@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>核邪部队</title>
+<style>
+*{margin:0;padding:0}
+body{background:#000;color:#0f0;font-family:'Courier New',monospace;overflow:hidden;width:100vw;height:100vh}
+canvas{display:block;cursor:crosshair}
+#mainMenu{position:fixed;inset:0;z-index:1000;background:#000}
+#mainMenu canvas{position:absolute;inset:0;width:100%;height:100%}
+#gameUI{position:fixed;inset:0;display:none;background:#000}
+#gameUI canvas{position:absolute;inset:0}
+#uiOverlay{position:fixed;z-index:500;pointer-events:none}
+#uiOverlay>*{pointer-events:auto}
+#topBar{position:fixed;top:0;left:0;right:0;height:44px;z-index:600;
+  background:#1a1a00;border-bottom:3px solid #654321;display:flex;align-items:center;
+  font-family:'Courier New',monospace;font-size:14px;color:#c8a96e;padding:0 10px}
+#topBar .t{color:#e8c87a;font-weight:bold;font-size:16px}
+#topBar .s{color:#8a7a5a;margin:0 15px;font-size:13px}
+#topBar .btn{padding:3px 10px;background:#2a2a00;border:2px solid #654321;
+  color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:13px;margin-left:auto}
+#topBar .btn:hover{background:#3a3a00;border-color:#8a6a41}
+#toolPanel{position:fixed;top:44px;right:0;bottom:36px;width:170px;z-index:600;
+  background:#1a1a00;border-left:3px solid #654321;overflow-y:auto;padding:6px}
+#toolPanel .st{color:#8a7a5a;font-size:11px;padding:3px 0;border-bottom:1px solid #3a2a00;
+  margin-top:6px;letter-spacing:1px}
+.tb{display:block;width:100%;padding:5px 8px;margin:2px 0;
+  background:#2a2a00;border:1px solid #3a2a00;color:#a0906a;cursor:pointer;
+  font-family:'Courier New';font-size:12px;text-align:left;pointer-events:auto}
+.tb:hover{background:#3a3a00;border-color:#654321;color:#c8a96e}
+.tb.act{border-color:#c8a96e;color:#e8c87a;background:#2a2a10}
+.tb.ht{display:none}
+.tb.r{border-left:3px solid #c44}
+.tb.b{border-left:3px solid #48f}
+#bottomBar{position:fixed;bottom:0;left:0;right:0;height:36px;z-index:600;
+  background:#1a1a00;border-top:3px solid #654321;display:flex;align-items:center;
+  font-family:'Courier New';font-size:13px;color:#8a7a5a;padding:0 10px}
+#turnInd{font-weight:bold;font-size:14px;margin-right:15px;white-space:nowrap}
+#hintTxt{flex:1;text-align:center;color:#a0906a}
+#startBtn{padding:2px 12px;background:#2a4a2a;border:2px solid #2a6a2a;
+  color:#4a8a4a;cursor:pointer;font-family:'Courier New';font-size:13px;pointer-events:auto}
+#startBtn:hover{background:#3a5a3a;border-color:#3a8a3a}
+#unitPopup{position:fixed;display:none;z-index:2000;background:#1a1a00;
+  border:2px solid #c8a96e;padding:8px;min-width:160px}
+.pb{display:block;width:100%;padding:5px 8px;margin:2px 0;
+  background:#2a2a00;border:1px solid #3a2a00;color:#a0906a;cursor:pointer;
+  font-family:'Courier New';font-size:12px;text-align:left}
+.pb:hover{background:#3a3a00;border-color:#c8a96e;color:#e8c87a}
+#modal{position:fixed;inset:0;z-index:3000;display:none;background:rgba(0,0,0,0.8);
+  align-items:center;justify-content:center}
+#modal .box{background:#1a1a00;border:3px solid #654321;padding:30px;text-align:center;max-width:350px}
+#modal h2{color:#e8c87a;font-size:22px;margin-bottom:10px}
+#modal p{color:#8a7a5a;margin-bottom:20px;font-size:14px}
+#modal button{padding:6px 24px;background:#3a2a00;border:2px solid #654321;
+  color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:14px}
+#modal button:hover{background:#4a3a00}
+</style></head><body>
+
+<div id="mainMenu"><canvas id="menuCanvas"></canvas></div>
+
+<div id="gameUI">
+  <canvas id="gameCanvas"></canvas>
+  <div id="topBar">
+    <span class="t">核邪部队</span><span class="s">战术模式</span>
+    <span style="color:#8a7a5a;font-size:13px" id="topInfo">回合:- 阶段:-</span>
+    <span style="margin:0 10px;color:#c44" id="hpR">红营:-</span>
+    <span style="color:#48f" id="hpB">蓝营:-</span>
+    <button class="btn" onclick="backToMenu()">返回</button>
+  </div>
+  <div id="toolPanel">
+    <div class="st" id="drawST">绘制地图</div>
+    <button class="tb draw-tool" data-tool="shelter" onclick="selTool('shelter')">■ 掩体 [无限]</button>
+    <button class="tb draw-tool" data-tool="camp_red" onclick="selTool('camp_red')">■ 营地(红) [5HP]</button>
+    <button class="tb draw-tool" data-tool="camp_blue" onclick="selTool('camp_blue')">■ 营地(蓝) [5HP]</button>
+    <div class="st">部署兵种</div>
+    <button class="tb unit-tool r" data-tool="soldier_r" onclick="selTool('soldier_r')">○ 普通兵 [3HP/1AT]</button>
+    <button class="tb unit-tool b" data-tool="soldier_b" onclick="selTool('soldier_b')">○ 普通兵 [3HP/1AT]</button>
+    <button class="tb unit-tool r" data-tool="sniper_r" onclick="selTool('sniper_r')">● 狙击兵 [1HP/2AT]</button>
+    <button class="tb unit-tool b" data-tool="sniper_b" onclick="selTool('sniper_b')">● 狙击兵 [1HP/2AT]</button>
+    <button class="tb unit-tool r" data-tool="engineer_r" onclick="selTool('engineer_r')">⊤ 工程兵 [1HP]</button>
+    <button class="tb unit-tool b" data-tool="engineer_b" onclick="selTool('engineer_b')">⊤ 工程兵 [1HP]</button>
+    <button class="tb unit-tool r" data-tool="mortar_r" onclick="selTool('mortar_r')">/\ 迫击炮 [1HP]</button>
+    <button class="tb unit-tool b" data-tool="mortar_b" onclick="selTool('mortar_b')">/\ 迫击炮 [1HP]</button>
+    <button class="tb unit-tool r" data-tool="interceptor_r" onclick="selTool('interceptor_r')">][ 拦截装置 [1HP]</button>
+    <button class="tb unit-tool b" data-tool="interceptor_b" onclick="selTool('interceptor_b')">][ 拦截装置 [1HP]</button>
+  </div>
+  <div id="bottomBar">
+    <span id="turnInd">准备中...</span>
+    <span id="hintTxt">点击地图放置或选择单位</span>
+    <button id="startBtn" onclick="startGame()">开始游戏</button>
+  </div>
+</div>
+
+<div id="unitPopup"></div>
+<div id="modal"><div class="box" id="modalBox"></div></div>
+
+<!-- 手机端提示遮罩 -->
+<div id="mobileOverlay" style="position:fixed;inset:0;z-index:9999;background:#000;display:none;align-items:center;justify-content:center;text-align:center;">
+  <div style="color:#c8a96e;font-family:'Courier New',monospace;">
+    <div style="font-size:60px;margin-bottom:20px;">🖥️</div>
+    <h2 style="font-size:24px;margin-bottom:12px;">请使用电脑访问</h2>
+    <p style="color:#8a7a5a;font-size:14px;">本游戏需要键盘和鼠标操作，<br>请在电脑浏览器中打开。</p>
+  </div>
+</div>
+
+<script>
+// 手机端检测
+(function(){
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints > 0 && window.innerWidth < 800);
+  if(isMobile){
+    document.getElementById('mobileOverlay').style.display='flex';
+    document.getElementById('mobileOverlay').style.display='flex';
+  }
+})();
+// ===== 图片加载系统 =====
+const IMG_CACHE = {};
+const IMG_LIST = {
+  // 营地
+  'camp_red': '元素/营地/红/营地红.png',
+  'camp_blue': '元素/营地/蓝/营地蓝.png',
+  // 墙
+  'wall_red': '元素/墙/红/墙红.png',
+  'wall_blue': '元素/墙/蓝/墙蓝.png',
+  'wall_black': '元素/墙/黑/墙黑.png',
+  // 普通兵
+  'soldier_red': '元素/普通兵/红/普通兵红.png',
+  'soldier_red_1': '元素/普通兵/红/普通兵红开一枪.png',
+  'soldier_red_2': '元素/普通兵/红/普通兵红开两枪.png',
+  'soldier_red_3': '元素/普通兵/红/普通兵红开三枪.png',
+  'soldier_red_4': '元素/普通兵/红/普通兵红开四枪.png',
+  'soldier_red_5': '元素/普通兵/红/普通兵红开五枪.png',
+  'soldier_blue': '元素/普通兵/蓝/普通兵蓝.png',
+  'soldier_blue_1': '元素/普通兵/蓝/普通兵蓝开一枪.png',
+  'soldier_blue_2': '元素/普通兵/蓝/普通兵蓝开两枪.png',
+  'soldier_blue_3': '元素/普通兵/蓝/普通兵蓝开三枪.png',
+  'soldier_blue_4': '元素/普通兵/蓝/普通兵蓝开四枪.png',
+  'soldier_blue_5': '元素/普通兵/蓝/普通兵蓝开五枪.png',
+  // 狙击兵
+  'sniper_red': '元素/狙击兵/红/狙击兵红.png',
+  'sniper_red_1': '元素/狙击兵/红/狙击兵红开一枪.png',
+  'sniper_red_2': '元素/狙击兵/红/狙击兵红开两枪.png',
+  'sniper_blue': '元素/狙击兵/蓝/狙击兵蓝.png',
+  'sniper_blue_1': '元素/狙击兵/蓝/狙击兵蓝开一枪.png',
+  'sniper_blue_2': '元素/狙击兵/蓝/狙击兵蓝开两枪.png',
+  // 拦截装置
+  'interceptor_red': '元素/拦截装置/红/拦截装置红.png',
+  'interceptor_red_1': '元素/拦截装置/红/拦截装置红上一发拦截弹.png',
+  'interceptor_red_2': '元素/拦截装置/红/拦截装置红上两发拦截弹.png',
+  'interceptor_red_3': '元素/拦截装置/红/拦截装置红上三发拦截弹.png',
+  'interceptor_blue': '元素/拦截装置/蓝/拦截装置蓝.png',
+  'interceptor_blue_1': '元素/拦截装置/蓝/拦截装置蓝上一发拦截弹.png',
+  'interceptor_blue_2': '元素/拦截装置/蓝/拦截装置蓝上两发拦截弹.png',
+  'interceptor_blue_3': '元素/拦截装置/蓝/拦截装置蓝上三发拦截弹.png',
+  // 工程兵
+  'engineer_red': '元素/工程兵/红/工程兵红.png',
+  'engineer_red_1': '元素/工程兵/红/工程兵红填充一个混泥土.png',
+  'engineer_red_2': '元素/工程兵/红/工程兵红填充两个混泥土.png',
+  'engineer_red_3': '元素/工程兵/红/工程兵红填充三个混泥土.png',
+  'engineer_blue': '元素/工程兵/蓝/工程兵蓝.png',
+  'engineer_blue_1': '元素/工程兵/蓝/工程兵蓝填充一个混泥土.png',
+  'engineer_blue_2': '元素/工程兵/蓝/工程兵蓝填充两个混泥土.png',
+  'engineer_blue_3': '元素/工程兵/蓝/工程兵蓝填充三个混泥土.png',
+  // 迫击炮
+  'mortar_red': '元素/迫击炮/红/迫击炮红.png',
+  'mortar_red_1': '元素/迫击炮/红/迫击炮红上一枚炮弹.png',
+  'mortar_red_2': '元素/迫击炮/红/迫击炮红上两枚炮弹.png',
+  'mortar_red_3': '元素/迫击炮/红/迫击炮红上三枚炮弹.png',
+  'mortar_red_4': '元素/迫击炮/红/迫击炮红上四枚炮弹.png',
+  'mortar_blue': '元素/迫击炮/蓝/迫击炮蓝.png',
+  'mortar_blue_1': '元素/迫击炮/蓝/迫击炮蓝上一枚炮弹.png',
+  'mortar_blue_2': '元素/迫击炮/蓝/迫击炮蓝上两枚炮弹.png',
+  'mortar_blue_3': '元素/迫击炮/蓝/迫击炮蓝上三枚炮弹.png',
+  'mortar_blue_4': '元素/迫击炮/蓝/迫击炮蓝上四枚炮弹.png',
+};
+
+function loadImages() {
+  let loaded = 0;
+  const total = Object.keys(IMG_LIST).length;
+  return new Promise((resolve) => {
+    for (const [key, path] of Object.entries(IMG_LIST)) {
+      const img = new Image();
+      img.onload = () => { loaded++; if (loaded >= total) resolve(); };
+      img.onerror = () => { loaded++; if (loaded >= total) resolve(); };
+      img.src = path;
+      IMG_CACHE[key] = img;
+    }
+  });
+}
+
+function getImg(key) {
+  return IMG_CACHE[key] || null;
+}
+
+// 获取单位对应的图片key
+function getUnitImgKey(u) {
+  const t = u.team === 'red' ? 'red' : 'blue';
+  if (u.type === 'soldier') {
+    const fired = u.bulletsFired || 0;
+    if (fired > 0) return `soldier_${t}_${fired}`;
+    return `soldier_${t}`;
+  }
+  if (u.type === 'sniper') {
+    const fired = u.bulletsFired || 0;
+    if (fired > 0) return `sniper_${t}_${fired}`;
+    return `sniper_${t}`;
+  }
+  if (u.type === 'mortar') {
+    const ammo = Math.min(u.ammo || 0, 4);
+    if (ammo > 0) return `mortar_${t}_${ammo}`;
+    return `mortar_${t}`;
+  }
+  if (u.type === 'engineer') {
+    const c = u.reservedCement || 0;
+    if (c > 0) return `engineer_${t}_${Math.min(c,3)}`;
+    return `engineer_${t}`;
+  }
+  if (u.type === 'interceptor') {
+    const a = u.interceptAmmo || 0;
+    if (a > 0) return `interceptor_${t}_${Math.min(a,3)}`;
+    return `interceptor_${t}`;
+  }
+  if (u.type === 'wall') return u.team === 'red' ? 'wall_red' : 'wall_blue';
+  return null;
+}
+
+// 绘制图片（带旋转和缩放）
+function drawImg(ctx, key, x, y, angle, scale) {
+  const img = getImg(key);
+  if (!img || !img.complete || img.naturalWidth === 0) return false;
+  // 营地用大一点的比例
+  const defaultScale = key.startsWith('camp') ? 0.22 : (key.startsWith('wall') ? 0.22 : 0.14);
+  const s = scale || defaultScale;
+  const w = img.naturalWidth * s;
+  const h = img.naturalHeight * s;
+  ctx.save();
+  ctx.translate(x, y);
+  // 普通兵/狙击兵根据朝向旋转图片（图片枪口默认朝右，所以加 Math.PI/2）
+  // 迫击炮的图片本身就有角度，不额外旋转
+  // 墙/掩体根据角度旋转
+  if (angle) {
+    if (key.startsWith('soldier') || key.startsWith('sniper')) {
+      ctx.rotate(angle + Math.PI/2);
+    } else if (key.startsWith('wall')) {
+      ctx.rotate(angle);
+    }
+  }
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  ctx.restore();
+  return true;
+}
+
+// ===== 常量 =====
+const MS=800,UR=12,CS=22,CM=70,SW=85,SH=20;
+const SD='draw',ST='truce',SB='battle';
+let G=null;
+const MC=document.getElementById('menuCanvas'),MCC=MC.getContext('2d');
+const GC=document.getElementById('gameCanvas'),GCC=GC.getContext('2d');
+GC.width=GC.height=MS;
+MC.width=window.innerWidth;MC.height=window.innerHeight;
+
+// ===== 复古沙土地图纹理 =====
+function genSandTexture(w,h){
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const cx=c.getContext('2d');
+  const id=cx.createImageData(w,h);
+  for(let i=0;i<id.data.length;i+=4){
+    const b=100+Math.random()*30|0;
+    id.data[i]=b+15;id.data[i+1]=b+5;id.data[i+2]=b-10;id.data[i+3]=255;
+  }
+  cx.putImageData(id,0,0);
+  // 一些深色斑点模拟沙砾
+  for(let i=0;i<300;i++){
+    const x=Math.random()*w,y=Math.random()*h;
+    const g=80+Math.random()*25|0;
+    cx.fillStyle=`rgb(${g},${g-5},${g-15})`;
+    cx.fillRect(x,y,1+Math.random()*2|0,1+Math.random()*2|0);
+  }
+  return c;
+}
+const SAND=genSandTexture(MS,MS);
+
+function drawDesertBG(ctx,w,h){
+  ctx.drawImage(SAND,0,0,w,h);
+  // 淡绿色网格
+  ctx.strokeStyle='rgba(60,80,40,0.15)';ctx.lineWidth=0.5;
+  for(let i=0;i<=w;i+=50){
+    ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,h);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(w,i);ctx.stroke();
+  }
+}
+
+function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2)}
+function inR(a,b){return dist(a,b)<=CM*3}
+
+// ===== 菜单界面（纯canvas复古风）=====
+function drawMenu(){
+  const w=MC.width,h=MC.height;
+  MCC.fillStyle='#000';MCC.fillRect(0,0,w,h);
+  // 底部沙尘
+  const grd=MCC.createRadialGradient(w/2,h+100,50,w/2,h+100,400);
+  grd.addColorStop(0,'rgba(100,80,40,0.3)');grd.addColorStop(1,'rgba(0,0,0,0)');
+  MCC.fillStyle=grd;MCC.fillRect(0,0,w,h);
+  // 标题
+  MCC.fillStyle='#c8a96e';MCC.font='bold 64px "Courier New",monospace';
+  MCC.textAlign='center';MCC.textBaseline='middle';
+  MCC.shadowColor='#4a3a00';MCC.shadowBlur=8;
+  MCC.fillText('核邪部队',w/2,h/2-80);
+  MCC.shadowBlur=0;
+  MCC.fillStyle='#8a7a5a';MCC.font='16px "Courier New",monospace';
+  MCC.fillText('- 战 术 对 弈 -',w/2,h/2-30);
+  // 按钮
+  const bx=w/2-100,by1=h/2+30,bw=200,bh=36;
+  drawRetroBtn(MCC,bx,by1,bw,bh,'⚔ 战术模式',()=>showGame());
+  drawRetroBtn(MCC,bx,by1+50,bw,bh,'🏴 大战场模式',()=>showModal('🚧 开发中','大战场模式正在紧张开发中，敬请期待！'));
+  MCC.fillStyle='#5a4a2a';MCC.font='11px "Courier New",monospace';
+  MCC.fillText('开发中 · 2026',w/2,h-20);
+}
+
+function drawRetroBtn(ctx,x,y,w,h,text,cb){
+  const over=MC.mx>x&&MC.mx<x+w&&MC.my>y&&MC.my<y+h;
+  ctx.fillStyle=over?'#3a2a10':'#1a1a00';
+  ctx.strokeStyle='#654321';ctx.lineWidth=2;
+  ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);
+  ctx.fillStyle=over?'#e8c87a':'#a0906a';
+  ctx.font='16px "Courier New",monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,x+w/2,y+h/2);
+  if(over&&!MC._down){MC._down=true;MC._cb=cb;}
+}
+
+MC.addEventListener('mousemove',e=>{
+  const r=MC.getBoundingClientRect();
+  MC.mx=e.clientX-r.left;MC.my=e.clientY-r.top;
+  drawMenu();
+});
+MC.addEventListener('click',()=>{if(MC._cb){const c=MC._cb;MC._cb=null;c();}});
+MC.addEventListener('mousedown',()=>MC._down=true);
+MC.addEventListener('mouseup',()=>MC._down=false);
+
+// ===== 游戏初始化 =====
+function showGame(){
+  loadImages().then(() => {
+    document.getElementById('mainMenu').style.display='none';
+    document.getElementById('gameUI').style.display='block';
+    GC.width=MS;GC.height=MS;
+    initGame();
+  });
+}
+
+function initGame(){
+  G={
+    state:SD,turn:0,phase:'red',step:0,maxStep:1,
+    units:[],camps:{red:null,blue:null},shelters:[],
+    selU:null,selT:null,buildWall:false,builder:null,
+    selMortar:false,
+    sa:0,pa:0,mx:0,my:0,over:false
+  };
+  resizeCanvas();
+  updUI();draw();
+}
+
+function resizeCanvas(){
+  const tw=window.innerWidth-173,th=window.innerHeight-80;
+  const s=Math.min(tw,th,MS);
+  GC.style.width=s+'px';GC.style.height=s+'px';
+  GC.style.position='absolute';
+  GC.style.left=((tw+173-s)/2)+'px';
+  GC.style.top=((th+80-s)/2)+'px';
+}
+
+window.addEventListener('resize',()=>{if(G)resizeCanvas();if(!G)drawMenu();});
+
+// ===== 绘制 =====
+function draw(){
+  if(!G)return;
+  GCC.clearRect(0,0,MS,MS);
+  drawDesertBG(GCC,MS,MS);
+  drawShelters();
+  drawCamps();
+  drawUnits();
+  drawWalls();
+  drawSel();
+  drawAnglePrev();
+  drawPlacePrev();
+  drawTrap();
+  drawMortarPrev();
+}
+
+function drawShelters(){
+  for(const s of G.shelters||[]){
+    // 地图掩体用墙黑.png
+    if(!drawImg(GCC, 'wall_black', s.x+SW/2, s.y+SH/2, s.angle||0)){
+      // fallback
+      GCC.save();
+      GCC.translate(s.x+SW/2,s.y+SH/2);
+      GCC.rotate(s.angle||0);
+      GCC.fillStyle='#5a4a30';GCC.strokeStyle='#7a6a4a';GCC.lineWidth=2;
+      rRect(GCC,-SW/2,-SH/2,SW,SH,3);GCC.fill();GCC.stroke();
+      GCC.fillStyle='#4a3a20';
+      for(let i=-SW/2+4;i<SW/2-4;i+=10)GCC.fillRect(i,-SH/2+3,6,SH-6);
+      GCC.restore();
+    }
+  }
+}
+
+function drawCamps(){
+  if(!G||!G.camps)return;
+  for(const t of['red','blue']){
+    const c=G.camps[t];if(!c)continue;
+    const cx=c.x,cy=c.y;
+    const key=t==='red'?'camp_red':'camp_blue';
+    if(!drawImg(GCC,key,cx,cy,0)){
+      // fallback
+      GCC.save();
+      GCC.fillStyle=t==='red'?'#5a2020':'#20305a';
+      GCC.strokeStyle=t==='red'?'#a44':'#48f';GCC.lineWidth=2;
+      GCC.fillRect(cx-CS,cy-CS+5,CS*2,CS*2-5);
+      GCC.strokeRect(cx-CS,cy-CS+5,CS*2,CS*2-5);
+      GCC.beginPath();
+      GCC.moveTo(cx-CS-5,cy-CS+5);GCC.lineTo(cx,cy-CS-8);GCC.lineTo(cx+CS+5,cy-CS+5);
+      GCC.closePath();
+      GCC.fillStyle=t==='red'?'#8a3030':'#304a8a';GCC.fill();GCC.stroke();
+      GCC.restore();
+    }
+    GCC.fillStyle='#fff';GCC.font='bold 14px "Courier New"';
+    GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText(`HP${c.hp}`,cx,cy+CS+12);
+  }
+}
+
+function drawUnits(){
+  for(const u of G.units){
+    if(u.eliminated||u.trapped)continue;
+    const r=u.team==='red',c=r?'#c44':'#48f';
+    GCC.save();GCC.translate(u.x,u.y);
+    if(G.selU===u){
+      GCC.strokeStyle='#c8a96e';GCC.lineWidth=1.5;GCC.setLineDash([3,3]);
+      GCC.beginPath();GCC.arc(0,0,UR+5,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
+    }
+    // 尝试用图片绘制
+    const imgKey = getUnitImgKey(u);
+    if (imgKey && drawImg(GCC, imgKey, 0, 0, u.facing)) {
+      // 图片绘制成功，绘制额外信息
+      if (u.type === 'engineer' && u.reservedCement > 0) {
+        GCC.fillStyle='#da0';GCC.font='9px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+        GCC.fillText(`C${u.reservedCement}`,0,UR+8);
+      }
+      if (u.type === 'interceptor') {
+        const p=u.interceptAmmo>=2?100:(u.interceptAmmo===1?50:0);
+        GCC.fillStyle=p>=100?'#0f0':(p>=50?'#aa0':'#555');
+        GCC.font='8px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+        GCC.fillText(`${p}%`,0,-UR-18);
+      }
+      // 血量数字
+    } else {
+      // fallback: 代码绘制
+      switch(u.type){
+        case'soldier':dSoldier(u,c);break;
+        case'sniper':dSniper(u,c);break;
+        case'engineer':dEngineer(u,c);break;
+        case'mortar':dMortar(u,c);break;
+        case'interceptor':dInterceptor(u,c);break;
+      }
+    }
+    // 血量数字
+    if (u.type !== 'wall' && u.type !== 'mortar' && u.type !== 'interceptor') {
+      GCC.fillStyle='#fff';GCC.font='bold 8px "Courier New"';
+      GCC.textAlign='center';GCC.textBaseline='middle';
+      GCC.fillText(`${u.hp}`,0,UR+10);
+    }
+    GCC.restore();
+  }
+  for(const u of G.units){
+    if(u.eliminated||!u.trapped)continue;
+    const r=u.team==='red',c=r?'#c44':'#48f';
+    GCC.save();GCC.globalAlpha=0.4;GCC.translate(u.x,u.y);
+    const imgKey = getUnitImgKey(u);
+    if (imgKey && getImg(imgKey) && getImg(imgKey).complete) {
+      drawImg(GCC, imgKey, 0, 0, u.facing);
+    } else {
+      switch(u.type){case'soldier':dSoldier(u,c);break;case'sniper':dSniper(u,c);break;case'engineer':dEngineer(u,c);break;}
+    }
+    GCC.restore();
+  }
+}
+
+// 兵种绘制（与描述完全一致）
+function dSoldier(u,c){
+  const a=u.facing;
+  GCC.strokeStyle=c;GCC.lineWidth=2.5;
+  GCC.beginPath();GCC.arc(0,0,UR,0,Math.PI*2);GCC.stroke();
+  // 血量
+  if(u.hp<=2){
+    GCC.strokeStyle=c;GCC.lineWidth=2;
+    GCC.beginPath();GCC.moveTo(-4,-4);GCC.lineTo(4,4);GCC.stroke();
+    if(u.hp<=1){GCC.beginPath();GCC.moveTo(-4,4);GCC.lineTo(4,-4);GCC.stroke();}
+  }
+  // 竖线
+  GCC.strokeStyle=c;GCC.lineWidth=2.5;
+  GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(a)*(UR+7),Math.sin(a)*(UR+7));GCC.stroke();
+  // 小直角
+  const gx=Math.cos(a)*(UR+7),gy=Math.sin(a)*(UR+7);
+  const px=Math.cos(a+Math.PI/2),py=Math.sin(a+Math.PI/2);
+  GCC.beginPath();GCC.moveTo(gx,gy);GCC.lineTo(gx+px*4,gy+py*4);GCC.stroke();
+  GCC.beginPath();GCC.moveTo(gx+px*4,gy+py*4);GCC.lineTo(gx+px*4-Math.cos(a)*3,gy+py*4-Math.sin(a)*3);GCC.stroke();
+  dBullets(u,UR,a,c);
+}
+
+function dSniper(u,c){
+  const a=u.facing;
+  GCC.fillStyle=c;GCC.beginPath();GCC.arc(0,0,UR,0,Math.PI*2);GCC.fill();
+  if(u.hp<=0){
+    GCC.strokeStyle='#fff';GCC.lineWidth=2;
+    GCC.beginPath();GCC.moveTo(-4,-4);GCC.lineTo(4,4);GCC.stroke();
+    GCC.beginPath();GCC.moveTo(-4,4);GCC.lineTo(4,-4);GCC.stroke();
+  }
+  GCC.strokeStyle='#fff';GCC.lineWidth=2.5;
+  GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(a)*(UR+7),Math.sin(a)*(UR+7));GCC.stroke();
+  const gx=Math.cos(a)*(UR+7),gy=Math.sin(a)*(UR+7);
+  const px=Math.cos(a+Math.PI/2),py=Math.sin(a+Math.PI/2);
+  GCC.beginPath();GCC.moveTo(gx,gy);GCC.lineTo(gx+px*4,gy+py*4);GCC.stroke();
+  GCC.beginPath();GCC.moveTo(gx+px*4,gy+py*4);GCC.lineTo(gx+px*4-Math.cos(a)*3,gy+py*4-Math.sin(a)*3);GCC.stroke();
+  dBullets(u,UR,a,'#fff');
+}
+
+function dEngineer(u,c){
+  GCC.strokeStyle=c;GCC.lineWidth=3.5;GCC.lineCap='round';
+  GCC.beginPath();GCC.moveTo(0,-UR+2);GCC.lineTo(0,UR-2);GCC.stroke();
+  GCC.beginPath();GCC.moveTo(-UR+2,-UR+2);GCC.lineTo(UR-2,-UR+2);GCC.stroke();
+  GCC.lineCap='butt';
+  if(u.reservedCement>0){
+    GCC.fillStyle='#da0';GCC.font='9px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText(`C${u.reservedCement}`,0,UR+8);
+  }
+}
+
+function dMortar(u,c){
+  const a=u.facing||-Math.PI/3;
+  GCC.fillStyle='#4a4a30';GCC.strokeStyle='#7a6a4a';GCC.lineWidth=2;
+  GCC.beginPath();GCC.arc(0,0,UR-1,0,Math.PI*2);GCC.fill();GCC.stroke();
+  GCC.strokeStyle='#6a6a4a';GCC.lineWidth=2.5;
+  GCC.beginPath();GCC.moveTo(-5,0);GCC.lineTo(0,-UR+2);GCC.lineTo(5,0);GCC.stroke();
+  GCC.strokeStyle='#5a5a3a';GCC.lineWidth=4;GCC.lineCap='round';
+  GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(a)*(UR+16),Math.sin(a)*(UR+16));GCC.stroke();
+  GCC.lineCap='butt';
+  GCC.strokeStyle='#8a8a6a';GCC.lineWidth=2;
+  GCC.beginPath();GCC.arc(Math.cos(a)*(UR+15),Math.sin(a)*(UR+15),3.5,0,Math.PI*2);GCC.stroke();
+  for(let i=0;i<Math.min(u.ammo,3);i++){
+    const ox=Math.cos(a)*(UR+20+i*4.5),oy=Math.sin(a)*(UR+20+i*4.5);
+    GCC.fillStyle='#333';GCC.strokeStyle='#666';GCC.lineWidth=1;
+    GCC.beginPath();GCC.arc(ox,oy,3,0,Math.PI*2);GCC.fill();GCC.stroke();
+  }
+}
+
+function dInterceptor(u,c){
+  const r=u.team==='red';
+  GCC.fillStyle=r?'#4a2020':'#202a4a';GCC.strokeStyle=c;GCC.lineWidth=2;
+  GCC.beginPath();GCC.arc(0,0,UR-1,0,Math.PI*2);GCC.fill();GCC.stroke();
+  GCC.strokeStyle='#6a6a4a';GCC.lineWidth=2;
+  GCC.beginPath();GCC.moveTo(0,-UR);GCC.lineTo(0,-UR-12);GCC.stroke();
+  GCC.strokeStyle='#0a0';GCC.lineWidth=2;
+  GCC.beginPath();GCC.arc(0,-UR-12,6,-Math.PI*0.7,Math.PI*0.7);GCC.stroke();
+  for(let i=0;i<Math.min(u.interceptAmmo,4);i++){
+    GCC.fillStyle='#0a0';GCC.strokeStyle='#080';GCC.lineWidth=1;
+    GCC.beginPath();GCC.arc(-7+i*4.5,UR+5,2.5,0,Math.PI*2);GCC.fill();GCC.stroke();
+  }
+  const p=u.interceptAmmo>=2?100:(u.interceptAmmo===1?50:0);
+  GCC.fillStyle=p>=100?'#0f0':(p>=50?'#aa0':'#555');
+  GCC.font='8px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+  GCC.fillText(`${p}%`,0,-UR-18);
+}
+
+function dBullets(u,r,a,c){
+  const f=u.bulletsFired||0;if(!f)return;
+  const ra=a+Math.PI/2;GCC.strokeStyle=c;GCC.lineWidth=1.5;
+  for(let i=0;i<f;i++){
+    const o=(i+1)*3;
+    const sx=Math.cos(a)*(r+1)+Math.cos(ra)*o,sy=Math.sin(a)*(r+1)+Math.sin(ra)*o;
+    GCC.beginPath();GCC.moveTo(sx,sy);GCC.lineTo(sx+Math.cos(a)*4,sy+Math.sin(a)*4);GCC.stroke();
+  }
+}
+
+function drawWalls(){
+  for(const u of G.units){
+    if(u.type!=='wall'||u.eliminated)continue;
+    const key = u.team === 'red' ? 'wall_red' : (u.team === 'blue' ? 'wall_blue' : 'wall_black');
+    if(!drawImg(GCC, key, u.x, u.y, 0)){
+      // fallback
+      const wc=u.color||'#6a5a40';
+      GCC.fillStyle=wc;GCC.strokeStyle='#aaa';GCC.lineWidth=1.5;
+      const w=u.w||50,h=u.h||6;
+      rRect(GCC,u.x-w/2,u.y-h/2,w,h,2);GCC.fill();GCC.stroke();
+    }
+    GCC.fillStyle='#fff';GCC.font='8px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText(u.maxHp>99?'∞':`H${u.hp}`,u.x,u.y-(u.h||6)/2-4);
+  }
+}
+
+function drawSel(){
+  const u=G.selU;if(!u||u.eliminated)return;
+  GCC.save();
+  GCC.strokeStyle='rgba(200,169,110,0.4)';GCC.lineWidth=1.5;GCC.setLineDash([4,4]);
+  GCC.beginPath();GCC.arc(u.x,u.y,CM*3,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
+  GCC.restore();
+}
+
+function drawAnglePrev(){
+  const u=G.selU;
+  if(!u||u.eliminated||(u.type!=='soldier'&&u.type!=='sniper'))return;
+  const rg=Math.PI/4;
+  GCC.save();
+  GCC.fillStyle='rgba(200,169,110,0.08)';GCC.strokeStyle='rgba(200,169,110,0.3)';GCC.lineWidth=1;
+  GCC.beginPath();GCC.moveTo(u.x,u.y);GCC.arc(u.x,u.y,600,u.facing-rg,u.facing+rg);GCC.closePath();GCC.fill();GCC.stroke();
+  const dx=G.mx-u.x,dy=G.my-u.y,ma=Math.atan2(dy,dx);
+  let df=ma-u.facing;while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
+  if(Math.abs(df)<=rg){
+    GCC.strokeStyle='rgba(200,50,50,0.6)';GCC.lineWidth=1.5;GCC.setLineDash([5,4]);
+    GCC.beginPath();GCC.moveTo(u.x,u.y);GCC.lineTo(G.mx,G.my);GCC.stroke();GCC.setLineDash([]);
+    GCC.fillStyle='#c44';GCC.font='11px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText('射击',G.mx,G.my-8);
+  }else{
+    GCC.fillStyle='rgba(200,50,50,0.3)';GCC.font='10px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText('超出范围',G.mx,G.my-8);
+  }
+  GCC.restore();
+}
+
+function drawPlacePrev(){
+  if(!G.selT)return;
+  const t=G.selT,mx=G.mx,my=G.my;
+  if(mx<0||mx>MS||my<0||my>MS)return;
+  GCC.save();GCC.globalAlpha=0.35;
+  if(t.startsWith('shelter')){
+    const ang=G.sa||0;
+    GCC.translate(mx,my);GCC.rotate(ang);
+    GCC.fillStyle='#5a4a30';GCC.strokeStyle='#7a6a4a';GCC.lineWidth=2;
+    rRect(GCC,-SW/2,-SH/2,SW,SH,3);GCC.fill();GCC.stroke();
+    GCC.restore();
+    GCC.fillStyle='rgba(200,169,110,0.5)';GCC.font='10px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText(`角度 ${Math.round(ang*180/Math.PI)}°`,mx,my-SH/2-8);
+  }else if(t.startsWith('camp')){
+    GCC.fillStyle=t==='camp_red'?'#5a2020':'#20305a';
+    GCC.fillRect(mx-CS,my-CS+5,CS*2,CS*2-5);
+    GCC.beginPath();GCC.moveTo(mx-CS-5,my-CS+5);GCC.lineTo(mx,my-CS-8);GCC.lineTo(mx+CS+5,my-CS+5);GCC.closePath();GCC.fill();
+    GCC.restore();
+  }else{
+    const r=t.endsWith('_r'),c=r?'#c44':'#48f',a=G.pa||0;
+    GCC.translate(mx,my);
+    GCC.strokeStyle=c;GCC.lineWidth=2;
+    GCC.beginPath();GCC.arc(0,0,UR,0,Math.PI*2);GCC.stroke();
+    GCC.strokeStyle=c;GCC.lineWidth=2;
+    GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(a)*(UR+8),Math.sin(a)*(UR+8));GCC.stroke();
+    const gx=Math.cos(a)*(UR+8),gy=Math.sin(a)*(UR+8);
+    const px=Math.cos(a+Math.PI/2),py=Math.sin(a+Math.PI/2);
+    GCC.beginPath();GCC.moveTo(gx,gy);GCC.lineTo(gx+px*4,gy+py*4);GCC.stroke();
+    GCC.restore();
+    GCC.fillStyle='rgba(200,169,110,0.5)';GCC.font='9px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText(`角度 ${Math.round(a*180/Math.PI)}°`,mx,my+UR+12);
+    GCC.strokeStyle='rgba(200,169,110,0.1)';GCC.setLineDash([3,3]);
+    GCC.beginPath();GCC.arc(mx,my,CM*3,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
+    GCC.restore();
+  }
+}
+
+function drawTrap(){
+  for(const u of G.units){
+    if(u.eliminated||!u.trapped)continue;
+    GCC.save();
+    GCC.strokeStyle='#aa0';GCC.lineWidth=1.5;GCC.setLineDash([3,3]);
+    GCC.beginPath();GCC.arc(u.x,u.y,UR+4,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
+    GCC.fillStyle='#aa0';GCC.font='9px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText('被困',u.x,u.y-UR-6);
+    GCC.restore();
+  }
+}
+
+function drawMortarPrev(){
+  if(!G.selMortar)return;
+  const mx=G.mx,my=G.my;
+  if(mx<0||mx>MS||my<0||my>MS)return;
+  GCC.save();
+  GCC.strokeStyle='#ff0';GCC.lineWidth=1.5;
+  GCC.beginPath();GCC.moveTo(mx-5,my);GCC.lineTo(mx+5,my);GCC.stroke();
+  GCC.beginPath();GCC.moveTo(mx,my-5);GCC.lineTo(mx,my+5);GCC.stroke();
+  GCC.strokeStyle='rgba(255,200,0,0.3)';GCC.setLineDash([4,4]);
+  GCC.beginPath();GCC.arc(mx,my,CM*1,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
+  GCC.fillStyle='rgba(255,200,0,0.5)';GCC.font='10px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+  GCC.fillText('点击确认目标',mx,my-14);
+  if(G.selU&&G.selU.type==='mortar'){
+    const cd=G.camps.red&&G.camps.blue?dist(G.camps.red,G.camps.blue):MS,mr=cd/2;
+    GCC.strokeStyle='rgba(255,200,0,0.1)';GCC.setLineDash([4,4]);
+    GCC.beginPath();GCC.arc(G.selU.x,G.selU.y,mr,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
+  }
+  GCC.restore();
+}
+
+function rRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+// ===== 工具选择 =====
+function selTool(t){
+  if(G.state===SD){if(!t.startsWith('shelter')&&!t.startsWith('camp')){hint('绘制阶段只能放掩体和营地');return;}
+  }else{
+    if(t.startsWith('shelter')||t.startsWith('camp')){hint('游戏开始后不能放');return;}
+    const te=t.endsWith('_r')?'red':'blue';
+    if(te!==G.phase){hint(`现在是${G.phase==='red'?'红':'蓝'}方回合`);return;}
+  }
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  const el=document.querySelector(`[data-tool="${t}"]`);
+  if(el)el.classList.add('act');
+  G.selT=t;G.pa=0;
+  hint(t.startsWith('shelter')?'点击放置，滚轮调角度':'点击放置，滚轮调角度');
+}
+
+function hint(t){document.getElementById('hintTxt').textContent=t;}
+
+// ===== Canvas事件 =====
+GC.addEventListener('mousemove',e=>{
+  const r=GC.getBoundingClientRect();
+  G.mx=(e.clientX-r.left)*MS/r.width;G.my=(e.clientY-r.top)*MS/r.height;
+  draw();
+});
+
+GC.addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(!G.selT)return;
+  const d=e.deltaY>0?0.1:-0.1;
+  if(G.selT==='shelter'&&G.state===SD){
+    G.sa=(G.sa||0)+d;
+    hint(`掩体角度 ${Math.round(G.sa*180/Math.PI)}°（滚轮调角度，点击放置）`);
+  }else if(G.state!==SD){
+    G.pa=(G.pa||0)+d;
+    hint(`放置角度 ${Math.round(G.pa*180/Math.PI)}°（滚轮调角度，点击放置）`);
+  }
+  draw();
+});
+// 确保画布能接收滚轮事件和键盘事件
+GC.addEventListener('mouseenter',()=>GC.focus());
+GC.setAttribute('tabindex','0');
+document.addEventListener('keydown',e=>{
+  if(e.key==='t'||e.key==='T'){
+    G.selU=null;G.selT=null;G.buildWall=false;G.selMortar=false;
+    closePop();
+    document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+    hint('');draw();
+  }
+});
+
+GC.addEventListener('click',e=>{
+  if(G.over)return;
+  const r=GC.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*MS/r.width,my=(e.clientY-r.top)*MS/r.height;
+  if(G.buildWall){placeWall(mx,my);return;}
+  if(G.selMortar){placeMortarT(mx,my);return;}
+  if(G.selT){place(mx,my);return;}
+  if(G.selU){clickUnit(mx,my);return;}
+  trySel(mx,my);
+});
+
+// ===== 放置 =====
+function place(mx,my){
+  const t=G.selT;if(!t)return;
+  if(G.state===SD){
+    if(t==='shelter'){
+      G.shelters.push({x:mx-SW/2,y:my-SH/2,w:SW,h:SH,hp:Infinity,angle:G.sa||0});
+      hint('掩体已放置');
+    }else if(t==='camp_red'){
+      if(G.camps&&G.camps.red){hint('红方营地已存在');return;}
+      if(!G.camps)G.camps={};
+      G.camps.red={x:mx,y:my,hp:5,team:'red'};hint('红方营地已放置');
+    }else if(t==='camp_blue'){
+      if(G.camps&&G.camps.blue){hint('蓝方营地已存在');return;}
+      if(!G.camps)G.camps={};
+      G.camps.blue={x:mx,y:my,hp:5,team:'blue'};hint('蓝方营地已放置');
+    }
+    updUI();draw();return;
+  }
+  if(!canP({x:mx,y:my})){hint('必须在己方营地或单位3cm内');return;}
+  if(overlap({x:mx,y:my},UR)){hint('位置重叠');return;}
+  if(G.step>=1){hint('本回合步数已用完');return;}
+  const r=t.endsWith('_r'),te=r?'red':'blue';
+  let type;
+  if(t.startsWith('soldier'))type='soldier';
+  else if(t.startsWith('sniper'))type='sniper';
+  else if(t.startsWith('engineer'))type='engineer';
+  else if(t.startsWith('mortar'))type='mortar';
+  else if(t.startsWith('interceptor'))type='interceptor';
+  else return;
+  const a=G.pa||0;
+  const u=makeUnit(type,te,mx,my,a);
+  if(type==='soldier'||type==='sniper'||type==='mortar')u.facing=a;
+  if(type==='mortar'){
+    G.units.push(u);G.step++;G.selT=null;G.pa=0;
+    document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+    G.selU=u;G.selMortar=true;
+    hint('选择目标位置');updUI();draw();return;
+  }
+  G.units.push(u);G.step++;G.selT=null;G.pa=0;
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  hint(`${u.label}已放置`);
+  animP(u);updUI();draw();autoEnd();
+}
+
+function placeMortarT(mx,my){
+  const u=G.selU;
+  if(!u||u.type!=='mortar'){G.selMortar=false;return;}
+  const cd=G.camps.red&&G.camps.blue?dist(G.camps.red,G.camps.blue):MS;
+  if(dist(u,{x:mx,y:my})>cd/2){hint('超出射程');return;}
+  u.mortarTarget={x:mx,y:my};G.selMortar=false;
+  hint('目标已设定');updUI();draw();autoEnd();
+}
+
+function placeWall(mx,my){
+  const e=G.builder;
+  if(!e||e.eliminated){G.buildWall=false;return;}
+  if(dist(e,{x:mx,y:my})>CM*3){hint('必须在工程兵3cm内');return;}
+  const w=makeUnit('wall',e.team,mx,my,0);
+  w.team=e.team;
+  G.units.push(w);G.step++;
+  G.buildWall=false;G.builder=null;
+  hint('掩体已建造');updUI();draw();autoEnd();
+}
+
+function canP(p){
+  const c=G.phase==='red'?G.camps.red:G.camps.blue;
+  if(c&&inR(p,c))return true;
+  for(const u of G.units)if(!u.eliminated&&u.team===G.phase&&inR(p,u))return true;
+  return false;
+}
+
+function overlap(p,rr){
+  for(const u of G.units)if(!u.eliminated&&dist(p,u)<rr+UR)return true;
+  if(G.camps.red&&dist(p,G.camps.red)<rr+CS)return true;
+  if(G.camps.blue&&dist(p,G.camps.blue)<rr+CS)return true;
+  return false;
+}
+
+// ===== 创建单位 =====
+function makeUnit(type,team,x,y,angle){
+  const b={
+    id:Date.now()+Math.random(),type,team,x,y,
+    hp:1,maxHp:1,ammo:0,maxAmmo:0,atk:0,
+    eliminated:false,trapped:false,facing:angle||0,
+    bulletsFired:0,reservedCement:0,
+    mortarTarget:null,interceptAmmo:0,label:''
+  };
+  switch(type){
+    case'soldier':b.hp=3;b.maxHp=3;b.ammo=5;b.maxAmmo=5;b.atk=1;b.label='普通兵';break;
+    case'sniper':b.hp=1;b.maxHp=1;b.ammo=2;b.maxAmmo=2;b.atk=2;b.label='狙击兵';break;
+    case'engineer':b.hp=1;b.maxHp=1;b.label='工程兵';break;
+    case'mortar':b.hp=1;b.maxHp=1;b.ammo=0;b.maxAmmo=Infinity;b.atk=3;b.label='迫击炮';break;
+    case'interceptor':b.hp=1;b.maxHp=1;b.interceptAmmo=1;b.label='拦截装置';break;
+    case'wall':b.hp=3;b.maxHp=3;b.w=50;b.h=6;b.label='墙';break;
+  }
+  return b;
+}
+
+// ===== 单位操作 =====
+function clickUnit(mx,my){
+  const u=G.selU;if(!u||u.eliminated)return;
+  
+  // 检查点击位置是否有单位
+  const clicked=findU(mx,my);
+  
+  // 特殊兵种弹窗
+  if(u.type==='engineer'||u.type==='mortar'||u.type==='interceptor'){
+    showPopup(u,mx,my);return;
+  }
+  
+  // 普通兵/狙击兵
+  if(u.type==='soldier'||u.type==='sniper'){
+    // 点击己方单位 -> 换弹
+    if(clicked&&clicked.team===G.phase&&clicked!==u){
+      if(u.ammo<u.maxAmmo&&G.step<1){u.ammo=u.maxAmmo;u.bulletsFired=0;G.step++;hint('换弹完成');updUI();draw();autoEnd();return;}
+      G.selU=clicked;hint(`${clicked.label}`);draw();return;
+    }
+    // 弹药=0时点击目标/空白换弹
+    if(u.ammo<=0){
+      if(G.step<1){u.ammo=u.maxAmmo;u.bulletsFired=0;G.step++;hint('换弹完成');updUI();draw();autoEnd();return;}
+      else{hint('步数已用完');return;}
+    }
+    // 有弹药时射击
+    if(clicked&&clicked.team!==G.phase&&!clicked.eliminated){
+      const a=Math.atan2(clicked.y-u.y,clicked.x-u.x);
+      fire(u,a);return;
+    }
+    const a=Math.atan2(my-u.y,mx-u.x);
+    let df=a-u.facing;while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
+    if(Math.abs(df)<=Math.PI/4){fire(u,a);return;}
+    else{hint('超出射击范围');return;}
+  }
+  
+  // 取消选择/切换选择
+  if(!clicked||clicked.eliminated||clicked.trapped){G.selU=null;hint('');draw();return;}
+  if(clicked!==u&&clicked.team===G.phase){G.selU=clicked;hint(`${clicked.label}`);draw();return;}
+}
+
+function trySel(mx,my){
+  const u=findU(mx,my);
+  if(u&&!u.eliminated&&!u.trapped&&u.team===G.phase&&G.state!==SD){
+    G.selU=u;
+    if(u.type==='engineer'||u.type==='mortar'||u.type==='interceptor')showPopup(u,mx,my);
+    else hint(`${u.label} HP:${u.hp}/${u.maxHp}`);
+    draw();
+  }else if(u&&u.team!==G.phase&&G.selU){
+    const s=G.selU;
+    if(s.type==='mortar'&&s.ammo>0&&s.mortarTarget)fireM(s);
+    else if((s.type==='soldier'||s.type==='sniper')&&s.ammo>0){
+      fire(s,Math.atan2(my-s.y,mx-s.x));
+    }
+  }
+}
+
+function findU(mx,my){
+  for(const u of G.units)if(!u.eliminated&&dist({x:mx,y:my},u)<UR+6)return u;
+  return null;
+}
+
+// ===== 小弹窗 =====
+function showPopup(unit,mx,my){
+  const p=document.getElementById('unitPopup');
+  const r=GC.getBoundingClientRect();
+  const sx=r.left+mx*MS/r.width,sy=r.top+my*MS/r.height;
+  let h='';
+  if(unit.type==='engineer'){
+    h=`<div style="color:#c8a96e;margin-bottom:4px;font-size:13px">[工程兵]</div>
+      <button class="pb" onclick="doEng('build')">建造掩体 [1步]</button>
+      <button class="pb" onclick="doEng('cement')">装水泥 [1步]${unit.reservedCement>0?` (${unit.reservedCement})`:''}</button>
+      <button class="pb" onclick="doEng('repair')">修复营地 [消耗1水泥]</button>`;
+  }else if(unit.type==='mortar'){
+    h=`<div style="color:#c8a96e;margin-bottom:4px;font-size:13px">[迫击炮]</div>
+      <button class="pb" onclick="doMor('ammo')">装填炮弹 [1步] (${unit.ammo})</button>
+      <button class="pb" onclick="doMor('target')">设定目标</button>
+      <button class="pb" onclick="doMor('fire')">开炮 [消耗1弹]</button>`;
+  }else if(unit.type==='interceptor'){
+    h=`<div style="color:#c8a96e;margin-bottom:4px;font-size:13px">[拦截装置]</div>
+      <button class="pb" onclick="doInt()">装填拦截弹 [1步] (${unit.interceptAmmo})</button>`;
+  }
+  h+=`<button class="pb" onclick="closePop()" style="color:#666">取消</button>`;
+  p.innerHTML=h;p.style.display='block';
+  let px=sx+25,py=sy-25;
+  if(px+170>window.innerWidth)px=sx-180;
+  if(py+160>window.innerHeight)py=window.innerHeight-170;
+  if(py<0)py=5;
+  p.style.left=px+'px';p.style.top=py+'px';
+}
+
+function closePop(){document.getElementById('unitPopup').style.display='none';}
+
+// 工程兵
+function doEng(a){
+  closePop();const e=G.selU;
+  if(!e||e.eliminated)return;
+  if(G.step>=1){hint('步数已用完');return;}
+  if(a==='build'){G.buildWall=true;G.builder=e;hint('点击地图放置掩体');}
+  else if(a==='cement'){e.reservedCement=(e.reservedCement||0)+1;G.step++;hint(`水泥${e.reservedCement}`);updUI();draw();autoEnd();}
+  else if(a==='repair'){
+    if(!e.reservedCement){hint('没有水泥');return;}
+    const c=G.camps[e.team];if(!c){hint('营地不存在');return;}
+    e.reservedCement--;c.hp++;G.step++;hint(`营地HP:${c.hp}`);updUI();draw();autoEnd();
+  }
+}
+
+// 迫击炮
+function doMor(a){
+  closePop();const u=G.selU;
+  if(!u||u.eliminated)return;
+  if(G.step>=1&&a!=='target'){hint('步数已用完');return;}
+  if(a==='ammo'){u.ammo=(u.ammo||0)+1;G.step++;hint(`炮弹${u.ammo}`);updUI();draw();autoEnd();}
+  else if(a==='target'){G.selMortar=true;hint('选择目标');draw();}
+  else if(a==='fire'){
+    if(!u.mortarTarget){hint('先设目标');return;}
+    if(!u.ammo){hint('炮弹不足');return;}
+    fireM(u);
+  }
+}
+
+// 拦截装置
+function doInt(){
+  closePop();const u=G.selU;
+  if(!u||u.eliminated)return;
+  if(G.step>=1){hint('步数已用完');return;}
+  u.interceptAmmo=(u.interceptAmmo||0)+1;G.step++;hint(`拦截弹${u.interceptAmmo}`);updUI();draw();autoEnd();
+}
+
+// ===== 射击 =====
+function fire(shooter,angle){
+  if(shooter.eliminated||shooter.trapped)return;
+  if(shooter.ammo<=0){hint('弹药不足');return;}
+  shooter.ammo--;shooter.bulletsFired=(shooter.bulletsFired||0)+1;G.step++;
+  const sx=shooter.x,sy=shooter.y;
+  let hitList=[],stop=MS*1.5,pen=0;
+  for(let d=6;d<MS*1.5;d+=6){
+    const px=sx+Math.cos(angle)*d,py=sy+Math.sin(angle)*d;
+    if(px<0||px>MS||py<0||py>MS){stop=d;break;}
+    // 墙
+    for(const w of G.units){
+      if(w.type!=='wall'||w.eliminated)continue;
+      if(dist({x:px,y:py},w)<w.w/2){
+        if(shooter.type==='sniper'&&pen<1){hitList.push({target:w,dmg:shooter.atk,dist:d});pen++;break;}
+        else{hitList.push({target:w,dmg:shooter.atk,dist:d});stop=d;break;}
+      }
+    }
+    if(stop!==MS*1.5&&shooter.type!=='sniper')break;
+    if(pen>=2)break;
+    // 地图掩体
+    for(const s of G.shelters||[]){
+      let cx=px,cy=py;
+      if(s.angle){const ox=s.x+SW/2,oy=s.y+SH/2,cs=Math.cos(-s.angle),sn=Math.sin(-s.angle),dx=cx-ox,dy=cy-oy;cx=dx*cs-dy*sn+ox;cy=dx*sn+dy*cs+oy;}
+      if(Math.abs(cy-(s.y+SH/2))<SH/2&&Math.abs(cx-(s.x+SW/2))<SW/2){
+        if(shooter.type==='sniper'&&pen<1){pen++;}else{stop=d;}break;
+      }
+    }
+    if(stop!==MS*1.5&&shooter.type!=='sniper')break;
+    if(pen>=2)break;
+    // 单位
+    for(const u of G.units){
+      if(u.eliminated||u===shooter||u.type==='wall')continue;
+      if(u.trapped)continue;
+      if(dist({x:px,y:py},u)<UR+6){
+        if(!hitList.find(h=>h.target===u)){
+          const dmg=shooter.type==='sniper'&&pen>0?1:shooter.atk;
+          hitList.push({target:u,dmg,dist:d});
+          if(shooter.type!=='sniper'){stop=d;}pen++;break;
+        }
+      }
+    }
+    if(stop!==MS*1.5&&shooter.type!=='sniper')break;
+    if(pen>=2&&shooter.type==='sniper')break;
+    // 营地
+    for(const t of['red','blue']){
+      const c=G.camps[t];if(!c)continue;
+      if(dist({x:px,y:py},c)<CS+4){
+        const dmg=shooter.type==='sniper'&&pen>0?1:shooter.atk;
+        hitList.push({target:c,dmg,dist:d,isCamp:true});
+        if(shooter.type!=='sniper'){stop=d;}pen++;break;
+      }
+    }
+    if(stop!==MS*1.5&&shooter.type!=='sniper')break;
+    if(pen>=2&&shooter.type==='sniper')break;
+  }
+  animBullet(sx,sy,angle,hitList,stop);
+  G.selU=null;updUI();draw();
+}
+
+function animBullet(sx,sy,angle,hitList,stop){
+  let d=0,app=0;
+  const iv=setInterval(()=>{
+    d+=25;
+    if(d>stop+10){clearInterval(iv);chkOver();autoEnd();draw();return;}
+    const px=sx+Math.cos(angle)*d,py=sy+Math.sin(angle)*d;
+    draw();
+    GCC.save();GCC.fillStyle='#ff0';GCC.shadowColor='#ff0';GCC.shadowBlur=10;
+    GCC.beginPath();GCC.arc(px,py,3,0,Math.PI*2);GCC.fill();GCC.restore();
+    while(app<hitList.length&&d>=hitList[app].dist){
+      const h=hitList[app];
+      if(h.isCamp){h.target.hp-=h.dmg;if(h.target.hp<=0){h.target.hp=0;endG(h.target.team==='red'?'blue':'red');}}
+      else dmgU(h.target,h.dmg);
+      app++;
+    }
+  },12);
+}
+
+function fireM(m){
+  if(m.eliminated)return;
+  if(!m.mortarTarget){hint('未设目标');return;}
+  if(!m.ammo){hint('炮弹不足');return;}
+  m.ammo--;G.step++;
+  const t=m.mortarTarget;let int=false;
+  for(const u of G.units){
+    if(u.type==='interceptor'&&!u.eliminated&&u.team!==m.team&&dist(u,t)<=CM*3&&u.interceptAmmo>0){
+      // 拦截概率：1发=50%，2发=100%
+      const prob=u.interceptAmmo>=2?1:0.5;
+      if(Math.random()<prob){
+        // 拦截成功：消耗全部弹药（2发全没，1发用完）
+        u.interceptAmmo=0;
+        int=true;hint('被拦截！');break;
+      }else{
+        // 拦截失败：消耗1发
+        u.interceptAmmo--;
+      }
+    }
+  }
+  if(!int)animMor(t.x,t.y);
+  G.selU=null;updUI();draw();
+}
+
+function animMor(tx,ty){
+  let r=0,dam=false;
+  const mx=CM*1;
+  const iv=setInterval(()=>{
+    r+=12;
+    if(r>mx){clearInterval(iv);chkOver();autoEnd();draw();return;}
+    draw();
+    GCC.save();GCC.fillStyle=`rgba(200,80,0,${0.25*(1-r/mx)})`;
+    GCC.beginPath();GCC.arc(tx,ty,r,0,Math.PI*2);GCC.fill();
+    GCC.strokeStyle='#c40';GCC.lineWidth=1.5;GCC.stroke();GCC.restore();
+    if(!dam&&r>mx*0.4){
+      dam=true;
+      for(const u of G.units)if(!u.eliminated&&dist(u,{x:tx,y:ty})<=mx)dmgU(u,3);
+      for(const t of['red','blue']){const c=G.camps[t];if(c&&dist(c,{x:tx,y:ty})<=mx){c.hp-=3;if(c.hp<=0){c.hp=0;endG(t==='red'?'blue':'red');}}}
+      hint('爆炸！范围3伤害');
+    }
+  },20);
+}
+
+function dmgU(u,d){
+  if(u.eliminated)return;
+  u.hp-=d;
+  if(u.hp<=0){u.hp=0;u.eliminated=true;animD(u);
+    for(const x of G.units)if(x.trapped&&dist(x,u)<40){x.trapped=false;hint('被困单位已解救！');}
+  }
+}
+
+// ===== 动画 =====
+function animP(u){let o=0;const iv=setInterval(()=>{o+=0.1;if(o>=1)clearInterval(iv);draw();},40);}
+function animD(u){
+  let o=1;
+  const iv=setInterval(()=>{o-=0.06;if(o<=0){clearInterval(iv);draw();return;}
+    draw();GCC.save();GCC.globalAlpha=o;GCC.fillStyle='rgba(255,255,200,0.3)';
+    GCC.font='18px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText('✕',u.x,u.y);GCC.restore();
+  },50);
+}
+
+// ===== 流程 =====
+function autoEnd(){
+  if(G.state===SD)return;
+  setTimeout(()=>swTurn(),100);
+}
+function swTurn(){
+  if(G.phase==='red')G.phase='blue';
+  else{G.phase='red';G.turn++;if(G.turn>3)G.state=SB;}
+  G.step=0;G.selU=null;G.selT=null;G.pa=0;
+  closePop();document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  updUI();draw();
+  hint(`T${G.turn} ${G.phase==='red'?'红':'蓝'}方${G.turn<=3?'(休战)':''}`);
+}
+function startGame(){
+  if(!G.camps||!G.camps.red||!G.camps.blue){hint('请放置双方营地');return;}
+  G.state=ST;G.turn=1;G.phase='red';G.step=0;
+  document.getElementById('startBtn').style.display='none';
+  updUI();draw();hint('休战期开始！前3回合不能开战');
+}
+function updUI(){
+  if(!G)return;
+  document.getElementById('topInfo').textContent=`T${G.turn} ${G.state===SD?'绘制':(G.state===ST?'休战':'战斗')}`;
+  const ti=document.getElementById('turnInd');
+  if(G.state===SD){ti.textContent='绘制地图';ti.style.color='#8a7a5a';document.getElementById('startBtn').style.display='';}
+  else{ti.textContent=G.phase==='red'?'[红方回合]':'[蓝方回合]';ti.style.color=G.phase==='red'?'#c44':'#48f';document.getElementById('startBtn').style.display='none';}
+  document.getElementById('hpR').textContent=`红营:${G.camps&&G.camps.red?G.camps.red.hp:'-'}`;
+  document.getElementById('hpB').textContent=`蓝营:${G.camps&&G.camps.blue?G.camps.blue.hp:'-'}`;
+  document.querySelectorAll('.unit-tool').forEach(b=>{
+    if(G.state===SD)b.classList.add('ht');
+    else if((b.classList.contains('r')&&G.phase==='red')||(b.classList.contains('b')&&G.phase==='blue'))b.classList.remove('ht');
+    else b.classList.add('ht');
+  });
+  document.querySelectorAll('.draw-tool').forEach(b=>{
+    if(G.state===SD)b.classList.remove('ht');else b.classList.add('ht');
+  });
+  const ds=document.getElementById('drawST');
+  if(ds)ds.style.display=G.state===SD?'block':'none';
+}
+function chkOver(){
+  if(G.camps.red&&G.camps.red.hp<=0)endG('blue');
+  else if(G.camps.blue&&G.camps.blue.hp<=0)endG('red');
+}
+function endG(w){
+  G.over=true;
+  setTimeout(()=>showModal(w==='red'?'红方胜利！':'蓝方胜利！','游戏结束'),500);
+}
+function backToMenu(){
+  if(!confirm('返回菜单将丢失进度，确定？'))return;
+  document.getElementById('gameUI').style.display='none';
+  document.getElementById('mainMenu').style.display='block';
+  G=null;MC.width=window.innerWidth;MC.height=window.innerHeight;drawMenu();
+}
+function showModal(t,d){
+  document.getElementById('modalBox').innerHTML=`<h2>${t}</h2><p>${d}</p><button onclick="document.getElementById('modal').style.display='none'">确定</button>`;
+  document.getElementById('modal').style.display='flex';
+}
+
+drawMenu();
+</script>
+</body></html>
