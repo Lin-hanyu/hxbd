@@ -54,6 +54,21 @@ canvas{display:block;cursor:crosshair}
 #modal button{padding:6px 24px;background:#3a2a00;border:2px solid #654321;
   color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:14px}
 #modal button:hover{background:#4a3a00}
+#cancelBtn{position:fixed;bottom:44px;right:4px;z-index:700;padding:6px 14px;
+  background:#3a2a00;border:2px solid #654321;color:#c8a96e;cursor:pointer;
+  font-family:'Courier New';font-size:13px;display:none}
+#cancelBtn:hover{background:#4a3a00;border-color:#c8a96e}
+#angleKnob{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:700;
+  background:#1a1a00;border:2px solid #654321;padding:6px 14px;display:none;
+  align-items:center;gap:8px;font-family:'Courier New',monospace}
+#angleLabel{color:#c8a96e;font-size:12px;min-width:32px;text-align:center}
+.knob-btn{padding:4px 10px;background:#2a2a00;border:1px solid #3a2a00;
+  color:#a0906a;cursor:pointer;font-family:'Courier New';font-size:14px}
+.knob-btn:hover{background:#3a3a00;border-color:#c8a96e;color:#e8c87a}
+#knobDisplay{width:30px;height:30px;border-radius:50%;border:2px solid #654321;
+  background:#2a2a00;position:relative;flex-shrink:0}
+#knobIndicator{position:absolute;width:3px;height:12px;background:#c8a96e;
+  left:50%;bottom:50%;transform-origin:50% 100%;border-radius:2px}
 </style></head><body>
 
 <div id="mainMenu"><canvas id="menuCanvas"></canvas></div>
@@ -94,25 +109,17 @@ canvas{display:block;cursor:crosshair}
 <div id="unitPopup"></div>
 <div id="modal"><div class="box" id="modalBox"></div></div>
 
-<!-- 手机端提示遮罩 -->
-<div id="mobileOverlay" style="position:fixed;inset:0;z-index:9999;background:#000;display:none;align-items:center;justify-content:center;text-align:center;">
-  <div style="color:#c8a96e;font-family:'Courier New',monospace;">
-    <div style="font-size:60px;margin-bottom:20px;">🖥️</div>
-    <h2 style="font-size:24px;margin-bottom:12px;">请使用电脑访问</h2>
-    <p style="color:#8a7a5a;font-size:14px;">本游戏需要键盘和鼠标操作，<br>请在电脑浏览器中打开。</p>
-  </div>
+<!-- 取消按钮（代替T键） -->
+<button id="cancelBtn" onclick="doCancel()">✕ 取消</button>
+<!-- 角度旋钮 -->
+<div id="angleKnob" style="display:none">
+  <div id="angleLabel">0°</div>
+  <button class="knob-btn" onclick="adjAngle(-0.26)">↺</button>
+  <div id="knobDisplay"><div id="knobIndicator"></div></div>
+  <button class="knob-btn" onclick="adjAngle(0.26)">↻</button>
 </div>
 
 <script>
-// 手机端检测
-(function(){
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    || (navigator.maxTouchPoints > 0 && window.innerWidth < 800);
-  if(isMobile){
-    document.getElementById('mobileOverlay').style.display='flex';
-    document.getElementById('mobileOverlay').style.display='flex';
-  }
-})();
 // ===== 图片加载系统 =====
 const IMG_CACHE = {};
 const IMG_LIST = {
@@ -238,11 +245,11 @@ function drawImg(ctx, key, x, y, angle, scale) {
   // 普通兵/狙击兵根据朝向旋转图片（图片枪口默认朝右，所以加 Math.PI/2）
   // 迫击炮的图片本身就有角度，不额外旋转
   // 墙/掩体根据角度旋转
-  if (angle) {
+  if (angle !== undefined && angle !== null) {
     if (key.startsWith('soldier') || key.startsWith('sniper')) {
-      ctx.rotate(angle + Math.PI/2);
-    } else if (key.startsWith('wall')) {
       ctx.rotate(angle);
+    } else if (key.startsWith('wall')) {
+      ctx.rotate(angle - Math.PI/2);
     }
   }
   ctx.drawImage(img, -w / 2, -h / 2, w, h);
@@ -352,20 +359,25 @@ function initGame(){
     state:SD,turn:0,phase:'red',step:0,maxStep:1,
     units:[],camps:{red:null,blue:null},shelters:[],
     selU:null,selT:null,buildWall:false,builder:null,
-    selMortar:false,
+    selMortar:false,aimMode:false,
     sa:0,pa:0,mx:0,my:0,over:false
   };
+  hideAngleKnob();hideCancelBtn();
   resizeCanvas();
   updUI();draw();
 }
 
 function resizeCanvas(){
-  const tw=window.innerWidth-173,th=window.innerHeight-80;
+  const isSmall=window.innerWidth<500;
+  const panelW=isSmall?0:173;
+  const tw=window.innerWidth-panelW,th=window.innerHeight-80;
   const s=Math.min(tw,th,MS);
   GC.style.width=s+'px';GC.style.height=s+'px';
   GC.style.position='absolute';
-  GC.style.left=((tw+173-s)/2)+'px';
+  GC.style.left=((tw+panelW-s)/2)+'px';
   GC.style.top=((th+80-s)/2)+'px';
+  // 小屏幕隐藏侧边面板，在底部显示精简控制栏
+  document.getElementById('toolPanel').style.display=isSmall?'none':'block';
 }
 
 window.addEventListener('resize',()=>{if(G)resizeCanvas();if(!G)drawMenu();});
@@ -393,7 +405,7 @@ function drawShelters(){
       // fallback
       GCC.save();
       GCC.translate(s.x+SW/2,s.y+SH/2);
-      GCC.rotate(s.angle||0);
+      GCC.rotate((s.angle||0) - Math.PI/2);
       GCC.fillStyle='#5a4a30';GCC.strokeStyle='#7a6a4a';GCC.lineWidth=2;
       rRect(GCC,-SW/2,-SH/2,SW,SH,3);GCC.fill();GCC.stroke();
       GCC.fillStyle='#4a3a20';
@@ -486,7 +498,7 @@ function drawUnits(){
 
 // 兵种绘制（与描述完全一致）
 function dSoldier(u,c){
-  const a=u.facing;
+  const a=u.facing,da=a-Math.PI/2;
   GCC.strokeStyle=c;GCC.lineWidth=2.5;
   GCC.beginPath();GCC.arc(0,0,UR,0,Math.PI*2);GCC.stroke();
   // 血量
@@ -497,17 +509,17 @@ function dSoldier(u,c){
   }
   // 竖线
   GCC.strokeStyle=c;GCC.lineWidth=2.5;
-  GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(a)*(UR+7),Math.sin(a)*(UR+7));GCC.stroke();
+  GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(da)*(UR+7),Math.sin(da)*(UR+7));GCC.stroke();
   // 小直角
-  const gx=Math.cos(a)*(UR+7),gy=Math.sin(a)*(UR+7);
-  const px=Math.cos(a+Math.PI/2),py=Math.sin(a+Math.PI/2);
+  const gx=Math.cos(da)*(UR+7),gy=Math.sin(da)*(UR+7);
+  const px=Math.cos(da+Math.PI/2),py=Math.sin(da+Math.PI/2);
   GCC.beginPath();GCC.moveTo(gx,gy);GCC.lineTo(gx+px*4,gy+py*4);GCC.stroke();
-  GCC.beginPath();GCC.moveTo(gx+px*4,gy+py*4);GCC.lineTo(gx+px*4-Math.cos(a)*3,gy+py*4-Math.sin(a)*3);GCC.stroke();
-  dBullets(u,UR,a,c);
+  GCC.beginPath();GCC.moveTo(gx+px*4,gy+py*4);GCC.lineTo(gx+px*4-Math.cos(da)*3,gy+py*4-Math.sin(da)*3);GCC.stroke();
+  dBullets(u,UR,da,c);
 }
 
 function dSniper(u,c){
-  const a=u.facing;
+  const a=u.facing,da=a-Math.PI/2;
   GCC.fillStyle=c;GCC.beginPath();GCC.arc(0,0,UR,0,Math.PI*2);GCC.fill();
   if(u.hp<=0){
     GCC.strokeStyle='#fff';GCC.lineWidth=2;
@@ -515,12 +527,12 @@ function dSniper(u,c){
     GCC.beginPath();GCC.moveTo(-4,4);GCC.lineTo(4,-4);GCC.stroke();
   }
   GCC.strokeStyle='#fff';GCC.lineWidth=2.5;
-  GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(a)*(UR+7),Math.sin(a)*(UR+7));GCC.stroke();
-  const gx=Math.cos(a)*(UR+7),gy=Math.sin(a)*(UR+7);
-  const px=Math.cos(a+Math.PI/2),py=Math.sin(a+Math.PI/2);
+  GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(da)*(UR+7),Math.sin(da)*(UR+7));GCC.stroke();
+  const gx=Math.cos(da)*(UR+7),gy=Math.sin(da)*(UR+7);
+  const px=Math.cos(da+Math.PI/2),py=Math.sin(da+Math.PI/2);
   GCC.beginPath();GCC.moveTo(gx,gy);GCC.lineTo(gx+px*4,gy+py*4);GCC.stroke();
-  GCC.beginPath();GCC.moveTo(gx+px*4,gy+py*4);GCC.lineTo(gx+px*4-Math.cos(a)*3,gy+py*4-Math.sin(a)*3);GCC.stroke();
-  dBullets(u,UR,a,'#fff');
+  GCC.beginPath();GCC.moveTo(gx+px*4,gy+py*4);GCC.lineTo(gx+px*4-Math.cos(da)*3,gy+py*4-Math.sin(da)*3);GCC.stroke();
+  dBullets(u,UR,da,'#fff');
 }
 
 function dEngineer(u,c){
@@ -535,7 +547,7 @@ function dEngineer(u,c){
 }
 
 function dMortar(u,c){
-  const a=u.facing||-Math.PI/3;
+  const a=(u.facing||-Math.PI/3)-Math.PI/2;
   GCC.fillStyle='#4a4a30';GCC.strokeStyle='#7a6a4a';GCC.lineWidth=2;
   GCC.beginPath();GCC.arc(0,0,UR-1,0,Math.PI*2);GCC.fill();GCC.stroke();
   GCC.strokeStyle='#6a6a4a';GCC.lineWidth=2.5;
@@ -584,12 +596,14 @@ function drawWalls(){
   for(const u of G.units){
     if(u.type!=='wall'||u.eliminated)continue;
     const key = u.team === 'red' ? 'wall_red' : (u.team === 'blue' ? 'wall_blue' : 'wall_black');
-    if(!drawImg(GCC, key, u.x, u.y, 0)){
-      // fallback
+    if(!drawImg(GCC, key, u.x, u.y, u.facing || 0)){
+      // fallback - 也应用角度旋转（0°=朝上）
+      GCC.save();GCC.translate(u.x,u.y);GCC.rotate((u.facing||0) - Math.PI/2);
       const wc=u.color||'#6a5a40';
       GCC.fillStyle=wc;GCC.strokeStyle='#aaa';GCC.lineWidth=1.5;
       const w=u.w||50,h=u.h||6;
-      rRect(GCC,u.x-w/2,u.y-h/2,w,h,2);GCC.fill();GCC.stroke();
+      rRect(GCC,-w/2,-h/2,w,h,2);GCC.fill();GCC.stroke();
+      GCC.restore();
     }
     GCC.fillStyle='#fff';GCC.font='8px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
     GCC.fillText(u.maxHp>99?'∞':`H${u.hp}`,u.x,u.y-(u.h||6)/2-4);
@@ -606,13 +620,13 @@ function drawSel(){
 
 function drawAnglePrev(){
   const u=G.selU;
-  if(!u||u.eliminated||(u.type!=='soldier'&&u.type!=='sniper'))return;
-  const rg=Math.PI/4;
+  if(!u||u.eliminated||!G.aimMode)return;
+  const rg=Math.PI/4,fa=u.facing-Math.PI/2;
   GCC.save();
   GCC.fillStyle='rgba(200,169,110,0.08)';GCC.strokeStyle='rgba(200,169,110,0.3)';GCC.lineWidth=1;
-  GCC.beginPath();GCC.moveTo(u.x,u.y);GCC.arc(u.x,u.y,600,u.facing-rg,u.facing+rg);GCC.closePath();GCC.fill();GCC.stroke();
+  GCC.beginPath();GCC.moveTo(u.x,u.y);GCC.arc(u.x,u.y,600,fa-rg,fa+rg);GCC.closePath();GCC.fill();GCC.stroke();
   const dx=G.mx-u.x,dy=G.my-u.y,ma=Math.atan2(dy,dx);
-  let df=ma-u.facing;while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
+  let df=ma-fa;while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
   if(Math.abs(df)<=rg){
     GCC.strokeStyle='rgba(200,50,50,0.6)';GCC.lineWidth=1.5;GCC.setLineDash([5,4]);
     GCC.beginPath();GCC.moveTo(u.x,u.y);GCC.lineTo(G.mx,G.my);GCC.stroke();GCC.setLineDash([]);
@@ -626,18 +640,40 @@ function drawAnglePrev(){
 }
 
 function drawPlacePrev(){
+  // 工程兵建造掩体预览
+  if(G.buildWall&&G.builder&&!G.builder.eliminated){
+    const mx=G.mx,my=G.my;
+    if(mx>=0&&mx<=MS&&my>=0&&my<=MS){
+      const a=G.pa||0;
+      GCC.save();GCC.globalAlpha=0.35;
+      const key=G.builder.team==='red'?'wall_red':'wall_blue';
+      if(!drawImg(GCC,key,mx,my,a)){
+        GCC.save();GCC.translate(mx,my);GCC.rotate(a - Math.PI/2);
+        GCC.fillStyle='#6a5a40';GCC.strokeStyle='#aaa';GCC.lineWidth=1.5;
+        rRect(GCC,-25,-3,50,6,2);GCC.fill();GCC.stroke();
+        GCC.restore();
+      }
+      GCC.fillStyle='rgba(200,169,110,0.5)';GCC.font='10px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+      GCC.fillText(`角度 ${Math.round(a*180/Math.PI)}°`,mx,my-16);
+      // 范围圈
+      GCC.strokeStyle='rgba(200,169,110,0.15)';GCC.setLineDash([3,3]);
+      GCC.beginPath();GCC.arc(G.builder.x,G.builder.y,CM*3,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
+      GCC.restore();
+    }
+    return;
+  }
   if(!G.selT)return;
   const t=G.selT,mx=G.mx,my=G.my;
   if(mx<0||mx>MS||my<0||my>MS)return;
   GCC.save();GCC.globalAlpha=0.35;
   if(t.startsWith('shelter')){
-    const ang=G.sa||0;
+    const ang=(G.sa||0) - Math.PI/2;
     GCC.translate(mx,my);GCC.rotate(ang);
     GCC.fillStyle='#5a4a30';GCC.strokeStyle='#7a6a4a';GCC.lineWidth=2;
     rRect(GCC,-SW/2,-SH/2,SW,SH,3);GCC.fill();GCC.stroke();
     GCC.restore();
     GCC.fillStyle='rgba(200,169,110,0.5)';GCC.font='10px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
-    GCC.fillText(`角度 ${Math.round(ang*180/Math.PI)}°`,mx,my-SH/2-8);
+    GCC.fillText(`角度 ${Math.round((G.sa||0)*180/Math.PI)}°`,mx,my-SH/2-8);
   }else if(t.startsWith('camp')){
     GCC.fillStyle=t==='camp_red'?'#5a2020':'#20305a';
     GCC.fillRect(mx-CS,my-CS+5,CS*2,CS*2-5);
@@ -645,13 +681,14 @@ function drawPlacePrev(){
     GCC.restore();
   }else{
     const r=t.endsWith('_r'),c=r?'#c44':'#48f',a=G.pa||0;
+    const da=a-Math.PI/2;
     GCC.translate(mx,my);
     GCC.strokeStyle=c;GCC.lineWidth=2;
     GCC.beginPath();GCC.arc(0,0,UR,0,Math.PI*2);GCC.stroke();
     GCC.strokeStyle=c;GCC.lineWidth=2;
-    GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(a)*(UR+8),Math.sin(a)*(UR+8));GCC.stroke();
-    const gx=Math.cos(a)*(UR+8),gy=Math.sin(a)*(UR+8);
-    const px=Math.cos(a+Math.PI/2),py=Math.sin(a+Math.PI/2);
+    GCC.beginPath();GCC.moveTo(0,0);GCC.lineTo(Math.cos(da)*(UR+8),Math.sin(da)*(UR+8));GCC.stroke();
+    const gx=Math.cos(da)*(UR+8),gy=Math.sin(da)*(UR+8);
+    const px=Math.cos(da+Math.PI/2),py=Math.sin(da+Math.PI/2);
     GCC.beginPath();GCC.moveTo(gx,gy);GCC.lineTo(gx+px*4,gy+py*4);GCC.stroke();
     GCC.restore();
     GCC.fillStyle='rgba(200,169,110,0.5)';GCC.font='9px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
@@ -713,10 +750,63 @@ function selTool(t){
   const el=document.querySelector(`[data-tool="${t}"]`);
   if(el)el.classList.add('act');
   G.selT=t;G.pa=0;
+  showCancelBtn();showAngleKnob();
   hint(t.startsWith('shelter')?'点击放置，滚轮调角度':'点击放置，滚轮调角度');
 }
 
 function hint(t){document.getElementById('hintTxt').textContent=t;}
+
+// ===== 取消按钮（代替T键）和角度旋钮 =====
+function doCancel(){
+  G.selU=null;G.selT=null;G.buildWall=false;G.selMortar=false;G.aimMode=false;
+  closePop();
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  hint('');document.getElementById('cancelBtn').style.display='none';
+  document.getElementById('angleKnob').style.display='none';
+  draw();
+}
+
+function adjAngle(step){
+  if(G.state===SD&&G.selT==='shelter'){
+    G.sa=(G.sa||0)+step;
+  }else if(G.buildWall){
+    G.pa=(G.pa||0)+step;
+  }else if(G.selT&&G.state!==SD){
+    G.pa=(G.pa||0)+step;
+  }
+  updKnob();draw();
+  if(G.selT==='shelter')hint(`掩体角度 ${Math.round((G.sa||0)*180/Math.PI)}°`);
+  else if(G.buildWall)hint(`掩体角度 ${Math.round((G.pa||0)*180/Math.PI)}°`);
+  else hint(`放置角度 ${Math.round((G.pa||0)*180/Math.PI)}°`);
+}
+
+function updKnob(){
+  const k=document.getElementById('angleKnob');
+  const a=(G.selT==='shelter'&&G.state===SD)?G.sa:(G.pa||0);
+  document.getElementById('angleLabel').textContent=Math.round(a*180/Math.PI)+'°';
+  const ind=document.getElementById('knobIndicator');
+  ind.style.transform=`rotate(${a}rad)`;
+  // 根据显示状态决定旋钮位置
+  k.style.display='flex';
+}
+
+function showAngleKnob(){
+  const k=document.getElementById('angleKnob');
+  k.style.display='flex';
+  updKnob();
+}
+
+function hideAngleKnob(){
+  document.getElementById('angleKnob').style.display='none';
+}
+
+function showCancelBtn(){
+  document.getElementById('cancelBtn').style.display='block';
+}
+
+function hideCancelBtn(){
+  document.getElementById('cancelBtn').style.display='none';
+}
 
 // ===== Canvas事件 =====
 GC.addEventListener('mousemove',e=>{
@@ -727,33 +817,56 @@ GC.addEventListener('mousemove',e=>{
 
 GC.addEventListener('wheel',e=>{
   e.preventDefault();
-  if(!G.selT)return;
   const d=e.deltaY>0?0.1:-0.1;
   if(G.selT==='shelter'&&G.state===SD){
-    G.sa=(G.sa||0)+d;
+    G.sa=(G.sa||0)+d;updKnob();
     hint(`掩体角度 ${Math.round(G.sa*180/Math.PI)}°（滚轮调角度，点击放置）`);
-  }else if(G.state!==SD){
-    G.pa=(G.pa||0)+d;
-    hint(`放置角度 ${Math.round(G.pa*180/Math.PI)}°（滚轮调角度，点击放置）`);
+    draw();
+  }else if(G.buildWall){
+    G.pa=(G.pa||0)+d;updKnob();
+    hint(`掩体角度 ${Math.round(G.pa*180/Math.PI)}°`);
+    draw();
+  }else if(G.selT&&G.state!==SD){
+    G.pa=(G.pa||0)+d;updKnob();
+    hint(`放置角度 ${Math.round(G.pa*180/Math.PI)}°`);
+    draw();
   }
-  draw();
 });
 // 确保画布能接收滚轮事件和键盘事件
 GC.addEventListener('mouseenter',()=>GC.focus());
 GC.setAttribute('tabindex','0');
+// 触屏事件（移动端适配）
+GC.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.touches[0],r=GC.getBoundingClientRect();
+  G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
+},{passive:false});
+GC.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  const t=e.touches[0],r=GC.getBoundingClientRect();
+  G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
+  draw();
+},{passive:false});
+GC.addEventListener('touchend',e=>{
+  e.preventDefault();
+  const r=GC.getBoundingClientRect();
+  const mx=G.mx,my=G.my;
+  if(G.aimMode){doAimFire(mx,my);return;}
+  if(G.buildWall){placeWall(mx,my);return;}
+  if(G.selMortar){placeMortarT(mx,my);return;}
+  if(G.selT){place(mx,my);return;}
+  if(G.selU){clickUnit(mx,my);return;}
+  trySel(mx,my);
+},{passive:false});
 document.addEventListener('keydown',e=>{
-  if(e.key==='t'||e.key==='T'){
-    G.selU=null;G.selT=null;G.buildWall=false;G.selMortar=false;
-    closePop();
-    document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
-    hint('');draw();
-  }
+  if(e.key==='t'||e.key==='T'){doCancel();draw();}
 });
 
 GC.addEventListener('click',e=>{
   if(G.over)return;
   const r=GC.getBoundingClientRect();
   const mx=(e.clientX-r.left)*MS/r.width,my=(e.clientY-r.top)*MS/r.height;
+  if(G.aimMode){doAimFire(mx,my);return;}
   if(G.buildWall){placeWall(mx,my);return;}
   if(G.selMortar){placeMortarT(mx,my);return;}
   if(G.selT){place(mx,my);return;}
@@ -777,7 +890,7 @@ function place(mx,my){
       if(!G.camps)G.camps={};
       G.camps.blue={x:mx,y:my,hp:5,team:'blue'};hint('蓝方营地已放置');
     }
-    updUI();draw();return;
+    hideAngleKnob();hideCancelBtn();updUI();draw();return;
   }
   if(!canP({x:mx,y:my})){hint('必须在己方营地或单位3cm内');return;}
   if(overlap({x:mx,y:my},UR)){hint('位置重叠');return;}
@@ -801,6 +914,7 @@ function place(mx,my){
   }
   G.units.push(u);G.step++;G.selT=null;G.pa=0;
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  hideAngleKnob();hideCancelBtn();
   hint(`${u.label}已放置`);
   animP(u);updUI();draw();autoEnd();
 }
@@ -816,12 +930,13 @@ function placeMortarT(mx,my){
 
 function placeWall(mx,my){
   const e=G.builder;
-  if(!e||e.eliminated){G.buildWall=false;return;}
+  if(!e||e.eliminated){G.buildWall=false;hideAngleKnob();hideCancelBtn();return;}
   if(dist(e,{x:mx,y:my})>CM*3){hint('必须在工程兵3cm内');return;}
-  const w=makeUnit('wall',e.team,mx,my,0);
+  const w=makeUnit('wall',e.team,mx,my,G.pa||0);
   w.team=e.team;
   G.units.push(w);G.step++;
-  G.buildWall=false;G.builder=null;
+  G.buildWall=false;G.builder=null;G.pa=0;
+  hideAngleKnob();hideCancelBtn();
   hint('掩体已建造');updUI();draw();autoEnd();
 }
 
@@ -866,45 +981,31 @@ function clickUnit(mx,my){
   // 检查点击位置是否有单位
   const clicked=findU(mx,my);
   
-  // 特殊兵种弹窗
-  if(u.type==='engineer'||u.type==='mortar'||u.type==='interceptor'){
-    showPopup(u,mx,my);return;
+  // 点击己方其他单位 -> 切换选择
+  if(clicked&&clicked!==u&&clicked.team===G.phase){
+    G.selU=clicked;
+    showCancelBtn();
+    showPopup(clicked,mx,my);
+    draw();return;
   }
   
-  // 普通兵/狙击兵
-  if(u.type==='soldier'||u.type==='sniper'){
-    // 点击己方单位 -> 换弹
-    if(clicked&&clicked.team===G.phase&&clicked!==u){
-      if(u.ammo<u.maxAmmo&&G.step<1){u.ammo=u.maxAmmo;u.bulletsFired=0;G.step++;hint('换弹完成');updUI();draw();autoEnd();return;}
-      G.selU=clicked;hint(`${clicked.label}`);draw();return;
-    }
-    // 弹药=0时点击目标/空白换弹
-    if(u.ammo<=0){
-      if(G.step<1){u.ammo=u.maxAmmo;u.bulletsFired=0;G.step++;hint('换弹完成');updUI();draw();autoEnd();return;}
-      else{hint('步数已用完');return;}
-    }
-    // 有弹药时射击
-    if(clicked&&clicked.team!==G.phase&&!clicked.eliminated){
-      const a=Math.atan2(clicked.y-u.y,clicked.x-u.x);
-      fire(u,a);return;
-    }
-    const a=Math.atan2(my-u.y,mx-u.x);
-    let df=a-u.facing;while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
-    if(Math.abs(df)<=Math.PI/4){fire(u,a);return;}
-    else{hint('超出射击范围');return;}
+  // 点击空白区域 -> 取消选择
+  if(!clicked||clicked.eliminated||clicked.trapped||clicked.team!==G.phase){
+    G.selU=null;hideCancelBtn();hint('');draw();return;
   }
   
-  // 取消选择/切换选择
-  if(!clicked||clicked.eliminated||clicked.trapped){G.selU=null;hint('');draw();return;}
-  if(clicked!==u&&clicked.team===G.phase){G.selU=clicked;hint(`${clicked.label}`);draw();return;}
+  // 点击选中单位本身 -> 重新弹出弹窗
+  if(clicked===u){
+    showPopup(u,mx,my);
+  }
 }
 
 function trySel(mx,my){
   const u=findU(mx,my);
   if(u&&!u.eliminated&&!u.trapped&&u.team===G.phase&&G.state!==SD){
     G.selU=u;
-    if(u.type==='engineer'||u.type==='mortar'||u.type==='interceptor')showPopup(u,mx,my);
-    else hint(`${u.label} HP:${u.hp}/${u.maxHp}`);
+    showCancelBtn();
+    showPopup(u,mx,my);
     draw();
   }else if(u&&u.team!==G.phase&&G.selU){
     const s=G.selU;
@@ -926,7 +1027,12 @@ function showPopup(unit,mx,my){
   const r=GC.getBoundingClientRect();
   const sx=r.left+mx*MS/r.width,sy=r.top+my*MS/r.height;
   let h='';
-  if(unit.type==='engineer'){
+  if(unit.type==='soldier'||unit.type==='sniper'){
+    const label=unit.label;
+    h=`<div style="color:#c8a96e;margin-bottom:4px;font-size:13px">[${label}]</div>
+      <button class="pb" onclick="doUnit('fire')">射击 [${unit.ammo}/${unit.maxAmmo}]</button>
+      <button class="pb" onclick="doUnit('reload')">装弹 [消耗1步]</button>`;
+  }else if(unit.type==='engineer'){
     h=`<div style="color:#c8a96e;margin-bottom:4px;font-size:13px">[工程兵]</div>
       <button class="pb" onclick="doEng('build')">建造掩体 [1步]</button>
       <button class="pb" onclick="doEng('cement')">装水泥 [1步]${unit.reservedCement>0?` (${unit.reservedCement})`:''}</button>
@@ -951,13 +1057,49 @@ function showPopup(unit,mx,my){
 
 function closePop(){document.getElementById('unitPopup').style.display='none';}
 
+// 通用兵种操作（射击/装弹）
+function doUnit(action){
+  closePop();const u=G.selU;
+  if(!u||u.eliminated)return;
+  if(action==='fire'){
+    if(u.ammo<=0){hint('弹药不足');return;}
+    G.aimMode=true;
+    showCancelBtn();
+    hint('移动鼠标瞄准，点击开火');
+    draw();
+  }else if(action==='reload'){
+    if(G.step>=1){hint('步数已用完');return;}
+    if(u.ammo>=u.maxAmmo){hint('弹药已满');return;}
+    u.ammo=u.maxAmmo;u.bulletsFired=0;G.step++;
+    hint('换弹完成');updUI();draw();autoEnd();
+  }
+}
+
+// 瞄准模式点击开火
+function doAimFire(mx,my){
+  const u=G.selU;
+  if(!u||u.eliminated||u.ammo<=0){G.aimMode=false;return;}
+  // 点击已选单位 -> 退出瞄准
+  if(dist({x:mx,y:my},u)<UR+6){
+    G.aimMode=false;hideCancelBtn();hint('');draw();return;
+  }
+  const a=Math.atan2(my-u.y,mx-u.x);
+  let df=a-(u.facing-Math.PI/2);while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
+  if(Math.abs(df)<=Math.PI/4){
+    fire(u,a);
+    G.aimMode=false;hideCancelBtn();
+  }else{
+    hint('超出射击范围');
+  }
+}
+
 // 工程兵
 function doEng(a){
   closePop();const e=G.selU;
   if(!e||e.eliminated)return;
   if(G.step>=1){hint('步数已用完');return;}
-  if(a==='build'){G.buildWall=true;G.builder=e;hint('点击地图放置掩体');}
-  else if(a==='cement'){e.reservedCement=(e.reservedCement||0)+1;G.step++;hint(`水泥${e.reservedCement}`);updUI();draw();autoEnd();}
+  if(a==='build'){G.buildWall=true;G.builder=e;G.pa=0;showCancelBtn();showAngleKnob();hint('点击地图放置掩体（可调角度）');}
+  else if(a==='cement'){e.reservedCement=(e.reservedCement||0)+1;G.step++;hideCancelBtn();hint(`水泥${e.reservedCement}`);updUI();draw();autoEnd();}
   else if(a==='repair'){
     if(!e.reservedCement){hint('没有水泥');return;}
     const c=G.camps[e.team];if(!c){hint('营地不存在');return;}
@@ -1135,8 +1277,8 @@ function autoEnd(){
 function swTurn(){
   if(G.phase==='red')G.phase='blue';
   else{G.phase='red';G.turn++;if(G.turn>3)G.state=SB;}
-  G.step=0;G.selU=null;G.selT=null;G.pa=0;
-  closePop();document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  G.step=0;G.selU=null;G.selT=null;G.pa=0;G.aimMode=false;
+  closePop();hideAngleKnob();hideCancelBtn();document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
   updUI();draw();
   hint(`T${G.turn} ${G.phase==='red'?'红':'蓝'}方${G.turn<=3?'(休战)':''}`);
 }
