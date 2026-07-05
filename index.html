@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>核邪部队</title>
 <style>
 *{margin:0;padding:0}
 body{background:#000;color:#0f0;font-family:'Courier New',monospace;overflow:hidden;width:100vw;height:100vh}
-canvas{display:block;cursor:crosshair}
+canvas{display:block;cursor:crosshair;touch-action:none}
 #mainMenu{position:fixed;inset:0;z-index:1000;background:#000}
 #mainMenu canvas{position:absolute;inset:0;width:100%;height:100%}
 #gameUI{position:fixed;inset:0;display:none;background:#000}
@@ -69,6 +69,64 @@ canvas{display:block;cursor:crosshair}
   background:#2a2a00;position:relative;flex-shrink:0}
 #knobIndicator{position:absolute;width:3px;height:12px;background:#c8a96e;
   left:50%;bottom:50%;transform-origin:50% 100%;border-radius:2px}
+
+/* ===== 移动端适配 ===== */
+/* 移动端底部工具面板（替代右侧 toolPanel） */
+#mobileToolPanel{position:fixed;bottom:0;left:0;right:0;z-index:650;display:none;
+  background:#1a1a00;border-top:3px solid #654321;max-height:45vh;overflow:hidden;
+  flex-direction:column}
+#mobileToolPanel .mtp-tabs{display:flex;flex-shrink:0;border-bottom:2px solid #3a2a00}
+#mobileToolPanel .mtp-tab{flex:1;padding:8px 4px;text-align:center;font-family:'Courier New';
+  font-size:12px;color:#8a7a5a;background:#1a1a00;border:none;border-right:1px solid #3a2a00;cursor:pointer}
+#mobileToolPanel .mtp-tab.active{color:#e8c87a;background:#2a2a10;border-bottom:2px solid #c8a96e}
+#mobileToolPanel .mtp-tab:last-child{border-right:none}
+#mobileToolPanel .mtp-list{overflow-y:auto;padding:4px;display:flex;flex-wrap:wrap;gap:4px}
+#mobileToolPanel .mtp-list .tb{width:calc(50% - 2px);padding:8px 6px;font-size:11px;margin:0;
+  box-sizing:border-box;min-height:36px}
+#mobileToolPanel .mtp-close{position:absolute;top:-32px;right:0;z-index:655;
+  padding:5px 14px;background:#3a2a00;border:2px solid #654321;border-bottom:none;
+  color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:13px;
+  border-radius:4px 4px 0 0;display:none}
+#mobileToolPanel .mtp-close.show{display:block}
+
+/* 移动端工具按钮（底栏中央，打开面板） */
+#mobileToolBtn{display:none;position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:640;
+  padding:6px 18px;background:#2a4a2a;border:2px solid #2a6a2a;color:#4a8a4a;cursor:pointer;
+  font-family:'Courier New';font-size:13px;border-radius:4px}
+
+/* 移动端开火确认按钮 */
+#mobileFireBtn{display:none;position:fixed;bottom:80px;right:10px;z-index:700;
+  padding:10px 20px;background:#5a2020;border:2px solid #c44;color:#faa;cursor:pointer;
+  font-family:'Courier New';font-size:15px;border-radius:6px;font-weight:bold}
+
+/* 响应式：小屏幕 */
+@media(max-width:600px){
+  #topBar{height:36px;font-size:12px;padding:0 6px}
+  #topBar .t{font-size:14px}
+  #topBar .s{margin:0 6px;font-size:11px}
+  #topBar .btn{padding:2px 8px;font-size:11px}
+  #bottomBar{height:32px;font-size:11px;padding:0 6px}
+  #turnInd{font-size:12px;margin-right:8px}
+  #hintTxt{font-size:11px}
+  #cancelBtn{bottom:38px;right:2px;padding:5px 10px;font-size:12px}
+  #angleKnob{bottom:76px;padding:4px 10px}
+  #angleLabel{font-size:11px}
+  .knob-btn{padding:6px 14px;font-size:16px}
+  #knobDisplay{width:36px;height:36px}
+  #knobIndicator{height:14px}
+  #mobileToolBtn{display:block}
+  #mobileFireBtn{padding:12px 24px;font-size:16px}
+  #unitPopup{min-width:140px;padding:6px}
+  #unitPopup .pb{padding:8px 6px;font-size:12px;min-height:36px}
+  #modal .box{padding:20px;max-width:90vw}
+  #modal h2{font-size:18px}
+  #modal p{font-size:12px}
+}
+/* 极小屏幕 */
+@media(max-width:380px){
+  #topBar .s{display:none}
+  #topBar .t{font-size:13px}
+}
 </style></head><body>
 
 <div id="mainMenu"><canvas id="menuCanvas"></canvas></div>
@@ -117,6 +175,23 @@ canvas{display:block;cursor:crosshair}
   <button class="knob-btn" onclick="adjAngle(-0.26)">↺</button>
   <div id="knobDisplay"><div id="knobIndicator"></div></div>
   <button class="knob-btn" onclick="adjAngle(0.26)">↻</button>
+</div>
+
+<!-- 移动端工具按钮（打开底部面板） -->
+<button id="mobileToolBtn" onclick="toggleMobilePanel()">☰ 工具</button>
+
+<!-- 移动端开火按钮 -->
+<button id="mobileFireBtn" onclick="mobileFire()">🔥 开火</button>
+
+<!-- 移动端底部工具面板 -->
+<div id="mobileToolPanel">
+  <button class="mtp-close" onclick="toggleMobilePanel()">▼ 收起</button>
+  <div class="mtp-tabs">
+    <button class="mtp-tab active" data-mtab="draw" onclick="switchMtpTab('draw')">地图</button>
+    <button class="mtp-tab" data-mtab="red" onclick="switchMtpTab('red')">红方</button>
+    <button class="mtp-tab" data-mtab="blue" onclick="switchMtpTab('blue')">蓝方</button>
+  </div>
+  <div class="mtp-list" id="mtpList"></div>
 </div>
 
 <script>
@@ -343,6 +418,21 @@ MC.addEventListener('mousemove',e=>{
 MC.addEventListener('click',()=>{if(MC._cb){const c=MC._cb;MC._cb=null;c();}});
 MC.addEventListener('mousedown',()=>MC._down=true);
 MC.addEventListener('mouseup',()=>MC._down=false);
+// 移动端菜单触屏
+MC.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.touches[0],r=MC.getBoundingClientRect();
+  MC.mx=t.clientX-r.left;MC.my=t.clientY-r.top;
+  MC._down=false; // 设为 false 让 drawRetroBtn 能注册回调
+  MC._cb=null;    // 清除旧回调
+  drawMenu();     // 重绘时检测 hover 并注册回调
+  MC._down=true;  // 标记按下
+},{passive:false});
+MC.addEventListener('touchend',e=>{
+  // touchend 不可取消，不调 preventDefault
+  if(MC._cb){const c=MC._cb;MC._cb=null;c();}
+  MC._down=false;
+},{passive:false});
 
 // ===== 游戏初始化 =====
 function showGame(){
@@ -368,16 +458,22 @@ function initGame(){
 }
 
 function resizeCanvas(){
-  const isSmall=window.innerWidth<500;
-  const panelW=isSmall?0:173;
-  const tw=window.innerWidth-panelW,th=window.innerHeight-80;
+  const isSmall=window.innerWidth<600;
+  const panelW=0; // 面板改为底部抽屉，不占侧边
+  const topH=isSmall?36:44;
+  const botH=isSmall?32:36;
+  const tw=window.innerWidth-panelW,th=window.innerHeight-topH-botH;
   const s=Math.min(tw,th,MS);
   GC.style.width=s+'px';GC.style.height=s+'px';
   GC.style.position='absolute';
   GC.style.left=((tw+panelW-s)/2)+'px';
-  GC.style.top=((th+80-s)/2)+'px';
-  // 小屏幕隐藏侧边面板，在底部显示精简控制栏
+  GC.style.top=((th+topH-botH+topH+botH-s)/2)+'px';
+  // 精确居中
+  GC.style.left=((window.innerWidth-s)/2)+'px';
+  GC.style.top=(topH+(th-s)/2)+'px';
+  // 侧边面板仅桌面端显示
   document.getElementById('toolPanel').style.display=isSmall?'none':'block';
+  // 移动端工具按钮由 CSS media query 控制显示，无需 JS 设置
 }
 
 window.addEventListener('resize',()=>{if(G)resizeCanvas();if(!G)drawMenu();});
@@ -751,7 +847,12 @@ function selTool(t){
   if(el)el.classList.add('act');
   G.selT=t;G.pa=0;
   showCancelBtn();showAngleKnob();
-  hint(t.startsWith('shelter')?'点击放置，滚轮调角度':'点击放置，滚轮调角度');
+  hint(t.startsWith('shelter')?'点击放置，双指旋转调角度':'点击放置，双指旋转调角度');
+  // 移动端选中后收起面板
+  if(window.innerWidth<600){
+    document.getElementById('mobileToolPanel').style.display='none';
+    document.querySelector('.mtp-close').classList.remove('show');
+  }
 }
 
 function hint(t){document.getElementById('hintTxt').textContent=t;}
@@ -763,6 +864,7 @@ function doCancel(){
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
   hint('');document.getElementById('cancelBtn').style.display='none';
   document.getElementById('angleKnob').style.display='none';
+  document.getElementById('mobileFireBtn').style.display='none';
   draw();
 }
 
@@ -808,6 +910,74 @@ function hideCancelBtn(){
   document.getElementById('cancelBtn').style.display='none';
 }
 
+// ===== 移动端工具面板 =====
+const MTP_TOOLS={
+  draw:[
+    {tool:'shelter',label:'■ 掩体',cls:''},
+    {tool:'camp_red',label:'■ 营地(红)',cls:'r'},
+    {tool:'camp_blue',label:'■ 营地(蓝)',cls:'b'}
+  ],
+  red:[
+    {tool:'soldier_r',label:'○ 普通兵 3HP/1AT',cls:'r'},
+    {tool:'sniper_r',label:'● 狙击兵 1HP/2AT',cls:'r'},
+    {tool:'engineer_r',label:'⊤ 工程兵 1HP',cls:'r'},
+    {tool:'mortar_r',label:'/\\ 迫击炮 1HP',cls:'r'},
+    {tool:'interceptor_r',label:'][ 拦截装置 1HP',cls:'r'}
+  ],
+  blue:[
+    {tool:'soldier_b',label:'○ 普通兵 3HP/1AT',cls:'b'},
+    {tool:'sniper_b',label:'● 狙击兵 1HP/2AT',cls:'b'},
+    {tool:'engineer_b',label:'⊤ 工程兵 1HP',cls:'b'},
+    {tool:'mortar_b',label:'/\\ 迫击炮 1HP',cls:'b'},
+    {tool:'interceptor_b',label:'][ 拦截装置 1HP',cls:'b'}
+  ]
+};
+
+function toggleMobilePanel(){
+  const p=document.getElementById('mobileToolPanel');
+  const isOpen=p.style.display==='flex';
+  if(isOpen){
+    p.style.display='none';
+    document.querySelector('.mtp-close').classList.remove('show');
+  }else{
+    // 自动选择当前回合对应tab
+    if(G&&G.state!==SD){
+      const tab=G.phase||'red';
+      switchMtpTab(tab);
+    }else{
+      switchMtpTab('draw');
+    }
+    p.style.display='flex';
+    document.querySelector('.mtp-close').classList.add('show');
+    // 刷新按钮可用状态
+    if(G)updUI();
+  }
+}
+
+function switchMtpTab(tab){
+  document.querySelectorAll('.mtp-tab').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mtab===tab);
+  });
+  const list=document.getElementById('mtpList');
+  const tools=MTP_TOOLS[tab]||[];
+  list.innerHTML=tools.map(t=>
+    `<button class="tb ${t.cls}" data-tool="${t.tool}" onclick="selTool('${t.tool}')">${t.label}</button>`
+  ).join('');
+  // 同步选中状态
+  if(G&&G.selT){
+    const el=list.querySelector(`[data-tool="${G.selT}"]`);
+    if(el)el.classList.add('act');
+  }
+}
+
+// 移动端开火按钮
+function mobileFire(){
+  if(G&&G.aimMode&&G.selU){
+    // 用当前预览位置开火
+    doAimFire(G.mx,G.my);
+  }
+}
+
 // ===== Canvas事件 =====
 GC.addEventListener('mousemove',e=>{
   const r=GC.getBoundingClientRect();
@@ -820,7 +990,7 @@ GC.addEventListener('wheel',e=>{
   const d=e.deltaY>0?0.1:-0.1;
   if(G.selT==='shelter'&&G.state===SD){
     G.sa=(G.sa||0)+d;updKnob();
-    hint(`掩体角度 ${Math.round(G.sa*180/Math.PI)}°（滚轮调角度，点击放置）`);
+    hint(`掩体角度 ${Math.round(G.sa*180/Math.PI)}°（双指或滚轮调角度）`);
     draw();
   }else if(G.buildWall){
     G.pa=(G.pa||0)+d;updKnob();
@@ -838,26 +1008,72 @@ GC.setAttribute('tabindex','0');
 // 触屏事件（移动端适配）
 GC.addEventListener('touchstart',e=>{
   e.preventDefault();
-  const t=e.touches[0],r=GC.getBoundingClientRect();
-  G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
+  const r=GC.getBoundingClientRect();
+  if(e.touches.length===1){
+    const t=e.touches[0];
+    G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
+    G._touchStart={x:G.mx,y:G.my};
+  }
+  if(e.touches.length===2){
+    // 双指：记录初始角度差
+    const t1=e.touches[0],t2=e.touches[1];
+    G._twoFingerStart=Math.atan2(t2.clientY-t1.clientY,t2.clientX-t1.clientX);
+    G._angleStart=(G.selT==='shelter'&&G.state===SD)?(G.sa||0):(G.pa||0);
+  }
 },{passive:false});
 GC.addEventListener('touchmove',e=>{
   e.preventDefault();
-  const t=e.touches[0],r=GC.getBoundingClientRect();
-  G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
-  draw();
+  const r=GC.getBoundingClientRect();
+  if(e.touches.length===2&&G._twoFingerStart!==undefined){
+    // 双指旋转 -> 调整角度
+    const t1=e.touches[0],t2=e.touches[1];
+    const cur=Math.atan2(t2.clientY-t1.clientY,t2.clientX-t1.clientX);
+    let diff=cur-G._twoFingerStart;
+    while(diff>Math.PI)diff-=Math.PI*2;
+    while(diff<-Math.PI)diff+=Math.PI*2;
+    const newAngle=G._angleStart+diff;
+    if(G.selT==='shelter'&&G.state===SD){
+      G.sa=newAngle;
+    }else if(G.buildWall||G.selT){
+      G.pa=newAngle;
+    }
+    updKnob();draw();
+  }else if(e.touches.length===1){
+    const t=e.touches[0];
+    G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
+    draw();
+  }
 },{passive:false});
 GC.addEventListener('touchend',e=>{
-  e.preventDefault();
-  const r=GC.getBoundingClientRect();
+  // touchend 不可取消，不调 preventDefault（否则浏览器报 passive 警告）
+  // 双指手势结束
+  if(e.touches.length<2){G._twoFingerStart=undefined;}
+  if(e.touches.length>0)return; // 还有手指在屏幕上，不触发点击
   const mx=G.mx,my=G.my;
-  if(G.aimMode){doAimFire(mx,my);return;}
+  // 瞄准模式下，松手不开火（需按开火按钮），但点选自己单位可退出瞄准
+  if(G.aimMode){
+    if(G._touchStart&&dist({x:mx,y:my},G._touchStart)<5){
+      // 几乎没移动 = 点击
+      if(dist({x:mx,y:my},G.selU)<UR+6){
+        doAimFire(mx,my); // 点自己退出瞄准
+      }
+      // 否则什么都不做，等开火按钮
+    }
+    G._touchStart=null;
+    return;
+  }
+  if(G._touchStart&&dist({x:mx,y:my},G._touchStart)>10){
+    // 是拖动不是点击，忽略
+    G._touchStart=null;
+    return;
+  }
+  G._touchStart=null;
   if(G.buildWall){placeWall(mx,my);return;}
   if(G.selMortar){placeMortarT(mx,my);return;}
   if(G.selT){place(mx,my);return;}
   if(G.selU){clickUnit(mx,my);return;}
   trySel(mx,my);
-},{passive:false});
+});
 document.addEventListener('keydown',e=>{
   if(e.key==='t'||e.key==='T'){doCancel();draw();}
 });
@@ -1048,11 +1264,19 @@ function showPopup(unit,mx,my){
   }
   h+=`<button class="pb" onclick="closePop()" style="color:#666">取消</button>`;
   p.innerHTML=h;p.style.display='block';
-  let px=sx+25,py=sy-25;
-  if(px+170>window.innerWidth)px=sx-180;
-  if(py+160>window.innerHeight)py=window.innerHeight-170;
-  if(py<0)py=5;
-  p.style.left=px+'px';p.style.top=py+'px';
+  // 移动端居中显示
+  if(window.innerWidth<600){
+    p.style.left='50%';
+    p.style.top='50%';
+    p.style.transform='translate(-50%,-50%)';
+  }else{
+    p.style.transform='none';
+    let px=sx+25,py=sy-25;
+    if(px+170>window.innerWidth)px=sx-180;
+    if(py+160>window.innerHeight)py=window.innerHeight-170;
+    if(py<0)py=5;
+    p.style.left=px+'px';p.style.top=py+'px';
+  }
 }
 
 function closePop(){document.getElementById('unitPopup').style.display='none';}
@@ -1065,7 +1289,11 @@ function doUnit(action){
     if(u.ammo<=0){hint('弹药不足');return;}
     G.aimMode=true;
     showCancelBtn();
-    hint('移动鼠标瞄准，点击开火');
+    // 移动端显示开火按钮
+    if(window.innerWidth<600){
+      document.getElementById('mobileFireBtn').style.display='block';
+    }
+    hint('拖动瞄准，点🔥开火');
     draw();
   }else if(action==='reload'){
     if(G.step>=1){hint('步数已用完');return;}
@@ -1078,16 +1306,16 @@ function doUnit(action){
 // 瞄准模式点击开火
 function doAimFire(mx,my){
   const u=G.selU;
-  if(!u||u.eliminated||u.ammo<=0){G.aimMode=false;return;}
+  if(!u||u.eliminated||u.ammo<=0){G.aimMode=false;document.getElementById('mobileFireBtn').style.display='none';return;}
   // 点击已选单位 -> 退出瞄准
   if(dist({x:mx,y:my},u)<UR+6){
-    G.aimMode=false;hideCancelBtn();hint('');draw();return;
+    G.aimMode=false;hideCancelBtn();document.getElementById('mobileFireBtn').style.display='none';hint('');draw();return;
   }
   const a=Math.atan2(my-u.y,mx-u.x);
   let df=a-(u.facing-Math.PI/2);while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
   if(Math.abs(df)<=Math.PI/4){
     fire(u,a);
-    G.aimMode=false;hideCancelBtn();
+    G.aimMode=false;hideCancelBtn();document.getElementById('mobileFireBtn').style.display='none';
   }else{
     hint('超出射击范围');
   }
@@ -1279,6 +1507,10 @@ function swTurn(){
   else{G.phase='red';G.turn++;if(G.turn>3)G.state=SB;}
   G.step=0;G.selU=null;G.selT=null;G.pa=0;G.aimMode=false;
   closePop();hideAngleKnob();hideCancelBtn();document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  document.getElementById('mobileFireBtn').style.display='none';
+  // 收起移动端面板
+  document.getElementById('mobileToolPanel').style.display='none';
+  document.querySelector('.mtp-close').classList.remove('show');
   updUI();draw();
   hint(`T${G.turn} ${G.phase==='red'?'红':'蓝'}方${G.turn<=3?'(休战)':''}`);
 }
@@ -1306,6 +1538,23 @@ function updUI(){
   });
   const ds=document.getElementById('drawST');
   if(ds)ds.style.display=G.state===SD?'block':'none';
+  // 移动端面板按钮同步（不隐藏，靠回合判断）
+  document.querySelectorAll('#mtpList .tb').forEach(b=>{
+    const tool=b.dataset.tool;
+    if(!tool)return;
+    if(G.state===SD){
+      // 绘制阶段只有地图工具可用
+      if(!tool.startsWith('shelter')&&!tool.startsWith('camp')){b.classList.add('ht');}
+      else b.classList.remove('ht');
+    }else{
+      if(tool.startsWith('shelter')||tool.startsWith('camp')){b.classList.add('ht');}
+      else{
+        const te=tool.endsWith('_r')?'red':'blue';
+        if(te!==G.phase)b.classList.add('ht');
+        else b.classList.remove('ht');
+      }
+    }
+  });
 }
 function chkOver(){
   if(G.camps.red&&G.camps.red.hp<=0)endG('blue');
@@ -1316,9 +1565,20 @@ function endG(w){
   setTimeout(()=>showModal(w==='red'?'红方胜利！':'蓝方胜利！','游戏结束'),500);
 }
 function backToMenu(){
-  if(!confirm('返回菜单将丢失进度，确定？'))return;
+  // 用自定义弹窗替代 confirm（移动端友好）
+  document.getElementById('modalBox').innerHTML=
+    `<h2>返回菜单</h2><p>返回菜单将丢失当前进度，确定返回？</p>
+     <div style="display:flex;gap:10px;justify-content:center">
+       <button onclick="document.getElementById('modal').style.display='none'" style="background:#2a4a2a;border-color:#2a6a2a;color:#4a8a4a">取消</button>
+       <button onclick="document.getElementById('modal').style.display='none';doBackToMenu()" style="background:#5a2020;border-color:#c44;color:#faa">确定返回</button>
+     </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+function doBackToMenu(){
   document.getElementById('gameUI').style.display='none';
   document.getElementById('mainMenu').style.display='block';
+  document.getElementById('mobileToolPanel').style.display='none';
+  document.getElementById('mobileFireBtn').style.display='none';
   G=null;MC.width=window.innerWidth;MC.height=window.innerHeight;drawMenu();
 }
 function showModal(t,d){
