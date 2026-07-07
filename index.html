@@ -83,11 +83,9 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 #mobileToolPanel .mtp-list{overflow-y:auto;padding:4px;display:flex;flex-wrap:wrap;gap:4px}
 #mobileToolPanel .mtp-list .tb{width:calc(50% - 2px);padding:8px 6px;font-size:11px;margin:0;
   box-sizing:border-box;min-height:36px}
-#mobileToolPanel .mtp-close{position:absolute;top:-32px;right:0;z-index:655;
-  padding:5px 14px;background:#3a2a00;border:2px solid #654321;border-bottom:none;
-  color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:13px;
-  border-radius:4px 4px 0 0;display:none}
-#mobileToolPanel .mtp-close.show{display:block}
+#mobileToolPanel .mtp-close{display:none;width:100%;padding:6px 0;text-align:center;
+  background:#3a2a00;border:none;border-bottom:2px solid #654321;
+  color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:13px;flex-shrink:0}
 
 /* 移动端工具按钮（底栏中央，打开面板） */
 #mobileToolBtn{display:none;position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:640;
@@ -185,7 +183,7 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 
 <!-- 移动端底部工具面板 -->
 <div id="mobileToolPanel">
-  <button class="mtp-close" onclick="toggleMobilePanel()">▼ 收起</button>
+  <button class="mtp-close" onclick="toggleMobilePanel()">▼ 收起工具栏</button>
   <div class="mtp-tabs">
     <button class="mtp-tab active" data-mtab="draw" onclick="switchMtpTab('draw')">地图</button>
     <button class="mtp-tab" data-mtab="red" onclick="switchMtpTab('red')">红方</button>
@@ -851,7 +849,7 @@ function selTool(t){
   // 移动端选中后收起面板
   if(window.innerWidth<600){
     document.getElementById('mobileToolPanel').style.display='none';
-    document.querySelector('.mtp-close').classList.remove('show');
+    document.querySelector('.mtp-close').style.display='none';
   }
 }
 
@@ -938,7 +936,7 @@ function toggleMobilePanel(){
   const isOpen=p.style.display==='flex';
   if(isOpen){
     p.style.display='none';
-    document.querySelector('.mtp-close').classList.remove('show');
+    document.querySelector('.mtp-close').style.display='none';
   }else{
     // 自动选择当前回合对应tab
     if(G&&G.state!==SD){
@@ -948,7 +946,7 @@ function toggleMobilePanel(){
       switchMtpTab('draw');
     }
     p.style.display='flex';
-    document.querySelector('.mtp-close').classList.add('show');
+    document.querySelector('.mtp-close').style.display='block';
     // 刷新按钮可用状态
     if(G)updUI();
   }
@@ -1331,7 +1329,8 @@ function doEng(a){
   else if(a==='repair'){
     if(!e.reservedCement){hint('没有水泥');return;}
     const c=G.camps[e.team];if(!c){hint('营地不存在');return;}
-    e.reservedCement--;c.hp++;G.step++;hint(`营地HP:${c.hp}`);updUI();draw();autoEnd();
+    if(c.hp>=5){hint('营地血量已满');return;}
+    e.reservedCement--;c.hp=Math.min(c.hp+1,5);G.step++;hint(`营地HP:${c.hp}`);updUI();draw();autoEnd();
   }
 }
 
@@ -1377,7 +1376,7 @@ function fire(shooter,angle){
     }
     if(stop!==MS*1.5&&shooter.type!=='sniper')break;
     if(pen>=2)break;
-    // 地图掩体
+    // 地图掩体（黑墙）——狙击兵可穿透一面，第二面停下；普通兵被挡住
     for(const s of G.shelters||[]){
       let cx=px,cy=py;
       if(s.angle){const ox=s.x+SW/2,oy=s.y+SH/2,cs=Math.cos(-s.angle),sn=Math.sin(-s.angle),dx=cx-ox,dy=cy-oy;cx=dx*cs-dy*sn+ox;cy=dx*sn+dy*cs+oy;}
@@ -1510,7 +1509,7 @@ function swTurn(){
   document.getElementById('mobileFireBtn').style.display='none';
   // 收起移动端面板
   document.getElementById('mobileToolPanel').style.display='none';
-  document.querySelector('.mtp-close').classList.remove('show');
+  document.querySelector('.mtp-close').style.display='none';
   updUI();draw();
   hint(`T${G.turn} ${G.phase==='red'?'红':'蓝'}方${G.turn<=3?'(休战)':''}`);
 }
