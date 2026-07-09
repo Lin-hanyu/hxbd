@@ -2295,7 +2295,7 @@ const BB_CFG={
   sniper:{hp:5,maxHp:5,atk:20,ammo:2,maxAmmo:2,label:'狙击兵',penetrate:true,canHitVehicle:false},
   engineer:{hp:15,maxHp:15,atk:2,ammo:3,maxAmmo:3,label:'工程兵',canBuild:true,canHealVehicle:true},
   doctor:{hp:10,maxHp:10,atk:2,ammo:3,maxAmmo:3,label:'医生',canHeal:true,canHitVehicle:false},
-  cannon:{hp:15,maxHp:15,atk:20,label:'大炮',needsOperator:true,bypassWall:true,cantHitAir:true},
+  cannon:{hp:15,maxHp:15,atk:20,ammo:1,maxAmmo:1,label:'大炮',needsOperator:true,bypassWall:true,cantHitAir:true,range:BB_CM*3},
   mine:{hp:Infinity,maxHp:Infinity,atk:10,label:'地雷',triggerRange:BB_CM*2},
   wall:{hp:3,maxHp:3,label:'掩体'},
   camp:{hp:200,maxHp:200,label:'营地',immuneToUnits:true},
@@ -2409,6 +2409,7 @@ function bbDraw(){
   bbDrawPlacePrev();
   bbDrawTrap();
   bbDrawCannonPrev();
+  bbDrawBomberLinePrev();
   bbDrawAnim();
 }
 function bbDrawSea(){
@@ -2634,6 +2635,22 @@ function bbDrawCannonPrev(){
   BB_CTX.beginPath();BB_CTX.arc(mx,my,BB_CM*1,0,Math.PI*2);BB_CTX.stroke();BB_CTX.setLineDash([]);
   BB_CTX.restore();
 }
+function bbDrawBomberLinePrev(){
+  if(!BB_G._bomberLine)return;
+  var mx=BB_G.mx,my=BB_G.my;
+  BB_CTX.save();
+  if(BB_G._bomberP1){
+    var p1=BB_G._bomberP1;
+    BB_CTX.strokeStyle='rgba(255,50,50,0.8)';BB_CTX.lineWidth=3;BB_CTX.setLineDash([8,4]);
+    BB_CTX.beginPath();BB_CTX.moveTo(p1.x,p1.y);BB_CTX.lineTo(mx,my);BB_CTX.stroke();BB_CTX.setLineDash([]);
+    BB_CTX.fillStyle='#f33';BB_CTX.beginPath();BB_CTX.arc(p1.x,p1.y,5,0,Math.PI*2);BB_CTX.fill();
+  }else{
+    BB_CTX.strokeStyle='#f33';BB_CTX.lineWidth=1.5;
+    BB_CTX.beginPath();BB_CTX.moveTo(mx-8,my);BB_CTX.lineTo(mx+8,my);BB_CTX.stroke();
+    BB_CTX.beginPath();BB_CTX.moveTo(mx,my-8);BB_CTX.lineTo(mx,my+8);BB_CTX.stroke();
+  }
+  BB_CTX.restore();
+}
 function bbDrawAnim(){
   var now=Date.now();
   BB_G.animBullets=BB_G.animBullets.filter(function(b){
@@ -2714,6 +2731,8 @@ function bbDoCancel(){
   BB_G.selU=null;BB_G.selT=null;BB_G.buildWall=false;BB_G.aimMode=false;
   BB_G.selCannon=false;BB_G.selCannonU=null;BB_G.healMode=false;BB_G.healer=null;
   BB_G.carMineMode=false;BB_G.carMineU=null;BB_G._seaLineStart=null;BB_G._buildCannon=false;BB_G._cannonBuilder=null;
+  BB_G._bomberLine=false;BB_G._bomberU=null;BB_G._bomberP1=null;
+  BB_G._carrierDeploy=false;BB_G._carrierU=null;BB_G._shipDeploy=false;BB_G._shipU=null;
   BB_G._driving=false;BB_G._driveU=null;document.getElementById('bbDrivePad').style.display='none';
   bbClosePop();
   document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
@@ -2938,6 +2957,14 @@ BB_CV.addEventListener('touchend',function(e){
     if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbBuildCannonAt(mx,my);}
     BB_G._touchStart=null;return;
   }
+  if(BB_G._carrierDeploy){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbDoCarrierDeployAt(mx,my);}
+    BB_G._touchStart=null;return;
+  }
+  if(BB_G._shipDeploy){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbDoShipDeployAt(mx,my);}
+    BB_G._touchStart=null;return;
+  }
   if(BB_G.aimMode){
     if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<5){
       if(dist({x:mx,y:my},BB_G.selU)<BB_UR+6)bbDoAimFire(mx,my);
@@ -2953,6 +2980,13 @@ BB_CV.addEventListener('touchend',function(e){
   }
   if(BB_G.healMode){
     if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbDoctorHeal(mx,my);}
+    BB_G._touchStart=null;return;
+  }
+  if(BB_G._bomberLine){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){
+      if(!BB_G._bomberP1)bbBomberLinePoint1(mx,my);
+      else bbBomberLineFire(BB_G._bomberP1,{x:mx,y:my});
+    }
     BB_G._touchStart=null;return;
   }
   if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)>10){BB_G._touchStart=null;return;}
@@ -2986,11 +3020,17 @@ BB_CV.addEventListener('click',function(e){
   var r=BB_CV.getBoundingClientRect();
   var mx=(e.clientX-r.left)*BB_MS/r.width,my=(e.clientY-r.top)*BB_MS/r.height;
   if(BB_G._buildCannon){bbBuildCannonAt(mx,my);return;}
+  if(BB_G._carrierDeploy){bbDoCarrierDeployAt(mx,my);return;}
+  if(BB_G._shipDeploy){bbDoShipDeployAt(mx,my);return;}
   if(BB_G.aimMode){bbDoAimFire(mx,my);return;}
   if(BB_G.buildWall){bbPlaceWall(mx,my);return;}
   if(BB_G.selCannon){bbFireCannon(mx,my);return;}
   if(BB_G.carMineMode){bbCarPlaceMine(mx,my);return;}
   if(BB_G.healMode){bbDoctorHeal(mx,my);return;}
+  if(BB_G._bomberLine){
+    if(!BB_G._bomberP1){bbBomberLinePoint1(mx,my);return;}
+    else{bbBomberLineFire(BB_G._bomberP1,{x:mx,y:my});return;}
+  }
   if(BB_G.selT){bbPlace(mx,my);return;}
   if(BB_G.selU){bbClickUnit(mx,my);return;}
   bbTrySel(mx,my);
@@ -3053,7 +3093,8 @@ function bbPlace(mx,my){
   }
   var _bt=bbParseType(t),_bc=_bt?BB_CFG[_bt]:null;
   if(!_bc||!_bc.air&&!_bc.sea){if(!bbCanPlace({x:mx,y:my})){bbHint('必须在己方营地或单位3cm内');return;}}
-  if(!_bc||!_bc.air&&!_bc.sea){if(bbIsInSea(mx,my)){bbHint('不能放置在海洋上');return;}}
+  if(_bc&&_bc.sea){if(!bbIsInSea(mx,my)){bbHint('航母和战舰必须建在海里');return;}}
+  else if(!_bc||!_bc.air){if(bbIsInSea(mx,my)){bbHint('不能放置在海洋上');return;}}
   if(!_bc||!_bc.air&&!_bc.sea){if(bbOverlap({x:mx,y:my},BB_UR)){bbHint('位置重叠');return;}}
   if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
   var r=t.endsWith('_r'),te=r?'red':'blue',type=bbParseType(t);
@@ -3140,6 +3181,7 @@ function bbMakeUnit(type,team,x,y,angle){
     w:type==='wall'?50:40,h:type==='wall'?6:40,
   };
   if(cfg.air){b.air=true;b.altitude=50;}
+  if(cfg.sea){b.sea=true;}
   return b;
 }
 
@@ -3165,8 +3207,12 @@ function bbShowPopup(unit,mx,my){
   var sx=r.left+mx*BB_MS/r.width,sy=r.top+my*BB_MS/r.height;
   var h='<div style="color:#c8a96e;margin-bottom:4px;font-size:13px">['+unit.label+'] HP:'+unit.hp+'/'+unit.maxHp+'</div>';
   var cfg=BB_CFG[unit.type];
-  if(['soldier','sniper','doctor','tank','car','jet','heli','bomber','carrier','ship'].indexOf(unit.type)>=0){
+  if(['soldier','sniper','doctor','tank','car','jet','heli','carrier','ship'].indexOf(unit.type)>=0){
     if(unit.ammo>0)h+='<button class="bb-pb" onclick="bbDoUnit(\'fire\')">射击 ['+unit.ammo+'/'+unit.maxAmmo+']</button>';
+    h+='<button class="bb-pb" onclick="bbDoUnit(\'reload\')">装弹 [1 step]</button>';
+  }
+  if(unit.type==='bomber'){
+    if(unit.ammo>0)h+='<button class="bb-pb" onclick="bbDoBomberLine()">直线轰炸 ['+unit.ammo+'/'+unit.maxAmmo+']</button>';
     h+='<button class="bb-pb" onclick="bbDoUnit(\'reload\')">装弹 [1 step]</button>';
   }
   if(unit.type==='engineer'){
@@ -3175,7 +3221,7 @@ function bbShowPopup(unit,mx,my){
     h+='<button class="bb-pb" onclick="bbDoEng(\'repair\')">修理载具/Cannon [1 step]</button>';
   }
   if(unit.type==='doctor')h+='<button class="bb-pb" onclick="bbDoHeal()">治疗队友 [1 step]</button>';
-  if(unit.type==='cannon')h+='<button class="bb-pb" onclick="bbDoCannon()">瞄准开火 [need soldier]</button>';
+  if(unit.type==='cannon'){h+='<button class="bb-pb" onclick="bbDoCannon()">瞄准开火 ['+(unit.ammo||0)+'/'+(unit.maxAmmo||1)+' need soldier]</button>';h+='<button class="bb-pb" onclick="bbDoCannonReload()">装弹 [1 step]</button>';}
   if(unit.type==='car')h+='<button class="bb-pb" onclick="bbDoCarMine()">放置地雷 [1 step]</button>';
   if(unit.type==='carrier'){h+='<button class="bb-pb" onclick="bbDoCarrierDeploy(\'jet\')">部署战斗机 [1 step]</button>';h+='<button class="bb-pb" onclick="bbDoCarrierDeploy(\'heli\')">部署直升机 [1 step]</button>';}
   if(unit.type==='ship')h+='<button class="bb-pb" onclick="bbDoShipDeploy()">部署直升机 [1 step]</button>';
@@ -3230,11 +3276,62 @@ function bbBuildCannonAt(mx,my){
   var e=BB_G._cannonBuilder;
   if(!e||e.eliminated){BB_G._buildCannon=false;BB_G._cannonBuilder=null;bbHideCancelBtn();return;}
   if(dist(e,{x:mx,y:my})>BB_CM*3){bbHint('必须在工程兵3cm范围内');return;}
+  if(bbIsInSea(mx,my)){bbHint('大炮不能建在海里');return;}
   if(bbOverlap({x:mx,y:my},BB_UR)){bbHint('位置重叠');return;}
   var u=bbMakeUnit('cannon',e.team,mx,my,0);
   BB_G.units.push(u);BB_G.step++;
   BB_G._buildCannon=false;BB_G._cannonBuilder=null;bbHideCancelBtn();
   bbHint('大炮已建造');bbUpdUI();bbAutoEnd();
+}
+function bbDoCannonReload(){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  if((u.ammo||0)>=(u.maxAmmo||1)){bbHint('弹药已满');return;}
+  u.ammo=(u.ammo||0)+1;BB_G.step++;
+  bbHint('大炮装弹完成('+u.ammo+'/'+u.maxAmmo+')');bbUpdUI();bbAutoEnd();
+}
+// 轰炸机直线轰炸（点击起点再点击终点）
+function bbDoBomberLine(){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  if((u.ammo||0)<=0){bbHint('弹药不足');return;}
+  BB_G._bomberLine=true;BB_G._bomberU=u;BB_G._bomberP1=null;
+  bbShowCancelBtn();
+  bbHint('点击起点，再点击终点完成轰炸');
+}
+function bbBomberLinePoint1(mx,my){
+  BB_G._bomberP1={x:mx,y:my};bbHint('已选起点，点击终点完成轰炸');
+}
+function bbBomberLineFire(p1,p2){
+  var u=BB_G._bomberU;if(!u||u.eliminated)return;
+  if(!p1||!p2)return;
+  u.ammo--;BB_G.step++;
+  var dmg=BB_CFG.bomber.atk;
+  // 线段检测：对线段p1-p2上的所有敌方目标造成伤害
+  for(var i=0;i<BB_G.units.length;i++){
+    var t=BB_G.units[i];
+    if(t.eliminated||t===u||t.team===u.team)continue;
+    if(pointToSegmentDist({x:t.x,y:t.y},p1,p2)<BB_UR+10)bbDmgU(t,dmg,u);
+  }
+  // 营地
+  ['red','blue'].forEach(function(side){
+    var c=BB_G.camps[side];if(!c||c.team===u.team||c.hp<=0)return;
+    if(pointToSegmentDist({x:c.x,y:c.y},p1,p2)<BB_CS+10)bbDmgU(c,dmg,u);
+  });
+  // 轰炸动画
+  BB_G._bomberLineAnim={p1:{x:p1.x,y:p1.y},p2:{x:p2.x,y:p2.y},startTime:Date.now()};
+  BB_G._bomberLine=false;BB_G._bomberU=null;BB_G._bomberP1=null;
+  bbHideCancelBtn();
+  bbHint('轰炸机轰炸！');bbChkOver();bbUpdUI();bbAutoEnd();
+}
+function pointToSegmentDist(p,a,b){
+  var dx=b.x-a.x,dy=b.y-a.y;
+  var len2=dx*dx+dy*dy;
+  if(len2===0)return dist(p,a);
+  var t=((p.x-a.x)*dx+(p.y-a.y)*dy)/len2;
+  t=Math.max(0,Math.min(1,t));
+  var proj={x:a.x+t*dx,y:a.y+t*dy};
+  return dist(p,proj);
 }
 function bbDoHeal(){
   bbClosePop();var doc=BB_G.selU;if(!doc||doc.eliminated)return;
@@ -3257,15 +3354,20 @@ function bbDoctorHeal(mx,my){
 function bbDoCannon(){
   bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
   if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  if((u.ammo||0)<=0){bbHint('大炮弹药不足，请装弹');return;}
   var operator=BB_G.units.find(function(s){return!s.eliminated&&s.team===u.team&&['soldier','sniper','engineer','doctor'].indexOf(s.type)>=0&&dist(s,u)<BB_CM*3;});
   if(!operator){bbHint('大炮需要附近有士兵操控！(3cm)');return;}
   BB_G.selCannon=true;BB_G.selCannonU=u;bbShowCancelBtn();
-  bbHint('点击选择大炮目标');
+  bbHint('点击选择大炮目标(范围'+Math.round(BB_CFG.cannon.range/BB_CM)+'cm)');
 }
 function bbFireCannon(tx,ty){
   var cannon=BB_G.selCannonU;if(!cannon||cannon.eliminated)return;
   var cfg=BB_CFG.cannon;
-  BB_G.step++;
+  // 检查范围
+  if(dist(cannon,{x:tx,y:ty})>cfg.range){bbHint('目标超出大炮射程('+Math.round(cfg.range/BB_CM)+'cm)！');return;}
+  // 检查弹药
+  if((cannon.ammo||0)<=0){bbHint('大炮弹药不足！');BB_G.selCannon=false;BB_G.selCannonU=null;bbHideCancelBtn();return;}
+  cannon.ammo--;BB_G.step++;
   for(var i=0;i<BB_G.units.length;i++){
     var u=BB_G.units[i];
     if(u.eliminated||u.team===cannon.team||u.type==='wall')continue;
@@ -3306,7 +3408,9 @@ function bbDriveMove(dx,dy,rot){
   var nx=u.x+dx,ny=u.y+dy;
   // 检查新位置是否超出范围
   if(nx<BB_UR||nx>BB_MS-BB_UR||ny<BB_UR||ny>BB_MS-BB_UR)return;
-  // 地面单位不能进入海洋，空中和海上单位可以
+  // 海上单位(carrier/ship)只能在海洋中移动
+  if(u.sea&&!bbIsInSea(nx,ny))return;
+  // 地面单位不能进入海洋
   if(!u.air&&!u.sea&&bbIsInSea(nx,ny))return;
   // 检查是否超出最大移动半径
   var distMoved=dist({x:nx,y:ny},{x:BB_G._driveOriginX,y:BB_G._driveOriginY});
@@ -3329,12 +3433,20 @@ function bbDoCarrierDeploy(type){
   var existing=BB_G.units.filter(function(x){return!x.eliminated&&x.team===u.team&&x.type===type&&x._deployedBy===u.id;});
   var maxNum=type==='jet'?3:2;
   if(existing.length>=maxNum){bbHint('已达到最大部署数量('+maxNum+')');return;}
-  // 在航母旁边放置
-  var nx=u.x+50,ny=u.y;
-  if(bbOverlap({x:nx,y:ny},BB_UR)){bbHint('位置重叠');return;}
-  var nu=bbMakeUnit(type,u.team,nx,ny,0);
+  // 进入选择位置模式
+  BB_G._carrierDeploy=true;BB_G._carrierDeployType=type;BB_G._carrierU=u;bbShowCancelBtn();
+  bbHint('点击航母2cm范围内选择'+(type==='jet'?'战斗机':'直升机')+'部署位置');
+}
+function bbDoCarrierDeployAt(mx,my){
+  var u=BB_G._carrierU,type=BB_G._carrierDeployType;
+  if(!u||u.eliminated){BB_G._carrierDeploy=false;BB_G._carrierU=null;bbHideCancelBtn();return;}
+  if(dist(u,{x:mx,y:my})>BB_CM*2){bbHint('部署位置超出2cm范围！');return;}
+  if(bbIsInSea(mx,my)){bbHint('不能部署在海洋上');return;}
+  if(bbOverlap({x:mx,y:my},BB_UR)){bbHint('位置重叠');return;}
+  var nu=bbMakeUnit(type,u.team,mx,my,0);
   nu._deployedBy=u.id;
   BB_G.units.push(nu);BB_G.step++;
+  BB_G._carrierDeploy=false;BB_G._carrierU=null;bbHideCancelBtn();
   bbHint((type==='jet'?'战斗机':'直升机')+'已部署');bbUpdUI();bbAutoEnd();
 }
 function bbDoShipDeploy(){
@@ -3343,11 +3455,20 @@ function bbDoShipDeploy(){
   // 检查是否已有战舰部署的直升机存活
   var existing=BB_G.units.filter(function(x){return!x.eliminated&&x.team===u.team&&x.type==='heli'&&x._deployedBy===u.id;});
   if(existing.length>=1){bbHint('已有战舰部署的直升机存活');return;}
-  var nx=u.x+50,ny=u.y;
-  if(bbOverlap({x:nx,y:ny},BB_UR)){bbHint('位置重叠');return;}
-  var nu=bbMakeUnit('heli',u.team,nx,ny,0);
+  // 进入选择位置模式
+  BB_G._shipDeploy=true;BB_G._shipU=u;bbShowCancelBtn();
+  bbHint('点击战舰2cm范围内选择直升机部署位置');
+}
+function bbDoShipDeployAt(mx,my){
+  var u=BB_G._shipU;
+  if(!u||u.eliminated){BB_G._shipDeploy=false;BB_G._shipU=null;bbHideCancelBtn();return;}
+  if(dist(u,{x:mx,y:my})>BB_CM*2){bbHint('部署位置超出2cm范围！');return;}
+  if(bbIsInSea(mx,my)){bbHint('不能部署在海洋上');return;}
+  if(bbOverlap({x:mx,y:my},BB_UR)){bbHint('位置重叠');return;}
+  var nu=bbMakeUnit('heli',u.team,mx,my,0);
   nu._deployedBy=u.id;
   BB_G.units.push(nu);BB_G.step++;
+  BB_G._shipDeploy=false;BB_G._shipU=null;bbHideCancelBtn();
   bbHint('直升机已部署');bbUpdUI();bbAutoEnd();
 }
 function bbDoCarMine(){
@@ -3412,7 +3533,7 @@ function bbFire(shooter,angle){
       if(u.eliminated||u===shooter||u.type==='wall'||u.type==='mine')continue;
       if(u.trapped)continue;
       if(u.type==='heli'&&(shooter.type==='sniper'||shooter.type==='doctor'))continue;
-      if(shooter.type==='sniper'&&['tank','car','cannon'].indexOf(u.type)>=0)continue;
+      if(shooter.type==='sniper'&&['tank','car'].indexOf(u.type)>=0)continue;
       if(shooter.type==='doctor'&&['tank','car','cannon'].indexOf(u.type)>=0)continue;
       if(u.air&&shooter.type!=='soldier')continue;
       if(u.type==='camp'&&['soldier','sniper','doctor','engineer'].indexOf(shooter.type)>=0)continue;
@@ -3466,7 +3587,12 @@ function bbDmgU(u,d,source){
   u.hp-=d;
   if(u.hp<=0){
     u.hp=0;u.eliminated=true;
-    if(source&&source.team!==u.team&&u.type!=='wall'){BB_G.killCoins[source.team]=(BB_G.killCoins[source.team]||0)+1;bbUpdKillCoins();}
+    if(source&&source.team!==u.team&&u.type!=='wall'){
+      var coins=1;
+      if(u.air)coins=3;
+      else if(u.type==='tank'||u.type==='car')coins=2;
+      BB_G.killCoins[source.team]=(BB_G.killCoins[source.team]||0)+coins;bbUpdKillCoins();
+    }
     if(u.type==='wall')bbCheckTrap();
     if(u.type==='camp'){bbHint((u.team==='red'?'Red':'Blue')+'营地被摧毁！');}
     else{bbHint(u.label+' 被摧毁！');}
@@ -3482,7 +3608,8 @@ function bbSwTurn(){
   BB_G.step=0;BB_G.selU=null;BB_G.selT=null;BB_G.pa=0;BB_G.aimMode=false;
   bbAiRetryCount=0;
   BB_G.selCannon=false;BB_G.selCannonU=null;BB_G.healMode=false;BB_G.healer=null;BB_G._driving=false;BB_G._driveU=null;document.getElementById('bbDrivePad').style.display='none';
-  BB_G.carMineMode=false;BB_G.carMineU=null;
+  BB_G.carMineMode=false;BB_G.carMineU=null;BB_G._bomberLine=false;BB_G._bomberU=null;BB_G._bomberP1=null;
+  BB_G._carrierDeploy=false;BB_G._carrierU=null;BB_G._shipDeploy=false;BB_G._shipU=null;
   bbClosePop();bbHideAngleKnob();bbHideCancelBtn();
   document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
   document.getElementById('bbMobileFireBtn').style.display='none';
