@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>核邪部队</title>
@@ -82,6 +82,7 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 #mobileToolPanel{position:fixed;bottom:0;left:0;right:0;z-index:650;display:none;
   background:#1a1a00;border-top:3px solid #654321;max-height:45vh;overflow:hidden;
   flex-direction:column}
+.bb-dp-btn{padding:8px 6px;background:#2a2a00;border:1px solid #654321;color:#c8a96e;cursor:pointer;font-family:Courier New;font-size:14px;text-align:center;border-radius:4px;user-select:none;-webkit-user-select:none;touch-action:none}.bb-dp-btn:active{background:#3a3a00;border-color:#c8a96e}
 #mobileToolPanel .mtp-tabs{display:flex;flex-shrink:0;border-bottom:2px solid #3a2a00}
 #mobileToolPanel .mtp-tab{flex:1;padding:8px 4px;text-align:center;font-family:'Courier New';
   font-size:12px;color:#8a7a5a;background:#1a1a00;border:none;border-right:1px solid #3a2a00;cursor:pointer}
@@ -126,12 +127,83 @@ canvas{display:block;cursor:crosshair;touch-action:none}
   #modal .box{padding:20px;max-width:90vw}
   #modal h2{font-size:18px}
   #modal p{font-size:12px}
+  #bbTopBar{height:36px;font-size:12px;padding:0 6px}
+  #bbBottomBar{height:32px;font-size:11px;padding:0 6px}
+  #bbCancelBtn{bottom:38px;right:2px;padding:5px 10px;font-size:12px}
+  #bbAngleKnob{bottom:76px;padding:4px 10px}
+  #bbAngleLabel{font-size:11px}
+  .bb-knob-btn{padding:6px 14px;font-size:16px}
+  #bbKnobDisplay{width:36px;height:36px}
+  #bbKnobIndicator{height:14px}
+  #bbMobileToolBtn{display:block}
+  #bbMobileFireBtn{padding:12px 24px;font-size:16px}
 }
 /* 极小屏幕 */
 @media(max-width:380px){
   #topBar .s{display:none}
   #topBar .t{font-size:13px}
 }
+/* ===== 大战场模式样式 ===== */
+.bb-tb{display:block;width:100%;padding:5px 8px;margin:2px 0;
+  background:#2a2a00;border:1px solid #3a2a00;color:#a0906a;cursor:pointer;
+  font-family:'Courier New';font-size:12px;text-align:left;pointer-events:auto}
+.bb-tb:hover{background:#3a3a00;border-color:#654321;color:#c8a96e}
+.bb-tb.act{border-color:#c8a96e;color:#e8c87a;background:#2a2a10}
+.bb-tb.ht{display:none}
+.bb-tb.r{border-left:3px solid #c44}
+.bb-tb.b{border-left:3px solid #48f}
+.bb-knob-btn{padding:4px 10px;background:#2a2a00;border:1px solid #3a2a00;
+  color:#a0906a;cursor:pointer;font-family:'Courier New';font-size:14px}
+.bb-knob-btn:hover{background:#3a3a00;border-color:#c8a96e;color:#e8c87a}
+.bb-mtp-tabs{display:flex;flex-shrink:0;border-bottom:2px solid #3a2a00}
+.bb-mtp-tab{flex:1;padding:8px 4px;text-align:center;font-family:'Courier New';
+  font-size:12px;color:#8a7a5a;background:#1a1a00;border:none;border-right:1px solid #3a2a00;cursor:pointer}
+.bb-mtp-tab.active{color:#e8c87a;background:#2a2a10;border-bottom:2px solid #c8a96e}
+.bb-mtp-tab:last-child{border-right:none}
+.bb-mtp-list{overflow-y:auto;padding:4px;display:flex;flex-wrap:wrap;gap:4px}
+.bb-mtp-list .bb-tb{width:calc(50% - 2px);padding:8px 6px;font-size:11px;margin:0;box-sizing:border-box;min-height:36px}
+.bb-mtp-close{display:none;width:100%;padding:6px 0;text-align:center;
+  background:#3a2a00;border:none;border-bottom:2px solid #654321;
+  color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:13px;flex-shrink:0}
+.bb-pb{display:block;width:100%;padding:5px 8px;margin:2px 0;
+  background:#2a2a00;border:1px solid #3a2a00;color:#a0906a;cursor:pointer;
+  font-family:'Courier New';font-size:12px;text-align:left}
+.bb-pb:hover{background:#3a3a00;border-color:#c8a96e;color:#e8c87a}
+#bigBattleUI{position:fixed;inset:0;display:none;background:#000}
+#bigBattleUI canvas{position:absolute;inset:0}
+#bbTopBar{position:fixed;top:0;left:0;right:0;height:44px;z-index:600;
+  background:#1a1a00;border-bottom:3px solid #654321;display:flex;align-items:center;
+  font-family:'Courier New',monospace;font-size:14px;color:#c8a96e;padding:0 10px}
+#bbToolPanel{position:fixed;top:44px;right:0;bottom:36px;width:170px;z-index:600;
+  background:#1a1a00;border-left:3px solid #654321;overflow-y:auto;padding:6px}
+#bbToolPanel .st{color:#8a7a5a;font-size:11px;padding:3px 0;border-bottom:1px solid #3a2a00;margin-top:6px;letter-spacing:1px}
+#bbBottomBar{position:fixed;bottom:0;left:0;right:0;height:36px;z-index:600;
+  background:#1a1a00;border-top:3px solid #654321;display:flex;align-items:center;
+  font-family:'Courier New';font-size:13px;color:#8a7a5a;padding:0 10px}
+#bbUnitPopup{position:fixed;display:none;z-index:2000;background:#1a1a00;border:2px solid #c8a96e;padding:8px;min-width:160px}
+#bbCancelBtn{position:fixed;bottom:44px;right:4px;z-index:700;padding:6px 14px;
+  background:#3a2a00;border:2px solid #654321;color:#c8a96e;cursor:pointer;
+  font-family:'Courier New';font-size:13px;display:none}
+#bbCancelBtn:hover{background:#4a3a00;border-color:#c8a96e}
+#bbAngleKnob{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:700;
+  background:#1a1a00;border:2px solid #654321;padding:6px 14px;display:none;
+  align-items:center;gap:8px;font-family:'Courier New',monospace}
+#bbAngleLabel{color:#c8a96e;font-size:12px;min-width:32px;text-align:center}
+#bbKnobDisplay{width:30px;height:30px;border-radius:50%;border:2px solid #654321;background:#2a2a00;position:relative;flex-shrink:0}
+#bbKnobIndicator{position:absolute;width:3px;height:12px;background:#c8a96e;left:50%;bottom:50%;transform-origin:50% 100%;border-radius:2px}
+#bbMobileToolBtn{display:none;position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:640;
+  padding:6px 18px;background:#2a4a2a;border:2px solid #2a6a2a;color:#4a8a4a;cursor:pointer;
+  font-family:'Courier New';font-size:13px;border-radius:4px}
+#bbMobileFireBtn{display:none;position:fixed;bottom:80px;right:10px;z-index:700;
+  padding:10px 20px;background:#5a2020;border:2px solid #c44;color:#faa;cursor:pointer;
+  font-family:'Courier New';font-size:15px;border-radius:6px;font-weight:bold}
+#bbStartBtn{position:fixed;bottom:16px;right:16px;z-index:700;
+  padding:6px 16px;background:#1a3a1a;border:2px solid #2a6a2a;color:#4aff4a;cursor:pointer;
+  font-family:'Courier New';font-size:13px;border-radius:4px;font-weight:bold}
+#bbStartBtn:hover{background:#2a5a2a;border-color:#6aff6a;color:#8fff8f}
+#bbMobileToolPanel{position:fixed;bottom:0;left:0;right:0;z-index:650;display:none;
+  background:#1a1a00;border-top:3px solid #654321;max-height:45vh;overflow:hidden;flex-direction:column}
+.bb-dp-btn{padding:8px 6px;background:#2a2a00;border:1px solid #654321;color:#c8a96e;cursor:pointer;font-family:Courier New;font-size:14px;text-align:center;border-radius:4px;user-select:none;-webkit-user-select:none;touch-action:none}.bb-dp-btn:active{background:#3a3a00;border-color:#c8a96e}
 </style></head><body>
 
 <div id="mainMenu">
@@ -139,12 +211,12 @@ canvas{display:block;cursor:crosshair;touch-action:none}
   <div id="menuBtns">
     <div id="menuMain">
       <button class="menu-btn" onclick="G={aiMode:false};showGame();">⚔ 战术模式</button>
-      <button class="menu-btn" onclick="showModal('🚧 开发中','大战场模式正在紧张开发中，敬请期待！')">🏴 大战场模式</button>
+      <button class="menu-btn" onclick="openBigBattle()">🏴 大战场模式</button>
       <button class="menu-btn" onclick="document.getElementById('menuMain').style.display='none';document.getElementById('menuAi').style.display='flex';">🤖 AI对战</button>
     </div>
     <div id="menuAi" style="display:none">
       <button class="menu-btn" onclick="G={aiMode:true};showGame();">⚔ 战术模式</button>
-      <button class="menu-btn" onclick="showModal('🚧 开发中','AI大战场模式正在开发中，敬请期待！')">🏴 大战场模式</button>
+      <button class="menu-btn" onclick="BB_G={aiMode:true};openBigBattle()">🏴 大战场模式(AI)</button>
       <button class="menu-btn" onclick="document.getElementById('menuMain').style.display='flex';document.getElementById('menuAi').style.display='none';">← 返回</button>
     </div>
   </div>
@@ -214,6 +286,93 @@ canvas{display:block;cursor:crosshair;touch-action:none}
   <div class="mtp-list" id="mtpList"></div>
 </div>
 
+<!-- ===== 大战场模式 UI ===== -->
+<div id="bigBattleUI" style="display:none">
+  <canvas id="bbCanvas"></canvas>
+  <div id="bbTopBar">
+    <span class="t">核邪部队</span><span class="s">大战场模式</span>
+    <span style="color:#8a7a5a;font-size:13px" id="bbTopInfo">回合:- 阶段:-</span>
+    <span style="margin:0 10px;color:#c44" id="bbHpR">红营:-</span>
+    <span style="color:#48f" id="bbHpB">蓝营:-</span>
+    <span id="bbKillCoin" style="color:#ffd700;font-weight:bold;margin:0 8px">💰<b id="bbKcRed">0</b>/<b id="bbKcBlue">0</b></span>
+    <button class="btn" onclick="backToMenuBB()">返回</button>
+  </div>
+  <div id="bbToolPanel">
+    <div class="st" id="bbDrawST">绘制地图</div>
+    <button class="bb-tb bb-draw-tool" data-tool="shelter" onclick="bbSelTool('shelter')">■ 掩体 [无限]</button>
+    <button class="bb-tb r bb-draw-tool" data-tool="camp_red" onclick="bbSelTool('camp_red')">■ 营地(红) [200HP]</button>
+    <button class="bb-tb b bb-draw-tool" data-tool="camp_blue" onclick="bbSelTool('camp_blue')">■ 营地(蓝) [200HP]</button>
+    <button class="bb-tb bb-draw-tool" data-tool="sea_line" onclick="bbSelTool('sea_line')">~ 海洋分界线</button>
+    <button class="bb-tb bb-draw-tool" data-tool="sea_fill" onclick="bbSelTool('sea_fill')">≈ 填充海洋</button>
+    <div class="st">部署兵种</div>
+    <button class="bb-tb r bb-unit-tool" data-tool="soldier_r" onclick="bbSelTool('soldier_r')">○ 普通兵 [10HP/5AT]</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="soldier_b" onclick="bbSelTool('soldier_b')">○ 普通兵 [10HP/5AT]</button>
+    <button class="bb-tb r bb-unit-tool" data-tool="sniper_r" onclick="bbSelTool('sniper_r')">● 狙击兵 [5HP/20AT]</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="sniper_b" onclick="bbSelTool('sniper_b')">● 狙击兵 [5HP/20AT]</button>
+    <button class="bb-tb r bb-unit-tool" data-tool="engineer_r" onclick="bbSelTool('engineer_r')">⊤ 工程兵 [15HP/2AT]</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="engineer_b" onclick="bbSelTool('engineer_b')">⊤ 工程兵 [15HP/2AT]</button>
+    <button class="bb-tb r bb-unit-tool" data-tool="doctor_r" onclick="bbSelTool('doctor_r')">+ 医生 [10HP/2AT]</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="doctor_b" onclick="bbSelTool('doctor_b')">+ 医生 [10HP/2AT]</button>
+    <div class="st">载具（人头币）</div>
+    <button class="bb-tb r bb-unit-tool" data-tool="car_r" onclick="bbSelTool('car_r')">▷ 车 [30HP/15AT] 💰2</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="car_b" onclick="bbSelTool('car_b')">▷ 车 [30HP/15AT] 💰2</button>
+    <button class="bb-tb r bb-unit-tool" data-tool="tank_r" onclick="bbSelTool('tank_r')">◈ 坦克 [60HP/20AT] 💰5</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="tank_b" onclick="bbSelTool('tank_b')">◈ 坦克 [60HP/20AT] 💰5</button>
+    <div class="st">空中单位（人头币）</div>
+    <button class="bb-tb r bb-unit-tool" data-tool="heli_r" onclick="bbSelTool('heli_r')">◇ 直升机 [20HP/15AT] 💰3</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="heli_b" onclick="bbSelTool('heli_b')">◇ 直升机 [20HP/15AT] 💰3</button>
+    <button class="bb-tb r bb-unit-tool" data-tool="jet_r" onclick="bbSelTool('jet_r')">△ 战斗机 [30HP/30AT] 💰4</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="jet_b" onclick="bbSelTool('jet_b')">△ 战斗机 [30HP/30AT] 💰4</button>
+    <button class="bb-tb r bb-unit-tool" data-tool="bomber_r" onclick="bbSelTool('bomber_r')">▽ 轰炸机 [25HP/30AT] 💰25</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="bomber_b" onclick="bbSelTool('bomber_b')">▽ 轰炸机 [25HP/30AT] 💰25</button>
+    <div class="st">海上单位（人头币）</div>
+    <button class="bb-tb r bb-unit-tool" data-tool="carrier_r" onclick="bbSelTool('carrier_r')">⊡ 航母 [70HP/10AT] 💰10</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="carrier_b" onclick="bbSelTool('carrier_b')">⊡ 航母 [70HP/10AT] 💰10</button>
+    <button class="bb-tb r bb-unit-tool" data-tool="ship_r" onclick="bbSelTool('ship_r')">◫ 战舰 [60HP/20AT] 💰5</button>
+    <button class="bb-tb b bb-unit-tool" data-tool="ship_b" onclick="bbSelTool('ship_b')">◫ 战舰 [60HP/20AT] 💰5</button>
+  </div>
+  <div id="bbBottomBar">
+    <span id="bbTurnInd">准备中...</span>
+    <span id="bbHintTxt">点击地图放置或选择单位</span>
+  </div>
+  <button id="bbStartBtn" onclick="bbStartGame()">开始游戏</button>
+</div>
+
+<div id="bbUnitPopup"></div>
+
+<button id="bbCancelBtn" onclick="bbDoCancel()">✕ 取消</button>
+<div id="bbAngleKnob" style="display:none">
+  <div id="bbAngleLabel">0°</div>
+  <button class="bb-knob-btn" onclick="bbAdjAngle(-0.26)">↺</button>
+  <div id="bbKnobDisplay"><div id="bbKnobIndicator"></div></div>
+  <button class="bb-knob-btn" onclick="bbAdjAngle(0.26)">↻</button>
+</div>
+<button id="bbMobileToolBtn" onclick="toggleBBMobilePanel()">☰ 工具</button>
+<button id="bbMobileFireBtn" onclick="bbMobileFire()">🔥 开火</button>
+<div id="bbMobileToolPanel">
+  <button class="bb-mtp-close" onclick="toggleBBMobilePanel()">▼ 收起工具栏</button>
+  <div class="bb-mtp-tabs">
+    <button class="bb-mtp-tab active" data-mtab="draw" onclick="switchBBMtpTab('draw')">地图</button>
+    <button class="bb-mtp-tab" data-mtab="red" onclick="switchBBMtpTab('red')">红方</button>
+    <button class="bb-mtp-tab" data-mtab="blue" onclick="switchBBMtpTab('blue')">蓝方</button>
+  </div>
+  <div class="bb-mtp-list" id="bbMtpList"></div>
+</div>
+<div id="bbDrivePad" style="display:none;position:fixed;bottom:100px;right:10px;z-index:800;background:#1a1a00;border:2px solid #654321;border-radius:8px;padding:6px;width:130px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;grid-template-rows:1fr 1fr 1fr">
+    <span></span><button class="bb-dp-btn" onmousedown="bbDPMove(0,-8)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(0,-8)" ontouchend="bbDPStop()">▲</button><span></span>
+    <button class="bb-dp-btn" onmousedown="bbDPMove(-8,0)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(-8,0)" ontouchend="bbDPStop()">◄</button>
+    <span></span>
+    <button class="bb-dp-btn" onmousedown="bbDPMove(8,0)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(8,0)" ontouchend="bbDPStop()">►</button>
+    <span></span><button class="bb-dp-btn" onmousedown="bbDPMove(0,8)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(0,8)" ontouchend="bbDPStop()">▼</button><span></span>
+  </div>
+  <div style="display:flex;gap:4px;margin-top:4px">
+    <button class="bb-dp-btn" style="flex:1" onmousedown="bbDPRot(-0.1)" onmouseup="bbDPStop()" ontouchstart="bbDPRot(-0.1)" ontouchend="bbDPStop()">↺</button>
+    <button class="bb-dp-btn" style="flex:1" onmousedown="bbDPRot(0.1)" onmouseup="bbDPStop()" ontouchstart="bbDPRot(0.1)" ontouchend="bbDPStop()">↻</button>
+    <button class="bb-dp-btn" style="flex:1;background:#2a4a2a;border-color:#2a6a2a;color:#4aff4a" onclick="bbDriveEnd()">✓</button>
+  </div>
+</div>
+
 <script>
 // ===== 图片加载系统 =====
 const IMG_CACHE = {};
@@ -274,6 +433,52 @@ const IMG_LIST = {
   'mortar_blue_2': '元素/迫击炮/蓝/迫击炮蓝上两枚炮弹.png',
   'mortar_blue_3': '元素/迫击炮/蓝/迫击炮蓝上三枚炮弹.png',
   'mortar_blue_4': '元素/迫击炮/蓝/迫击炮蓝上四枚炮弹.png',
+  // ===== 大战场模式 =====
+  'bb_camp_red': '元素/大战场模式/地面单位/营地/红/营地红.png',
+  'bb_camp_blue': '元素/大战场模式/地面单位/营地/蓝/营地蓝.png',
+  'bb_wall_red': '元素/大战场模式/地面单位/墙/红/墙红.png',
+  'bb_wall_blue': '元素/大战场模式/地面单位/墙/蓝/墙蓝.png',
+  'bb_wall_black': '元素/大战场模式/地面单位/墙/黑/墙黑.png',
+  'bb_soldier_red': '元素/大战场模式/地面单位/兵种/普通兵/红/普通兵红.png',
+  'bb_soldier_red_1': '元素/大战场模式/地面单位/兵种/普通兵/红/普通兵红开一枪.png',
+  'bb_soldier_red_2': '元素/大战场模式/地面单位/兵种/普通兵/红/普通兵红开两枪.png',
+  'bb_soldier_red_3': '元素/大战场模式/地面单位/兵种/普通兵/红/普通兵红开三枪.png',
+  'bb_soldier_red_4': '元素/大战场模式/地面单位/兵种/普通兵/红/普通兵红开四枪.png',
+  'bb_soldier_red_5': '元素/大战场模式/地面单位/兵种/普通兵/红/普通兵红开五枪.png',
+  'bb_soldier_blue': '元素/大战场模式/地面单位/兵种/普通兵/蓝/普通兵蓝.png',
+  'bb_soldier_blue_1': '元素/大战场模式/地面单位/兵种/普通兵/蓝/普通兵蓝开一枪.png',
+  'bb_soldier_blue_2': '元素/大战场模式/地面单位/兵种/普通兵/蓝/普通兵蓝开两枪.png',
+  'bb_soldier_blue_3': '元素/大战场模式/地面单位/兵种/普通兵/蓝/普通兵蓝开三枪.png',
+  'bb_soldier_blue_4': '元素/大战场模式/地面单位/兵种/普通兵/蓝/普通兵蓝开四枪.png',
+  'bb_soldier_blue_5': '元素/大战场模式/地面单位/兵种/普通兵/蓝/普通兵蓝开五枪.png',
+  'bb_sniper_red': '元素/大战场模式/地面单位/兵种/狙击兵/红/狙击兵红.png',
+  'bb_sniper_red_1': '元素/大战场模式/地面单位/兵种/狙击兵/红/狙击兵红开一枪.png',
+  'bb_sniper_red_2': '元素/大战场模式/地面单位/兵种/狙击兵/红/狙击兵红开两枪.png',
+  'bb_sniper_blue': '元素/大战场模式/地面单位/兵种/狙击兵/蓝/狙击兵蓝.png',
+  'bb_sniper_blue_1': '元素/大战场模式/地面单位/兵种/狙击兵/蓝/狙击兵蓝开一枪.png',
+  'bb_sniper_blue_2': '元素/大战场模式/地面单位/兵种/狙击兵/蓝/狙击兵蓝开两枪.png',
+  'bb_engineer_red': '元素/大战场模式/地面单位/兵种/工程兵/红/工程兵红.png',
+  'bb_engineer_blue': '元素/大战场模式/地面单位/兵种/工程兵/蓝/工程兵蓝.png',
+  'bb_doctor_red': '元素/大战场模式/地面单位/兵种/医生/红/医生红.png',
+  'bb_doctor_blue': '元素/大战场模式/地面单位/兵种/医生/蓝/医生蓝.png',
+  'bb_cannon_red': '元素/大战场模式/地面单位/大炮/红/大炮红.png',
+  'bb_cannon_blue': '元素/大战场模式/地面单位/大炮/蓝/大炮蓝.png',
+  'bb_mine_red': '元素/大战场模式/地面单位/地雷/红/地雷红.png',
+  'bb_mine_blue': '元素/大战场模式/地面单位/地雷/蓝/地雷蓝.png',
+  'bb_tank_red': '元素/大战场模式/地面单位/载具/坦克/红/坦克红.png',
+  'bb_tank_blue': '元素/大战场模式/地面单位/载具/坦克/蓝/坦克蓝.png',
+  'bb_car_red': '元素/大战场模式/地面单位/载具/车/红/车红.png',
+  'bb_car_blue': '元素/大战场模式/地面单位/载具/车/蓝/车蓝.png',
+  'bb_jet_red': '元素/大战场模式/空中单位/战斗机/红/战斗机红.png',
+  'bb_jet_blue': '元素/大战场模式/空中单位/战斗机/蓝/战斗机蓝.png',
+  'bb_heli_red': '元素/大战场模式/空中单位/直升机/红/直升机红.png',
+  'bb_heli_blue': '元素/大战场模式/空中单位/直升机/蓝/直升机蓝.png',
+  'bb_bomber_red': '元素/大战场模式/空中单位/轰炸机/红/轰炸机红.png',
+  'bb_bomber_blue': '元素/大战场模式/空中单位/轰炸机/蓝/轰炸机蓝.png',
+  'bb_carrier_red': '元素/大战场模式/海上单位/航母/红/航母红.png',
+  'bb_carrier_blue': '元素/大战场模式/海上单位/航母/蓝/航母蓝.png',
+  'bb_ship_red': '元素/大战场模式/海上单位/战舰/红/战舰红.png',
+  'bb_ship_blue': '元素/大战场模式/海上单位/战舰/蓝/战舰蓝.png',
 };
 
 function loadImages() {
@@ -435,7 +640,7 @@ function initGame(aiMode){
     sa:0,pa:0,mx:0,my:0,over:false,
     aiMode:!!aiMode
   };
-  hideAngleKnob();hideCancelBtn();
+  hideAngleKnob();hide取消Btn();
   resizeCanvas();
   updUI();draw();
 }
@@ -829,7 +1034,7 @@ function selTool(t){
   const el=document.querySelector(`[data-tool="${t}"]`);
   if(el)el.classList.add('act');
   G.selT=t;G.pa=0;
-  showCancelBtn();showAngleKnob();
+  show取消Btn();showAngleKnob();
   hint(t.startsWith('shelter')?'点击放置，双指旋转调角度':'点击放置，双指旋转调角度');
   // 移动端选中后收起面板
   if(window.innerWidth<600){
@@ -842,6 +1047,7 @@ function hint(t){document.getElementById('hintTxt').textContent=t;}
 
 // ===== 取消按钮（代替T键）和角度旋钮 =====
 function doCancel(){
+  if(!G)return;
   G.selU=null;G.selT=null;G.buildWall=false;G.selMortar=false;G.aimMode=false;
   closePop();
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
@@ -885,11 +1091,11 @@ function hideAngleKnob(){
   document.getElementById('angleKnob').style.display='none';
 }
 
-function showCancelBtn(){
+function show取消Btn(){
   document.getElementById('cancelBtn').style.display='block';
 }
 
-function hideCancelBtn(){
+function hide取消Btn(){
   document.getElementById('cancelBtn').style.display='none';
 }
 
@@ -1089,7 +1295,7 @@ function place(mx,my){
       if(!G.camps)G.camps={};
       G.camps.blue={x:mx,y:my,hp:5,team:'blue'};hint('蓝方营地已放置');
     }
-    hideAngleKnob();hideCancelBtn();updUI();draw();return;
+    hideAngleKnob();hide取消Btn();updUI();draw();return;
   }
   if(!canP({x:mx,y:my})){hint('必须在己方营地或单位3cm内');return;}
   if(overlap({x:mx,y:my},UR)){hint('位置重叠');return;}
@@ -1113,7 +1319,7 @@ function place(mx,my){
   }
   G.units.push(u);G.step++;G.selT=null;G.pa=0;
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
-  hideAngleKnob();hideCancelBtn();
+  hideAngleKnob();hide取消Btn();
   hint(`${u.label}已放置`);
   animP(u);updUI();draw();autoEnd();
 }
@@ -1129,13 +1335,13 @@ function placeMortarT(mx,my){
 
 function placeWall(mx,my){
   const e=G.builder;
-  if(!e||e.eliminated){G.buildWall=false;hideAngleKnob();hideCancelBtn();return;}
+  if(!e||e.eliminated){G.buildWall=false;hideAngleKnob();hide取消Btn();return;}
   if(dist(e,{x:mx,y:my})>CM*3){hint('必须在工程兵3cm内');return;}
   const w=makeUnit('wall',e.team,mx,my,G.pa||0);
   w.team=e.team;
   G.units.push(w);G.step++;
   G.buildWall=false;G.builder=null;G.pa=0;
-  hideAngleKnob();hideCancelBtn();
+  hideAngleKnob();hide取消Btn();
   hint('掩体已建造');checkTrap();updUI();draw();autoEnd();
 }
 
@@ -1213,14 +1419,14 @@ function clickUnit(mx,my){
   // 点击己方其他单位 -> 切换选择
   if(clicked&&clicked!==u&&clicked.team===G.phase){
     G.selU=clicked;
-    showCancelBtn();
+    show取消Btn();
     showPopup(clicked,mx,my);
     draw();return;
   }
   
   // 点击空白区域 -> 取消选择
   if(!clicked||clicked.eliminated||clicked.trapped||clicked.team!==G.phase){
-    G.selU=null;hideCancelBtn();hint('');draw();return;
+    G.selU=null;hide取消Btn();hint('');draw();return;
   }
   
   // 点击选中单位本身 -> 重新弹出弹窗
@@ -1233,7 +1439,7 @@ function trySel(mx,my){
   const u=findU(mx,my);
   if(u&&!u.eliminated&&!u.trapped&&u.team===G.phase&&G.state!==SD){
     G.selU=u;
-    showCancelBtn();
+    show取消Btn();
     showPopup(u,mx,my);
     draw();
   }else if(u&&u.team!==G.phase&&G.selU){
@@ -1301,7 +1507,7 @@ function doUnit(action){
   if(action==='fire'){
     if(u.ammo<=0){hint('弹药不足');return;}
     G.aimMode=true;
-    showCancelBtn();
+    show取消Btn();
     // 移动端显示开火按钮
     if(window.innerWidth<600){
       document.getElementById('mobileFireBtn').style.display='block';
@@ -1322,13 +1528,13 @@ function doAimFire(mx,my){
   if(!u||u.eliminated||u.ammo<=0){G.aimMode=false;document.getElementById('mobileFireBtn').style.display='none';return;}
   // 点击已选单位 -> 退出瞄准
   if(dist({x:mx,y:my},u)<UR+6){
-    G.aimMode=false;hideCancelBtn();document.getElementById('mobileFireBtn').style.display='none';hint('');draw();return;
+    G.aimMode=false;hide取消Btn();document.getElementById('mobileFireBtn').style.display='none';hint('');draw();return;
   }
   const a=Math.atan2(my-u.y,mx-u.x);
   let df=a-(u.facing-Math.PI/2);while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
   if(Math.abs(df)<=Math.PI/4){
     fire(u,a);
-    G.aimMode=false;hideCancelBtn();document.getElementById('mobileFireBtn').style.display='none';
+    G.aimMode=false;hide取消Btn();document.getElementById('mobileFireBtn').style.display='none';
   }else{
     hint('超出射击范围');
   }
@@ -1339,8 +1545,8 @@ function doEng(a){
   closePop();const e=G.selU;
   if(!e||e.eliminated)return;
   if(G.step>=1){hint('步数已用完');return;}
-  if(a==='build'){G.buildWall=true;G.builder=e;G.pa=0;showCancelBtn();showAngleKnob();hint('点击地图放置掩体（可调角度）');}
-  else if(a==='cement'){e.reservedCement=(e.reservedCement||0)+1;G.step++;hideCancelBtn();hint(`水泥${e.reservedCement}`);updUI();draw();autoEnd();}
+  if(a==='build'){G.buildWall=true;G.builder=e;G.pa=0;show取消Btn();showAngleKnob();hint('点击地图放置掩体（可调角度）');}
+  else if(a==='cement'){e.reservedCement=(e.reservedCement||0)+1;G.step++;hide取消Btn();hint(`水泥${e.reservedCement}`);updUI();draw();autoEnd();}
   else if(a==='repair'){
     if(!e.reservedCement){hint('没有水泥');return;}
     const c=G.camps[e.team];if(!c){hint('营地不存在');return;}
@@ -1671,20 +1877,20 @@ function buildGameContext(){
     // 优先级4: 迫击炮需要设目标(排除被困)
     const mortarNeedTarget=bu.filter(u=>u.type==='mortar'&&u.ammo>0&&!u.mortarTarget&&!u.trapped);
     // 优先级5: 需要装弹的步兵(排除被困)
-    const needReload=bu.filter(u=>(u.type==='soldier'||u.type==='sniper')&&u.ammo===0&&!u.trapped);
+    const need装弹=bu.filter(u=>(u.type==='soldier'||u.type==='sniper')&&u.ammo===0&&!u.trapped);
     
     if(fireable.length>0){
       const f=fireable[0];
       const idx=bu.indexOf(f);
       // 找能打红营的单位
-      const campShooter=fireable.find(u=>{
+      const camp射击er=fireable.find(u=>{
         if(!G.camps.red)return false;
         const a=Math.atan2(G.camps.red.y-u.y,G.camps.red.x-u.x);
         let df=a-(u.facing-Math.PI/2);while(df>Math.PI)df-=Math.PI*2;while(df<-Math.PI)df+=Math.PI*2;
         return Math.abs(df)<=Math.PI/4;
       });
-      if(campShooter){
-        ctx.push(`建议:control_unit unit_index=${bu.indexOf(campShooter)} action=fire target_x=${Math.round(G.camps.red.x)} target_y=${Math.round(G.camps.red.y)} 打红营`);
+      if(camp射击er){
+        ctx.push(`建议:control_unit unit_index=${bu.indexOf(camp射击er)} action=fire target_x=${Math.round(G.camps.red.x)} target_y=${Math.round(G.camps.red.y)} 打红营`);
       }else{
         ctx.push(`建议:control_unit unit_index=${idx} action=fire 打射角内的红方单位`);
       }
@@ -1694,8 +1900,8 @@ function buildGameContext(){
       ctx.push(`建议:control_unit unit_index=${bu.indexOf(mortarNeedTarget[0])} action=set_mortar_target target_x=${Math.round(G.camps.red.x)} target_y=${Math.round(G.camps.red.y)} 设迫击炮目标为红营`);
     }else if(mortarNeedAmmo.length>0){
       ctx.push(`建议:control_unit unit_index=${bu.indexOf(mortarNeedAmmo[0])} action=load_mortar 迫击炮装弹`);
-    }else if(needReload.length>0){
-      ctx.push(`建议:control_unit unit_index=${bu.indexOf(needReload[0])} action=reload 装弹`);
+    }else if(need装弹.length>0){
+      ctx.push(`建议:control_unit unit_index=${bu.indexOf(need装弹[0])} action=reload 装弹`);
     }else{
       ctx.push('建议:部署新单位或让工程兵行动');
     }
@@ -1980,7 +2186,7 @@ function swTurn(){
   if(G.phase==='red')G.phase='blue';
   else{G.phase='red';G.turn++;if(G.turn>3)G.state=SB;}
   G.step=0;G.selU=null;G.selT=null;G.pa=0;G.aimMode=false;aiRetryCount=0;
-  closePop();hideAngleKnob();hideCancelBtn();document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
+  closePop();hideAngleKnob();hide取消Btn();document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
   document.getElementById('mobileFireBtn').style.display='none';
   // 收起移动端面板
   document.getElementById('mobileToolPanel').style.display='none';
@@ -2074,5 +2280,1645 @@ function showModal(t,d){
 }
 
 drawMenu();
+</script>
+<script>
+// ===== 大战场模式 =====
+const BB_MS=800,BB_UR=14,BB_CS=28,BB_CM=70,BB_SW=85,BB_SH=20;
+const BB_SD='draw',BB_ST='truce',BB_SB='battle';
+let BB_G=null;
+const BB_CV=document.getElementById('bbCanvas'),BB_CTX=BB_CV.getContext('2d');
+BB_CV.width=BB_CV.height=BB_MS;
+const BB_SAND=genSandTexture(BB_MS,BB_MS);
+
+const BB_CFG={
+  soldier:{hp:10,maxHp:10,atk:5,ammo:5,maxAmmo:5,label:'普通兵',canHitAir:true},
+  sniper:{hp:5,maxHp:5,atk:20,ammo:2,maxAmmo:2,label:'狙击兵',penetrate:true,canHitVehicle:false},
+  engineer:{hp:15,maxHp:15,atk:2,ammo:3,maxAmmo:3,label:'工程兵',canBuild:true,canHealVehicle:true},
+  doctor:{hp:10,maxHp:10,atk:2,ammo:3,maxAmmo:3,label:'医生',canHeal:true,canHitVehicle:false},
+  cannon:{hp:15,maxHp:15,atk:20,label:'大炮',needsOperator:true,bypassWall:true,cantHitAir:true},
+  mine:{hp:Infinity,maxHp:Infinity,atk:10,label:'地雷',triggerRange:BB_CM*2},
+  wall:{hp:3,maxHp:3,label:'掩体'},
+  camp:{hp:200,maxHp:200,label:'营地',immuneToUnits:true},
+  tank:{hp:60,maxHp:60,atk:20,ammo:3,maxAmmo:3,label:'坦克',cost:5},
+  car:{hp:30,maxHp:30,atk:15,ammo:2,maxAmmo:2,label:'车',cost:2,canPlaceMine:true},
+  jet:{hp:30,maxHp:30,atk:30,ammo:2,maxAmmo:2,label:'战斗机',cost:4,air:true,flare:true},
+  heli:{hp:20,maxHp:20,atk:15,ammo:2,maxAmmo:2,label:'直升机',cost:3,air:true,immuneToSniperDoctor:true},
+  bomber:{hp:25,maxHp:25,atk:30,ammo:1,maxAmmo:1,label:'轰炸机',cost:25,air:true},
+  carrier:{hp:70,maxHp:70,atk:10,ammo:2,maxAmmo:2,label:'航母',cost:10,sea:true},
+  ship:{hp:60,maxHp:60,atk:20,ammo:2,maxAmmo:2,label:'战舰',cost:5,sea:true},
+};
+
+function bbGetUnitImgKey(u){
+  const t=u.team==='red'?'red':'blue';
+  if(u.type==='soldier'){const f=u.bulletsFired||0;return f>0?'bb_soldier_'+t+'_'+f:'bb_soldier_'+t;}
+  if(u.type==='sniper'){const f=u.bulletsFired||0;return f>0?'bb_sniper_'+t+'_'+f:'bb_sniper_'+t;}
+  const map={engineer:'bb_engineer_'+t,doctor:'bb_doctor_'+t,cannon:'bb_cannon_'+t,mine:'bb_mine_'+t,tank:'bb_tank_'+t,car:'bb_car_'+t,jet:'bb_jet_'+t,heli:'bb_heli_'+t,camp:'bb_camp_'+t,bomber:'bb_bomber_'+t,carrier:'bb_carrier_'+t,ship:'bb_ship_'+t};
+  if(u.type==='wall'){if(u.team==='black')return'bb_wall_black';return'bb_wall_'+t;}
+  return map[u.type]||null;
+}
+function bbDrawImg(ctx,key,x,y,angle,scale){
+  const img=IMG_CACHE[key];if(!img||!img.complete||img.naturalWidth===0)return false;
+  const ds=key.startsWith('bb_camp')?0.22:(key.startsWith('bb_wall')?0.22:0.14);
+  const s=scale||ds,w=img.naturalWidth*s,h=img.naturalHeight*s;
+  ctx.save();ctx.translate(x,y);
+  if(angle!==undefined&&angle!==null){
+    if(key.startsWith('bb_soldier')||key.startsWith('bb_sniper')){ctx.rotate(angle);}
+    else if(key.startsWith('bb_tank')||key.startsWith('bb_car')||key.startsWith('bb_jet')||key.startsWith('bb_heli')||key.startsWith('bb_cannon')||key.startsWith('bb_bomber')||key.startsWith('bb_carrier')||key.startsWith('bb_ship')){ctx.rotate(angle-Math.PI/2);}
+    else if(key.startsWith('bb_wall')){ctx.rotate(angle-Math.PI/2);}
+  }
+  ctx.drawImage(img,-w/2,-h/2,w,h);ctx.restore();return true;
+}
+
+function openBigBattle(){
+  loadImages().then(function(){
+    document.getElementById('mainMenu').style.display='none';
+    document.getElementById('gameUI').style.display='none';
+    document.getElementById('bigBattleUI').style.display='block';
+    // 隐藏战术模式移动端按钮，显示大战场移动端按钮
+    document.getElementById('mobileToolBtn').style.display='none';
+    document.getElementById('mobileFireBtn').style.display='none';
+    document.getElementById('mobileToolPanel').style.display='none';
+    bbInitGame();
+  });
+}
+function closeBigBattle(){
+  document.getElementById('bigBattleUI').style.display='none';
+  document.getElementById('mainMenu').style.display='block';
+  document.getElementById('menuMain').style.display='flex';
+  document.getElementById('menuAi').style.display='none';
+  bbDestroy();
+}
+function backToMenuBB(){
+  document.getElementById('modalBox').innerHTML='<h2>返回菜单</h2><p>返回菜单将丢失当前进度，确定返回？</p><div style="display:flex;gap:10px;justify-content:center"><button onclick="document.getElementById(\'modal\').style.display=\'none\'" style="background:#2a4a2a;border-color:#2a6a2a;color:#4a8a4a">取消</button><button onclick="document.getElementById(\'modal\').style.display=\'none\';closeBigBattle()" style="background:#5a2020;border-color:#c44;color:#faa">确定返回</button></div>';
+  document.getElementById('modal').style.display='flex';
+}
+
+function bbInitGame(){
+  var aiMode=BB_G&&BB_G.aiMode?true:false;
+  BB_G={
+    state:BB_SD,turn:0,phase:'red',step:0,maxStep:1,
+    units:[],camps:{red:null,blue:null},shelters:[],
+    selU:null,selT:null,buildWall:false,builder:null,
+    aimMode:false,selCannon:false,selCannonU:null,
+    healMode:false,healer:null,carMineMode:false,carMineU:null,
+    killCoins:{red:0,blue:0},
+    seaLine:null,seaFilled:false,
+    sa:0,pa:0,mx:0,my:0,over:false,
+    animBullets:[],animExplosions:[],animId:null,
+    aiMode:aiMode,
+  };
+  bbHideAngleKnob();bbHideCancelBtn();
+  bbResizeCanvas();bbUpdUI();bbDraw();bbStartAnim();
+}
+function bbResizeCanvas(){
+  var isSmall=window.innerWidth<600;
+  var topH=isSmall?36:44,botH=isSmall?32:36;
+  var tw=window.innerWidth,th=window.innerHeight-topH-botH;
+  var s=Math.min(tw,th,BB_MS);
+  BB_CV.style.width=s+'px';BB_CV.style.height=s+'px';
+  BB_CV.style.position='absolute';
+  BB_CV.style.left=((window.innerWidth-s)/2)+'px';
+  BB_CV.style.top=(topH+(th-s)/2)+'px';
+  BB_CV.style.pointerEvents='auto';
+  document.getElementById('bbToolPanel').style.display=isSmall?'none':'block';
+  document.getElementById('bbMobileToolBtn').style.display=isSmall?'block':'none';
+}
+window.addEventListener('resize',function(){if(BB_G)bbResizeCanvas();});
+
+// ===== DRAW =====
+function bbDraw(){
+  if(!BB_G)return;
+  BB_CTX.clearRect(0,0,BB_MS,BB_MS);
+  BB_CTX.drawImage(BB_SAND,0,0,BB_MS,BB_MS);
+  BB_CTX.strokeStyle='rgba(60,80,40,0.15)';BB_CTX.lineWidth=0.5;
+  for(var i=0;i<=BB_MS;i+=50){BB_CTX.beginPath();BB_CTX.moveTo(i,0);BB_CTX.lineTo(i,BB_MS);BB_CTX.stroke();BB_CTX.beginPath();BB_CTX.moveTo(0,i);BB_CTX.lineTo(BB_MS,i);BB_CTX.stroke();}
+  bbDrawSea();
+  bbDrawShelters();
+  bbDrawCamps();
+  bbDrawUnits();
+  bbDrawWalls();
+  bbDrawSel();
+  bbDrawAimPrev();
+  bbDrawPlacePrev();
+  bbDrawTrap();
+  bbDrawCannonPrev();
+  bbDrawAnim();
+}
+function bbDrawSea(){
+  if(!BB_G)return;
+  BB_CTX.save();
+  var sl=BB_G.seaLine;
+  var livePath=BB_G._seaDrawing?BB_G.seaPath:null;
+  var drawPath=sl?sl.path:livePath;
+  if(drawPath&&drawPath.length>=2){
+    // 先画海洋填充(更深的蓝色)
+    if(sl&&sl.seaSide){
+      BB_CTX.fillStyle='rgba(8,50,140,0.55)';
+      BB_CTX.beginPath();
+      if(sl.seaSide==='top'){
+        BB_CTX.moveTo(0,0);BB_CTX.lineTo(BB_MS,0);
+        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
+      }else if(sl.seaSide==='bottom'){
+        BB_CTX.moveTo(0,BB_MS);BB_CTX.lineTo(BB_MS,BB_MS);
+        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
+      }else if(sl.seaSide==='left'){
+        BB_CTX.moveTo(0,0);BB_CTX.lineTo(0,BB_MS);
+        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
+      }else{
+        BB_CTX.moveTo(BB_MS,0);BB_CTX.lineTo(BB_MS,BB_MS);
+        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
+      }
+      BB_CTX.closePath();BB_CTX.fill();
+      // 加上海浪纹理
+      BB_CTX.fillStyle='rgba(20,80,180,0.15)';
+      BB_CTX.beginPath();
+      for(var i=0;i<drawPath.length-1;i++){
+        var mx=(drawPath[i].x+drawPath[i+1].x)/2;
+        var my=(drawPath[i].y+drawPath[i+1].y)/2;
+        var ddx=drawPath[i+1].x-drawPath[i].x;
+        var ddy=drawPath[i+1].y-drawPath[i].y;
+        var dl=Math.sqrt(ddx*ddx+ddy*ddy);
+        if(dl>0){var n=-ddy/dl*8;BB_CTX.moveTo(mx+n,my+ddx/dl*8);BB_CTX.lineTo(mx-n,my-ddx/dl*8);}
+      }
+      BB_CTX.strokeStyle='rgba(40,120,220,0.2)';BB_CTX.lineWidth=1;
+      BB_CTX.stroke();
+    }
+    // 绘制分界线
+    BB_CTX.strokeStyle='rgba(50,150,240,0.9)';BB_CTX.lineWidth=2.5;
+    BB_CTX.shadowColor='rgba(30,100,200,0.6)';BB_CTX.shadowBlur=6;
+    BB_CTX.setLineDash(livePath?[4,4]:[8,4]);
+    BB_CTX.beginPath();
+    BB_CTX.moveTo(drawPath[0].x,drawPath[0].y);
+    for(var i=1;i<drawPath.length;i++)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
+    BB_CTX.stroke();BB_CTX.setLineDash([]);
+    BB_CTX.shadowBlur=0;
+  }
+  BB_CTX.restore();
+}
+function bbDrawShelters(){
+  if(!BB_G||!BB_G.shelters)return;
+  for(var i=0;i<BB_G.shelters.length;i++){
+    var s=BB_G.shelters[i];
+    if(!bbDrawImg(BB_CTX,'bb_wall_black',s.x+BB_SW/2,s.y+BB_SH/2,s.angle||0)){
+      BB_CTX.save();BB_CTX.translate(s.x+BB_SW/2,s.y+BB_SH/2);BB_CTX.rotate((s.angle||0)-Math.PI/2);
+      BB_CTX.fillStyle='#5a4a30';BB_CTX.strokeStyle='#7a6a4a';BB_CTX.lineWidth=2;
+      rRect(BB_CTX,-BB_SW/2,-BB_SH/2,BB_SW,BB_SH,3);BB_CTX.fill();BB_CTX.stroke();
+      BB_CTX.fillStyle='#4a3a20';
+      for(var ii=-BB_SW/2+4;ii<BB_SW/2-4;ii+=10)BB_CTX.fillRect(ii,-BB_SH/2+3,6,BB_SH-6);
+      BB_CTX.restore();
+    }
+  }
+}
+function bbDrawCamps(){
+  if(!BB_G||!BB_G.camps)return;
+  ['red','blue'].forEach(function(t){
+    var c=BB_G.camps[t];if(!c||c.eliminated)return;
+    var cx=c.x,cy=c.y,key='bb_camp_'+t;
+    if(!bbDrawImg(BB_CTX,key,cx,cy,0)){
+      BB_CTX.save();
+      BB_CTX.fillStyle=t==='red'?'#5a2020':'#20305a';
+      BB_CTX.strokeStyle=t==='red'?'#a44':'#48f';BB_CTX.lineWidth=2;
+      BB_CTX.fillRect(cx-BB_CS,cy-BB_CS+5,BB_CS*2,BB_CS*2-5);
+      BB_CTX.strokeRect(cx-BB_CS,cy-BB_CS+5,BB_CS*2,BB_CS*2-5);
+      BB_CTX.restore();
+    }
+    BB_CTX.fillStyle='#fff';BB_CTX.font='bold 14px "Courier New"';
+    BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
+    BB_CTX.fillText('HP'+c.hp,cx,cy+BB_CS+12);
+  });
+}
+function bbDrawUnits(){
+  if(!BB_G)return;
+  for(var i=0;i<BB_G.units.length;i++){
+    var u=BB_G.units[i];
+    if(u.eliminated||u.trapped)continue;
+    if(u.type==='wall')continue;
+    BB_CTX.save();BB_CTX.translate(u.x,u.y);
+    if(BB_G.selU===u){
+      BB_CTX.strokeStyle='#c8a96e';BB_CTX.lineWidth=1.5;BB_CTX.setLineDash([3,3]);
+      BB_CTX.beginPath();BB_CTX.arc(0,0,BB_UR+5,0,Math.PI*2);BB_CTX.stroke();BB_CTX.setLineDash([]);
+    }
+    if(u.air){
+      BB_CTX.fillStyle='rgba(0,0,0,0.2)';
+      BB_CTX.beginPath();BB_CTX.ellipse(0,BB_UR+8,BB_UR,BB_UR*0.4,0,0,Math.PI*2);BB_CTX.fill();
+    }
+    var imgKey=bbGetUnitImgKey(u);
+    if(imgKey)bbDrawImg(BB_CTX,imgKey,0,0,u.facing);
+    if(u.type!=='wall'&&u.type!=='mine'){
+      BB_CTX.fillStyle='#fff';BB_CTX.font='bold 9px "Courier New"';
+      BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
+      BB_CTX.fillText(''+u.hp,0,BB_UR+10);
+    }
+    if(u.air){
+      BB_CTX.fillStyle='#fff';BB_CTX.font='8px "Courier New"';BB_CTX.textAlign='center';
+      BB_CTX.fillText('H:'+(u.altitude||50),0,-BB_UR-10);
+    }
+    BB_CTX.restore();
+  }
+  for(var i=0;i<BB_G.units.length;i++){
+    var u=BB_G.units[i];
+    if(u.eliminated||!u.trapped)continue;
+    if(u.type==='wall')continue;
+    BB_CTX.save();BB_CTX.globalAlpha=0.4;BB_CTX.translate(u.x,u.y);
+    var imgKey=bbGetUnitImgKey(u);
+    if(imgKey&&IMG_CACHE[imgKey]&&IMG_CACHE[imgKey].complete)bbDrawImg(BB_CTX,imgKey,0,0,u.facing);
+    BB_CTX.restore();
+  }
+}
+function bbDrawWalls(){
+  if(!BB_G)return;
+  for(var i=0;i<BB_G.units.length;i++){
+    var u=BB_G.units[i];
+    if(u.type!=='wall'||u.eliminated)continue;
+    var key=u.team==='red'?'bb_wall_red':(u.team==='blue'?'bb_wall_blue':'bb_wall_black');
+    if(!bbDrawImg(BB_CTX,key,u.x,u.y,u.facing||0)){
+      BB_CTX.save();BB_CTX.translate(u.x,u.y);BB_CTX.rotate((u.facing||0)-Math.PI/2);
+      var wc=u.team==='red'?'#8a4030':(u.team==='blue'?'#304080':'#6a5a40');
+      BB_CTX.fillStyle=wc;BB_CTX.strokeStyle='#aaa';BB_CTX.lineWidth=1.5;
+      var w=u.w||50,h=u.h||6;rRect(BB_CTX,-w/2,-h/2,w,h,2);BB_CTX.fill();BB_CTX.stroke();
+      BB_CTX.restore();
+    }
+    BB_CTX.fillStyle='#fff';BB_CTX.font='8px "Courier New"';BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
+    BB_CTX.fillText(u.maxHp>99?'inf':'H'+u.hp,u.x,u.y-(u.h||6)/2-4);
+  }
+}
+function bbDrawSel(){
+  var u=BB_G.selU;if(!u||u.eliminated)return;
+  BB_CTX.save();
+  BB_CTX.strokeStyle='rgba(200,169,110,0.4)';BB_CTX.lineWidth=1.5;BB_CTX.setLineDash([4,4]);
+  BB_CTX.beginPath();BB_CTX.arc(u.x,u.y,BB_CM*3,0,Math.PI*2);BB_CTX.stroke();BB_CTX.setLineDash([]);
+  BB_CTX.restore();
+}
+function bbDrawAimPrev(){
+  var u=BB_G.selU;if(!u||u.eliminated||!BB_G.aimMode)return;
+  var rg=Math.PI*2,fa=0;
+  BB_CTX.save();
+  BB_CTX.fillStyle='rgba(200,169,110,0.08)';BB_CTX.strokeStyle='rgba(200,169,110,0.3)';BB_CTX.lineWidth=1;
+  BB_CTX.beginPath();BB_CTX.moveTo(u.x,u.y);BB_CTX.arc(u.x,u.y,600,0,Math.PI*2);BB_CTX.closePath();BB_CTX.fill();BB_CTX.stroke();
+  var dx=BB_G.mx-u.x,dy=BB_G.my-u.y,ma=Math.atan2(dy,dx);
+  BB_CTX.strokeStyle='rgba(200,50,50,0.6)';BB_CTX.lineWidth=1.5;BB_CTX.setLineDash([5,4]);
+  BB_CTX.beginPath();BB_CTX.moveTo(u.x,u.y);BB_CTX.lineTo(BB_G.mx,BB_G.my);BB_CTX.stroke();BB_CTX.setLineDash([]);
+  BB_CTX.fillStyle='#c44';BB_CTX.font='11px "Courier New"';BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
+  BB_CTX.fillText('shoot',BB_G.mx,BB_G.my-8);
+  BB_CTX.restore();
+}
+function bbDrawPlacePrev(){
+  if(BB_G.buildWall&&BB_G.builder&&!BB_G.builder.eliminated){
+    var mx=BB_G.mx,my=BB_G.my;
+    if(mx>=0&&mx<=BB_MS&&my>=0&&my<=BB_MS){
+      var a=BB_G.pa||0;
+      BB_CTX.save();BB_CTX.globalAlpha=0.35;
+      var key=BB_G.builder.team==='red'?'bb_wall_red':'bb_wall_blue';
+      if(!bbDrawImg(BB_CTX,key,mx,my,a)){
+        BB_CTX.save();BB_CTX.translate(mx,my);BB_CTX.rotate(a-Math.PI/2);
+        BB_CTX.fillStyle='#6a5a40';BB_CTX.strokeStyle='#aaa';BB_CTX.lineWidth=1.5;
+        rRect(BB_CTX,-25,-3,50,6,2);BB_CTX.fill();BB_CTX.stroke();BB_CTX.restore();
+      }
+      BB_CTX.restore();
+    }
+    return;
+  }
+  if(!BB_G.selT)return;
+  var t=BB_G.selT,mx=BB_G.mx,my=BB_G.my;
+  if(mx<0||mx>BB_MS||my<0||my>BB_MS)return;
+  BB_CTX.save();BB_CTX.globalAlpha=0.35;
+  if(t==='shelter'){
+    var ang=(BB_G.sa||0)-Math.PI/2;
+    BB_CTX.translate(mx,my);BB_CTX.rotate(ang);
+    BB_CTX.fillStyle='#5a4a30';BB_CTX.strokeStyle='#7a6a4a';BB_CTX.lineWidth=2;
+    rRect(BB_CTX,-BB_SW/2,-BB_SH/2,BB_SW,BB_SH,3);BB_CTX.fill();BB_CTX.stroke();
+  }else if(t==='camp_red'||t==='camp_blue'){
+    BB_CTX.fillStyle=t==='camp_red'?'#5a2020':'#20305a';
+    BB_CTX.fillRect(mx-BB_CS,my-BB_CS+5,BB_CS*2,BB_CS*2-5);
+  }else if(t==='sea_line'||t==='sea_fill'){
+    BB_CTX.strokeStyle='rgba(30,120,200,0.5)';BB_CTX.lineWidth=2;
+    BB_CTX.beginPath();BB_CTX.arc(mx,my,8,0,Math.PI*2);BB_CTX.stroke();
+  }else{
+    var r=t.endsWith('_r'),c=r?'#c44':'#48f',a=BB_G.pa||0;
+    BB_CTX.translate(mx,my);
+    BB_CTX.strokeStyle=c;BB_CTX.lineWidth=2;
+    BB_CTX.beginPath();BB_CTX.arc(0,0,BB_UR,0,Math.PI*2);BB_CTX.stroke();
+    var da=a-Math.PI/2;
+    BB_CTX.beginPath();BB_CTX.moveTo(0,0);BB_CTX.lineTo(Math.cos(da)*(BB_UR+8),Math.sin(da)*(BB_UR+8));BB_CTX.stroke();
+  }
+  BB_CTX.restore();
+}
+function bbDrawTrap(){
+  for(var i=0;i<BB_G.units.length;i++){
+    var u=BB_G.units[i];
+    if(u.eliminated||!u.trapped||u.type==='wall')continue;
+    BB_CTX.save();
+    BB_CTX.strokeStyle='#aa0';BB_CTX.lineWidth=1.5;BB_CTX.setLineDash([3,3]);
+    BB_CTX.beginPath();BB_CTX.arc(u.x,u.y,BB_UR+4,0,Math.PI*2);BB_CTX.stroke();BB_CTX.setLineDash([]);
+    BB_CTX.fillStyle='#aa0';BB_CTX.font='9px "Courier New"';BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
+    BB_CTX.fillText('X',u.x,u.y-BB_UR-6);
+    BB_CTX.restore();
+  }
+}
+function bbDrawCannonPrev(){
+  if(!BB_G.selCannon&&!BB_G.carMineMode)return;
+  var mx=BB_G.mx,my=BB_G.my;
+  if(mx<0||mx>BB_MS||my<0||my>BB_MS)return;
+  BB_CTX.save();
+  BB_CTX.strokeStyle='#ff0';BB_CTX.lineWidth=1.5;
+  BB_CTX.beginPath();BB_CTX.moveTo(mx-5,my);BB_CTX.lineTo(mx+5,my);BB_CTX.stroke();
+  BB_CTX.beginPath();BB_CTX.moveTo(mx,my-5);BB_CTX.lineTo(mx,my+5);BB_CTX.stroke();
+  BB_CTX.strokeStyle='rgba(255,200,0,0.3)';BB_CTX.setLineDash([4,4]);
+  BB_CTX.beginPath();BB_CTX.arc(mx,my,BB_CM*1,0,Math.PI*2);BB_CTX.stroke();BB_CTX.setLineDash([]);
+  BB_CTX.restore();
+}
+function bbDrawAnim(){
+  var now=Date.now();
+  BB_G.animBullets=BB_G.animBullets.filter(function(b){
+    var elapsed=now-b.startTime,d=(elapsed/200)*b.stop;
+    if(d>b.stop+10)return false;
+    var px=b.sx+Math.cos(b.angle)*d,py=b.sy+Math.sin(b.angle)*d;
+    BB_CTX.save();BB_CTX.fillStyle='#ff0';BB_CTX.shadowColor='#ff0';BB_CTX.shadowBlur=10;
+    BB_CTX.beginPath();BB_CTX.arc(px,py,3,0,Math.PI*2);BB_CTX.fill();BB_CTX.restore();
+    return true;
+  });
+  BB_G.animExplosions=BB_G.animExplosions.filter(function(e){
+    var elapsed=now-e.startTime,p=elapsed/400;
+    if(p>=1)return false;
+    var r=e.radius*(1+p*2);
+    BB_CTX.fillStyle='rgba(255,100,0,'+(0.8-p)+')';
+    BB_CTX.beginPath();BB_CTX.arc(e.x,e.y,r,0,Math.PI*2);BB_CTX.fill();
+    return true;
+  });
+}
+function bbStartAnim(){
+  function loop(){bbDraw();BB_G.animId=requestAnimationFrame(loop);}
+  loop();
+}
+
+// ===== TOOLS =====
+function bbSelTool(t){
+  if(BB_G.state===BB_SD){
+    if(t==='shelter'||t==='camp_red'||t==='camp_blue'||t==='sea_line'||t==='sea_fill'){}
+    else{bbHint('绘制阶段只能使用地图工具');return;}
+  }else{
+    if(t==='shelter'||t==='camp_red'||t==='camp_blue'||t==='sea_line'||t==='sea_fill'){bbHint('游戏开始后不能编辑地图');return;}
+    var te=t.endsWith('_r')?'red':'blue';
+    if(te!==BB_G.phase){bbHint('不是你的回合');return;}
+  }
+  if(BB_G.state!==BB_SD){
+    var type=bbParseType(t),cfg=BB_CFG[type];
+    if(cfg&&cfg.cost&&BB_G.killCoins[BB_G.phase]<cfg.cost){bbHint('人头币不足！需要 '+cfg.cost);return;}
+  }
+  document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
+  var el=document.querySelector('.bb-tb[data-tool="'+t+'"]');
+  if(el)el.classList.add('act');
+  BB_G.selT=t;BB_G.pa=0;
+  bbShowCancelBtn();
+  // 不需要角度的工具：营地、海洋、大炮、地雷、工程兵、医生
+  var noAngle=(t==='camp_red'||t==='camp_blue'||t==='sea_line'||t==='sea_fill'||t.startsWith('cannon')||t.startsWith('mine')||t.startsWith('engineer')||t.startsWith('doctor'));
+  if(BB_G.state===BB_SD&&noAngle){
+    bbHideAngleKnob();
+  }else{
+    bbShowAngleKnob();
+  }
+  if(t==='sea_line'){BB_G._seaDrawing=false;BB_G.seaPath=[];bbHint('长按左键拖动绘制分界线');}
+  else if(t==='sea_fill'){bbHint('点击分割后的一侧区域填充海洋');}
+  else if(noAngle)bbHint('点击放置');
+  else bbHint('点击放置，滚轮调整角度');
+  if(window.innerWidth<600){
+    document.getElementById('bbMobileToolPanel').style.display='none';
+    document.querySelector('.bb-mtp-close').style.display='none';
+  }
+}
+function bbParseType(t){
+  if(t.startsWith('soldier'))return'soldier';
+  if(t.startsWith('sniper'))return'sniper';
+  if(t.startsWith('engineer'))return'engineer';
+  if(t.startsWith('doctor'))return'doctor';
+  if(t.startsWith('cannon'))return'cannon';
+  if(t.startsWith('tank'))return'tank';
+  if(t.startsWith('carrier'))return'carrier';
+  if(t.startsWith('car'))return'car';
+  if(t.startsWith('heli'))return'heli';
+  if(t.startsWith('jet'))return'jet';
+  if(t.startsWith('bomber'))return'bomber';
+  if(t.startsWith('ship'))return'ship';
+  return null;
+}
+function bbHint(t){document.getElementById('bbHintTxt').textContent=t;}
+function bbDoCancel(){
+  BB_G.selU=null;BB_G.selT=null;BB_G.buildWall=false;BB_G.aimMode=false;
+  BB_G.selCannon=false;BB_G.selCannonU=null;BB_G.healMode=false;BB_G.healer=null;
+  BB_G.carMineMode=false;BB_G.carMineU=null;BB_G._seaLineStart=null;BB_G._buildCannon=false;BB_G._cannonBuilder=null;
+  BB_G._driving=false;BB_G._driveU=null;document.getElementById('bbDrivePad').style.display='none';
+  bbClosePop();
+  document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
+  bbHint('');document.getElementById('bbCancelBtn').style.display='none';
+  document.getElementById('bbAngleKnob').style.display='none';
+  document.getElementById('bbMobileFireBtn').style.display='none';
+}
+function bbAdjAngle(step){
+  if(BB_G.state===BB_SD&&BB_G.selT==='shelter')BB_G.sa=(BB_G.sa||0)+step;
+  else if(BB_G.buildWall)BB_G.pa=(BB_G.pa||0)+step;
+  else if(BB_G.selT&&BB_G.state!==BB_SD)BB_G.pa=(BB_G.pa||0)+step;
+  bbUpdKnob();
+}
+function bbUpdKnob(){
+  var a=(BB_G.selT==='shelter'&&BB_G.state===BB_SD)?BB_G.sa:(BB_G.pa||0);
+  document.getElementById('bbAngleLabel').textContent=Math.round(a*180/Math.PI)+'deg';
+  document.getElementById('bbKnobIndicator').style.transform='rotate('+a+'rad)';
+  document.getElementById('bbAngleKnob').style.display='flex';
+}
+function bbShowAngleKnob(){document.getElementById('bbAngleKnob').style.display='flex';bbUpdKnob();}
+function bbHideAngleKnob(){document.getElementById('bbAngleKnob').style.display='none';}
+function bbShowCancelBtn(){document.getElementById('bbCancelBtn').style.display='block';}
+function bbHideCancelBtn(){document.getElementById('bbCancelBtn').style.display='none';}
+
+// ===== MOBILE PANEL =====
+var BB_MTP_TOOLS={
+  draw:[
+    {tool:'shelter',label:'■ 掩体',cls:''},
+    {tool:'camp_red',label:'■ 营地(红)',cls:'r'},
+    {tool:'camp_blue',label:'■ 营地(蓝)',cls:'b'},
+    {tool:'sea_line',label:'~ 分界线',cls:''},
+    {tool:'sea_fill',label:'~ 填充海',cls:''}
+  ],
+  red:[
+    {tool:'soldier_r',label:'○ 普通兵 10HP',cls:'r'},
+    {tool:'sniper_r',label:'● 狙击兵 5HP',cls:'r'},
+    {tool:'engineer_r',label:'⊤ 工程兵 15HP',cls:'r'},
+    {tool:'doctor_r',label:'+ 医生 10HP',cls:'r'},
+    {tool:'car_r',label:'▷ 车 💰2',cls:'r'},
+    {tool:'tank_r',label:'◈ 坦克 💰5',cls:'r'},
+    {tool:'heli_r',label:'◇ 直升机 💰3',cls:'r'},
+    {tool:'jet_r',label:'△ 战斗机 💰4',cls:'r'},
+    {tool:'bomber_r',label:'▽ 轰炸机 💰25',cls:'r'},
+    {tool:'carrier_r',label:'⊡ 航母 💰10',cls:'r'},
+    {tool:'ship_r',label:'◫ 战舰 💰5',cls:'r'},
+  ],
+  blue:[
+    {tool:'soldier_b',label:'○ 普通兵 10HP',cls:'b'},
+    {tool:'sniper_b',label:'● 狙击兵 5HP',cls:'b'},
+    {tool:'engineer_b',label:'⊤ 工程兵 15HP',cls:'b'},
+    {tool:'doctor_b',label:'+ 医生 10HP',cls:'b'},
+    {tool:'car_b',label:'▷ 车 💰2',cls:'b'},
+    {tool:'tank_b',label:'◈ 坦克 💰5',cls:'b'},
+    {tool:'heli_b',label:'◇ 直升机 💰3',cls:'b'},
+    {tool:'jet_b',label:'△ 战斗机 💰4',cls:'b'},
+    {tool:'bomber_b',label:'▽ 轰炸机 💰25',cls:'b'},
+    {tool:'carrier_b',label:'⊡ 航母 💰10',cls:'b'},
+    {tool:'ship_b',label:'◫ 战舰 💰5',cls:'b'},
+  ]
+};
+function toggleBBMobilePanel(){
+  var p=document.getElementById('bbMobileToolPanel');
+  var isOpen=p.style.display==='flex';
+  if(isOpen){p.style.display='none';document.querySelector('.bb-mtp-close').style.display='none';}
+  else{
+    if(BB_G&&BB_G.state!==BB_SD)switchBBMtpTab(BB_G.phase||'red');
+    else switchBBMtpTab('draw');
+    p.style.display='flex';document.querySelector('.bb-mtp-close').style.display='block';
+    if(BB_G)bbUpdUI();
+  }
+}
+function switchBBMtpTab(tab){
+  document.querySelectorAll('.bb-mtp-tab').forEach(function(b){b.classList.toggle('active',b.dataset.mtab===tab);});
+  var list=document.getElementById('bbMtpList'),tools=BB_MTP_TOOLS[tab]||[];
+  list.innerHTML=tools.map(function(t){return'<button class="bb-tb '+t.cls+'" data-tool="'+t.tool+'" onclick="bbSelTool(\''+t.tool+'\')">'+t.label+'</button>';}).join('');
+  if(BB_G&&BB_G.selT){var el=list.querySelector('[data-tool="'+BB_G.selT+'"]');if(el)el.classList.add('act');}
+}
+function bbDPMove(dx,dy){if(!BB_G||!BB_G._driving)return;var u=BB_G._driveU;var a=u.facing||0;var cs=Math.cos(a),sn=Math.sin(a);bbDriveMove(dx*cs-dy*sn,dx*sn+dy*cs,0);}function bbDPRot(r){if(!BB_G||!BB_G._driving)return;bbDriveMove(0,0,r);}function bbDPStop(){}function bbMobileFire(){if(BB_G&&BB_G.aimMode&&BB_G.selU)bbDoAimFire(BB_G.mx,BB_G.my);}
+
+// ===== EVENTS =====
+BB_CV.addEventListener('mousemove',function(e){
+  if(!BB_G)return;
+  var r=BB_CV.getBoundingClientRect();
+  BB_G.mx=(e.clientX-r.left)*BB_MS/r.width;BB_G.my=(e.clientY-r.top)*BB_MS/r.height;
+  // 海洋分界线拖动绘制
+  if(BB_G._seaDrawing){
+    var last=BB_G.seaPath[BB_G.seaPath.length-1];
+    if(!last||dist({x:BB_G.mx,y:BB_G.my},last)>5){
+      BB_G.seaPath.push({x:BB_G.mx,y:BB_G.my});
+    }
+  }
+});
+BB_CV.addEventListener('mousedown',function(e){
+  if(!BB_G||e.button!==0)return;
+  if(BB_G.state!==BB_SD)return;
+  if(BB_G.selT==='sea_line'){
+    BB_G._seaDrawing=true;
+    BB_G.seaPath=[{x:BB_G.mx,y:BB_G.my}];
+    e.preventDefault();
+  }
+});
+BB_CV.addEventListener('mouseup',function(e){
+  if(!BB_G)return;
+  if(BB_G._seaDrawing){
+    BB_G._seaDrawing=false;
+    if(BB_G.seaPath&&BB_G.seaPath.length>=2){
+      // 创建带路径的 seaLine
+      var path=BB_G.seaPath;
+      // 计算两端延伸到地图边缘
+      var first=path[0],last=path[path.length-1];
+      var dx=last.x-first.x,dy=last.y-first.y;
+      var len=Math.sqrt(dx*dx+dy*dy);
+      if(len>0){
+        var ux=dx/len,uy=dy/len;
+        // 延伸至地图边缘
+        function extendLine(p,dx,dy){
+          // 从p开始沿(dx,dy)方向延伸至地图边界
+          if(dx>0){var t=(BB_MS-p.x)/dx;p={x:p.x+dx*t,y:p.y+dy*t};}
+          else if(dx<0){var t=-p.x/dx;p={x:p.x+dx*t,y:p.y+dy*t};}
+          if(dy>0){var t=(BB_MS-p.y)/dy;p={x:p.x+dx*t,y:p.y+dy*t};}
+          else if(dy<0){var t=-p.y/dy;p={x:p.x+dx*t,y:p.y+dy*t};}
+          return p;
+        }
+        var startExt=extendLine(first,-ux,-uy);
+        var endExt=extendLine(last,ux,uy);
+        // 构建完整路径
+        BB_G.seaLine={path:[startExt].concat(path,[endExt]),seaSide:null};
+        BB_G.seaFilled=false;
+        bbHint('分界线已绘制，请用填充工具选择海洋侧');
+      }
+    }
+    BB_G.seaPath=null;
+  }
+});
+BB_CV.addEventListener('wheel',function(e){
+  e.preventDefault();
+  if(!BB_G)return;
+  var d=e.deltaY>0?0.1:-0.1;
+  if(BB_G.selT==='shelter'&&BB_G.state===BB_SD){BB_G.sa=(BB_G.sa||0)+d;bbUpdKnob();}
+  else if(BB_G.buildWall){BB_G.pa=(BB_G.pa||0)+d;bbUpdKnob();}
+  else if(BB_G.selT&&BB_G.state!==BB_SD){BB_G.pa=(BB_G.pa||0)+d;bbUpdKnob();}
+},{passive:false});
+BB_CV.addEventListener('mouseenter',function(){BB_CV.focus();});
+BB_CV.setAttribute('tabindex','0');
+
+BB_CV.addEventListener('touchstart',function(e){
+  e.preventDefault();if(!BB_G)return;
+  var r=BB_CV.getBoundingClientRect();
+  if(e.touches.length===1){
+    var t=e.touches[0];
+    BB_G.mx=(t.clientX-r.left)*BB_MS/r.width;BB_G.my=(t.clientY-r.top)*BB_MS/r.height;
+    BB_G._touchStart={x:BB_G.mx,y:BB_G.my};
+  }
+  if(e.touches.length===2){
+    var t1=e.touches[0],t2=e.touches[1];
+    BB_G._twoFingerStart=Math.atan2(t2.clientY-t1.clientY,t2.clientX-t1.clientX);
+    BB_G._angleStart=(BB_G.selT==='shelter'&&BB_G.state===BB_SD)?(BB_G.sa||0):(BB_G.pa||0);
+  }
+},{passive:false});
+BB_CV.addEventListener('touchmove',function(e){
+  e.preventDefault();if(!BB_G)return;
+  var r=BB_CV.getBoundingClientRect();
+  if(e.touches.length===2&&BB_G._twoFingerStart!==undefined){
+    var t1=e.touches[0],t2=e.touches[1],cur=Math.atan2(t2.clientY-t1.clientY,t2.clientX-t1.clientX);
+    var diff=cur-BB_G._twoFingerStart;
+    while(diff>Math.PI)diff-=Math.PI*2;while(diff<-Math.PI)diff+=Math.PI*2;
+    var na=BB_G._angleStart+diff;
+    if(BB_G.selT==='shelter'&&BB_G.state===BB_SD)BB_G.sa=na;
+    else if(BB_G.buildWall||BB_G.selT)BB_G.pa=na;
+    bbUpdKnob();
+  }else if(e.touches.length===1){
+    var t=e.touches[0];
+    BB_G.mx=(t.clientX-r.left)*BB_MS/r.width;BB_G.my=(t.clientY-r.top)*BB_MS/r.height;
+  }
+},{passive:false});
+BB_CV.addEventListener('touchend',function(e){
+  if(!BB_G)return;
+  if(e.touches.length<2)BB_G._twoFingerStart=undefined;
+  if(e.touches.length>0)return;
+  var mx=BB_G.mx,my=BB_G.my;
+  if(BB_G._buildCannon){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbBuildCannonAt(mx,my);}
+    BB_G._touchStart=null;return;
+  }
+  if(BB_G.aimMode){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<5){
+      if(dist({x:mx,y:my},BB_G.selU)<BB_UR+6)bbDoAimFire(mx,my);
+    }BB_G._touchStart=null;return;
+  }
+  if(BB_G.selCannon){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbFireCannon(mx,my);}
+    BB_G._touchStart=null;return;
+  }
+  if(BB_G.carMineMode){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbCarPlaceMine(mx,my);}
+    BB_G._touchStart=null;return;
+  }
+  if(BB_G.healMode){
+    if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)<10){bbDoctorHeal(mx,my);}
+    BB_G._touchStart=null;return;
+  }
+  if(BB_G._touchStart&&dist({x:mx,y:my},BB_G._touchStart)>10){BB_G._touchStart=null;return;}
+  BB_G._touchStart=null;
+  if(BB_G.buildWall){bbPlaceWall(mx,my);return;}
+  if(BB_G.selT){bbPlace(mx,my);return;}
+  if(BB_G.selU){bbClickUnit(mx,my);return;}
+  bbTrySel(mx,my);
+});
+document.addEventListener('keydown',function(e){
+  if(BB_G&&BB_G._driving){
+    var step=8,rot=0.1;
+    var dx=0,dy=0;
+    if(e.key==='w'||e.key==='W')dy=-step;
+    if(e.key==='s'||e.key==='S')dy=step;
+    if(e.key==='a'||e.key==='A')dx=-step;
+    if(e.key==='d'||e.key==='D')dx=step;
+    if(e.key==='q'||e.key==='Q')rot=-rot;
+    if(e.key==='e'||e.key==='E')rot=rot;
+    if(e.key===' '){e.preventDefault();bbDriveEnd();return;}
+    if(dx!==0||dy!==0||rot!==0){
+      e.preventDefault();
+      bbDriveMove(dx,dy,rot);
+    }
+    return;
+  }
+  if(BB_G&&(e.key==='t'||e.key==='T')){bbDoCancel();}
+});
+BB_CV.addEventListener('click',function(e){
+  if(!BB_G||BB_G.over)return;
+  var r=BB_CV.getBoundingClientRect();
+  var mx=(e.clientX-r.left)*BB_MS/r.width,my=(e.clientY-r.top)*BB_MS/r.height;
+  if(BB_G._buildCannon){bbBuildCannonAt(mx,my);return;}
+  if(BB_G.aimMode){bbDoAimFire(mx,my);return;}
+  if(BB_G.buildWall){bbPlaceWall(mx,my);return;}
+  if(BB_G.selCannon){bbFireCannon(mx,my);return;}
+  if(BB_G.carMineMode){bbCarPlaceMine(mx,my);return;}
+  if(BB_G.healMode){bbDoctorHeal(mx,my);return;}
+  if(BB_G.selT){bbPlace(mx,my);return;}
+  if(BB_G.selU){bbClickUnit(mx,my);return;}
+  bbTrySel(mx,my);
+});
+
+// ===== PLACE =====
+function bbPlace(mx,my){
+  var t=BB_G.selT;if(!t)return;
+  if(BB_G.state===BB_SD){
+    if(t==='shelter'){
+      BB_G.shelters.push({x:mx-BB_SW/2,y:my-BB_SH/2,w:BB_SW,h:BB_SH,hp:Infinity,angle:BB_G.sa||0});
+    }else if(t==='camp_red'){
+      if(BB_G.camps.red){bbHint('红方营地已存在');return;}
+      BB_G.camps.red={x:mx,y:my,hp:200,maxHp:200,team:'red',type:'camp',label:'钀ュ湴',eliminated:false};
+    }else if(t==='camp_blue'){
+      if(BB_G.camps.blue){bbHint('蓝方营地已存在');return;}
+      BB_G.camps.blue={x:mx,y:my,hp:200,maxHp:200,team:'blue',type:'camp',label:'钀ュ湴',eliminated:false};
+    }else if(t==='sea_line'){
+      // sea_line 现在由 mousedown/mousemove/mouseup 处理拖动绘制
+      return;
+    }else if(t==='sea_fill'){
+      if(!BB_G.seaLine||!BB_G.seaLine.path){bbHint('请先长按拖动绘制分界线');return;}
+      var path=BB_G.seaLine.path;
+      // 找到路径上离点击点最近的点
+      var minDist=Infinity,nearIdx=0;
+      for(var i=0;i<path.length;i++){
+        var d=dist({x:mx,y:my},path[i]);
+        if(d<minDist){minDist=d;nearIdx=i;}
+      }
+      var p=path[nearIdx];
+      var before=path[Math.max(0,nearIdx-1)];
+      var after=path[Math.min(path.length-1,nearIdx+1)];
+      var tdx=after.x-before.x,tdy=after.y-before.y;
+      var tlen=Math.sqrt(tdx*tdx+tdy*tdy);
+      if(tlen>0){tdx/=tlen;tdy/=tlen;}
+      // 法线：(-tdy, tdx) 是切线方向的"左侧"法线
+      var nx=-tdy,ny=tdx;
+      var vx=mx-p.x,vy=my-p.y;
+      var dot=vx*nx+vy*ny;
+      // dot>0 表示点击在法线方向侧(路径左侧)，dot<0 在右侧
+      // 用整体趋势来判断"top/bottom/left/right"
+      var totalDx=path[path.length-1].x-path[0].x;
+      var totalDy=path[path.length-1].y-path[0].y;
+      if(Math.abs(totalDx)>Math.abs(totalDy)){
+        // 大致水平方向的路径：上方=top，下方=bottom
+        // 路径从左到右时，法线指向上；从右到左时，法线指向下
+        if(totalDx>0){BB_G.seaLine.seaSide=dot>0?'top':'bottom';}
+        else{BB_G.seaLine.seaSide=dot>0?'bottom':'top';}
+      }else{
+        // 大致垂直方向的路径：左=left，右=right
+        if(totalDy>0){BB_G.seaLine.seaSide=dot>0?'left':'right';}
+        else{BB_G.seaLine.seaSide=dot>0?'right':'left';}
+      }
+      BB_G.seaFilled=true;
+      bbHint('海洋已填充');BB_G.selT=null;bbHideAngleKnob();bbHideCancelBtn();
+      document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
+      bbUpdUI();return;
+    }
+    bbHideAngleKnob();bbHideCancelBtn();bbUpdUI();return;
+  }
+  var _bt=bbParseType(t),_bc=_bt?BB_CFG[_bt]:null;
+  if(!_bc||!_bc.air&&!_bc.sea){if(!bbCanPlace({x:mx,y:my})){bbHint('必须在己方营地或单位3cm内');return;}}
+  if(!_bc||!_bc.air&&!_bc.sea){if(bbIsInSea(mx,my)){bbHint('不能放置在海洋上');return;}}
+  if(!_bc||!_bc.air&&!_bc.sea){if(bbOverlap({x:mx,y:my},BB_UR)){bbHint('位置重叠');return;}}
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  var r=t.endsWith('_r'),te=r?'red':'blue',type=bbParseType(t);
+  if(!type)return;
+  var cfg=BB_CFG[type];
+  if(cfg&&cfg.cost){
+    if(BB_G.killCoins[te]<cfg.cost){bbHint('人头币不足！需要 '+cfg.cost);return;}
+    BB_G.killCoins[te]-=cfg.cost;bbUpdKillCoins();
+  }
+  var a=BB_G.pa||0;
+  var u=bbMakeUnit(type,te,mx,my,a);
+  BB_G.units.push(u);BB_G.step++;BB_G.selT=null;BB_G.pa=0;
+  document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
+  bbHideAngleKnob();bbHideCancelBtn();
+  bbHint(u.label+' 已放置');bbUpdUI();bbAutoEnd();
+}
+function bbPlaceWall(mx,my){
+  var e=BB_G.builder;
+  if(!e||e.eliminated){BB_G.buildWall=false;bbHideAngleKnob();bbHideCancelBtn();return;}
+  if(dist(e,{x:mx,y:my})>BB_CM*3){bbHint('必须在工程兵3cm范围内');return;}
+  var w=bbMakeUnit('wall',e.team,mx,my,BB_G.pa||0);
+  BB_G.units.push(w);BB_G.step++;
+  BB_G.buildWall=false;BB_G.builder=null;BB_G.pa=0;
+  bbHideAngleKnob();bbHideCancelBtn();
+  bbHint('掩体已建造');bbCheckTrap();bbUpdUI();bbAutoEnd();
+}
+function bbCheckTrap(){
+  for(var i=0;i<BB_G.units.length;i++){
+    var u=BB_G.units[i];
+    if(u.eliminated||u.type==='wall')continue;
+    var trapped=false;
+    for(var j=0;j<BB_G.units.length;j++){
+      var w=BB_G.units[j];
+      if(w.type!=='wall'||w.eliminated)continue;
+      var dx=u.x-w.x,dy=u.y-w.y,wallAngle=w.facing-Math.PI/2;
+      var cs=Math.cos(wallAngle),sn=Math.sin(wallAngle);
+      var rx=dx*cs+dy*sn,ry=-dx*sn+dy*cs;
+      var ww=w.w||50,hh=w.h||6;
+      if(Math.abs(rx)<ww/2+BB_UR-2&&Math.abs(ry)<hh/2+BB_UR-2){trapped=true;break;}
+    }
+    if(trapped&&!u.trapped){u.trapped=true;}
+    else if(!trapped&&u.trapped)u.trapped=false;
+  }
+}
+function bbCanPlace(p){
+  var c=BB_G.phase==='red'?BB_G.camps.red:BB_G.camps.blue;
+  if(c&&!c.eliminated&&dist(p,c)<=BB_CM*3)return true;
+  for(var i=0;i<BB_G.units.length;i++){var u=BB_G.units[i];if(!u.eliminated&&u.team===BB_G.phase&&dist(p,u)<=BB_CM*3)return true;}
+  return false;
+}
+function bbOverlap(p,rr){
+  for(var i=0;i<BB_G.units.length;i++){var u=BB_G.units[i];if(!u.eliminated&&dist(p,u)<rr+BB_UR)return true;}
+  if(BB_G.camps.red&&!BB_G.camps.red.eliminated&&dist(p,BB_G.camps.red)<rr+BB_CS)return true;
+  if(BB_G.camps.blue&&!BB_G.camps.blue.eliminated&&dist(p,BB_G.camps.blue)<rr+BB_CS)return true;
+  return false;
+}
+function bbIsInSea(mx,my){
+  // 未填充海洋不算
+  if(!BB_G.seaLine||!BB_G.seaLine.seaSide)return false;
+  var path=BB_G.seaLine.path;
+  if(!path||path.length<2)return false;
+  // 使用 ray casting 算法判断点是否在多边形内
+  var inside=false;
+  for(var i=0,j=path.length-1;i<path.length;j=i++){
+    var xi=path[i].x,yi=path[i].y;
+    var xj=path[j].x,yj=path[j].y;
+    var intersect=((yi>my)!==(yj>my))&&(mx<(xj-xi)*(my-yi)/(yj-yi)+xi);
+    if(intersect)inside=!inside;
+  }
+  return inside;
+}
+
+// ===== MAKE UNIT =====
+function bbMakeUnit(type,team,x,y,angle){
+  var cfg=BB_CFG[type]||{};
+  var b={
+    id:Date.now()+Math.random(),type:type,team:team,x:x,y:y,
+    hp:cfg.hp||1,maxHp:cfg.maxHp||1,
+    ammo:cfg.maxAmmo||0,maxAmmo:cfg.maxAmmo||0,
+    atk:cfg.atk||0,
+    eliminated:false,trapped:false,facing:angle||0,
+    bulletsFired:0,reservedCement:0,
+    label:cfg.label||type,
+    w:type==='wall'?50:40,h:type==='wall'?6:40,
+  };
+  if(cfg.air){b.air=true;b.altitude=50;}
+  return b;
+}
+
+// ===== SELECT/POPUP =====
+function bbClickUnit(mx,my){
+  var u=BB_G.selU;if(!u||u.eliminated)return;
+  var clicked=bbFindU(mx,my);
+  if(clicked&&clicked!==u&&clicked.team===BB_G.phase){BB_G.selU=clicked;bbShowCancelBtn();bbShowPopup(clicked,mx,my);return;}
+  if(!clicked||clicked.eliminated||clicked.trapped||clicked.team!==BB_G.phase){BB_G.selU=null;bbHideCancelBtn();bbHint('');return;}
+  if(clicked===u)bbShowPopup(u,mx,my);
+}
+function bbTrySel(mx,my){
+  var u=bbFindU(mx,my);
+  if(u&&!u.eliminated&&!u.trapped&&u.team===BB_G.phase&&BB_G.state!==BB_SD){BB_G.selU=u;bbShowCancelBtn();bbShowPopup(u,mx,my);}
+}
+function bbFindU(mx,my){
+  for(var i=0;i<BB_G.units.length;i++){var u=BB_G.units[i];if(!u.eliminated&&u.type!=='wall'&&u.type!=='mine'&&dist({x:mx,y:my},u)<BB_UR+6)return u;}
+  return null;
+}
+function bbShowPopup(unit,mx,my){
+  var p=document.getElementById('bbUnitPopup');
+  var r=BB_CV.getBoundingClientRect();
+  var sx=r.left+mx*BB_MS/r.width,sy=r.top+my*BB_MS/r.height;
+  var h='<div style="color:#c8a96e;margin-bottom:4px;font-size:13px">['+unit.label+'] HP:'+unit.hp+'/'+unit.maxHp+'</div>';
+  var cfg=BB_CFG[unit.type];
+  if(['soldier','sniper','doctor','tank','car','jet','heli','bomber','carrier','ship'].indexOf(unit.type)>=0){
+    if(unit.ammo>0)h+='<button class="bb-pb" onclick="bbDoUnit(\'fire\')">射击 ['+unit.ammo+'/'+unit.maxAmmo+']</button>';
+    h+='<button class="bb-pb" onclick="bbDoUnit(\'reload\')">装弹 [1 step]</button>';
+  }
+  if(unit.type==='engineer'){
+    h+='<button class="bb-pb" onclick="bbDoEng(\'build\')">建造掩体 [1 step]</button>';
+    h+='<button class="bb-pb" onclick="bbDoEng(\'buildCannon\')">建造大炮 [1 step]</button>';
+    h+='<button class="bb-pb" onclick="bbDoEng(\'repair\')">修理载具/Cannon [1 step]</button>';
+  }
+  if(unit.type==='doctor')h+='<button class="bb-pb" onclick="bbDoHeal()">治疗队友 [1 step]</button>';
+  if(unit.type==='cannon')h+='<button class="bb-pb" onclick="bbDoCannon()">瞄准开火 [need soldier]</button>';
+  if(unit.type==='car')h+='<button class="bb-pb" onclick="bbDoCarMine()">放置地雷 [1 step]</button>';
+  if(unit.type==='carrier'){h+='<button class="bb-pb" onclick="bbDoCarrierDeploy(\'jet\')">部署战斗机 [1 step]</button>';h+='<button class="bb-pb" onclick="bbDoCarrierDeploy(\'heli\')">部署直升机 [1 step]</button>';}
+  if(unit.type==='ship')h+='<button class="bb-pb" onclick="bbDoShipDeploy()">部署直升机 [1 step]</button>';
+  if(unit.type==='tank'||unit.type==='car'||unit.type==='heli'||unit.type==='jet'||unit.type==='bomber'||unit.type==='carrier'||unit.type==='ship')h+='<button class="bb-pb" onclick="bbDoDrive()">驾驶 [WASD移动, QE旋转]</button>';
+  h+='<button class="bb-pb" onclick="bbClosePop()" style="color:#666">取消</button>';
+  p.innerHTML=h;p.style.display='block';
+  if(window.innerWidth<600){p.style.left='50%';p.style.top='50%';p.style.transform='translate(-50%,-50%)';}
+  else{p.style.transform='none';var px=sx+25,py=sy-25;if(px+170>window.innerWidth)px=sx-180;if(py+200>window.innerHeight)py=window.innerHeight-210;if(py<0)py=5;p.style.left=px+'px';p.style.top=py+'px';}
+}
+function bbClosePop(){document.getElementById('bbUnitPopup').style.display='none';}
+
+// ===== UNIT ACTIONS =====
+function bbDoUnit(action){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(action==='fire'){
+    if(u.ammo<=0){bbHint('弹药不足');return;}
+    if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+    BB_G.aimMode=true;bbShowCancelBtn();
+    if(window.innerWidth<600)document.getElementById('bbMobileFireBtn').style.display='block';
+    bbHint('拖动瞄准点击射击(360度)');
+  }else if(action==='reload'){
+    if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+    if(u.ammo>=u.maxAmmo){bbHint('弹药已满');return;}
+    u.ammo=u.maxAmmo;u.bulletsFired=0;BB_G.step++;
+    bbHint('装弹完成');bbUpdUI();bbAutoEnd();
+  }
+}
+function bbDoAimFire(mx,my){
+  var u=BB_G.selU;
+  if(!u||u.eliminated||u.ammo<=0){BB_G.aimMode=false;document.getElementById('bbMobileFireBtn').style.display='none';return;}
+  if(dist({x:mx,y:my},u)<BB_UR+6){BB_G.aimMode=false;bbHideCancelBtn();document.getElementById('bbMobileFireBtn').style.display='none';bbHint('');return;}
+  var a=Math.atan2(my-u.y,mx-u.x);
+  bbFire(u,a);
+  BB_G.aimMode=false;bbHideCancelBtn();document.getElementById('bbMobileFireBtn').style.display='none';
+}
+function bbDoEng(a){
+  bbClosePop();var e=BB_G.selU;if(!e||e.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  if(a==='build'){BB_G.buildWall=true;BB_G.builder=e;BB_G.pa=0;bbShowCancelBtn();bbShowAngleKnob();bbHint('点击放置掩体');}
+  else if(a==='buildCannon'){
+    BB_G._buildCannon=true;BB_G._cannonBuilder=e;
+    bbShowCancelBtn();bbHint('点击地图选择大炮放置位置(3cm内)');
+  }
+  else if(a==='repair'){
+    var targets=BB_G.units.filter(function(u){return!u.eliminated&&u.team===e.team&&['tank','car','cannon'].indexOf(u.type)>=0&&dist(u,e)<=BB_CM*3;});
+    if(targets.length===0){bbHint('附近没有可修理的载具/大炮');return;}
+    for(var i=0;i<targets.length;i++)targets[i].hp=targets[i].maxHp;
+    BB_G.step++;bbHint('已修理'+targets.length+'个载具/大炮');bbUpdUI();bbAutoEnd();
+  }
+}
+function bbBuildCannonAt(mx,my){
+  var e=BB_G._cannonBuilder;
+  if(!e||e.eliminated){BB_G._buildCannon=false;BB_G._cannonBuilder=null;bbHideCancelBtn();return;}
+  if(dist(e,{x:mx,y:my})>BB_CM*3){bbHint('必须在工程兵3cm范围内');return;}
+  if(bbOverlap({x:mx,y:my},BB_UR)){bbHint('位置重叠');return;}
+  var u=bbMakeUnit('cannon',e.team,mx,my,0);
+  BB_G.units.push(u);BB_G.step++;
+  BB_G._buildCannon=false;BB_G._cannonBuilder=null;bbHideCancelBtn();
+  bbHint('大炮已建造');bbUpdUI();bbAutoEnd();
+}
+function bbDoHeal(){
+  bbClosePop();var doc=BB_G.selU;if(!doc||doc.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  BB_G.healMode=true;BB_G.healer=doc;bbShowCancelBtn();
+  bbHint('点击队友进行治疗');
+}
+function bbDoctorHeal(mx,my){
+  var doc=BB_G.healer;if(!doc)return;
+  var target=bbFindU(mx,my);
+  if(target&&target.team===doc.team&&target!==doc&&!target.eliminated){
+    target.hp=target.maxHp;
+    doc.hp=Math.min(doc.maxHp,doc.hp+2);
+    BB_G.step++;
+    bbHint('治疗完成！'+target.label+' 已满血');
+    bbUpdUI();bbAutoEnd();
+  }else{bbHint('未找到有效治疗目标');}
+  BB_G.healMode=false;BB_G.healer=null;bbHideCancelBtn();
+}
+function bbDoCannon(){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  var operator=BB_G.units.find(function(s){return!s.eliminated&&s.team===u.team&&['soldier','sniper','engineer','doctor'].indexOf(s.type)>=0&&dist(s,u)<BB_CM*3;});
+  if(!operator){bbHint('大炮需要附近有士兵操控！(3cm)');return;}
+  BB_G.selCannon=true;BB_G.selCannonU=u;bbShowCancelBtn();
+  bbHint('点击选择大炮目标');
+}
+function bbFireCannon(tx,ty){
+  var cannon=BB_G.selCannonU;if(!cannon||cannon.eliminated)return;
+  var cfg=BB_CFG.cannon;
+  BB_G.step++;
+  for(var i=0;i<BB_G.units.length;i++){
+    var u=BB_G.units[i];
+    if(u.eliminated||u.team===cannon.team||u.type==='wall')continue;
+    if(cfg.cantHitAir&&u.air)continue;
+    if(dist(u,{x:tx,y:ty})<BB_CM)bbDmgU(u,cfg.atk,cannon);
+  }
+  ['red','blue'].forEach(function(t){
+    var c=BB_G.camps[t];if(!c||c.team===cannon.team||c.hp<=0)return;
+    if(dist(c,{x:tx,y:ty})<BB_CM)bbDmgU(c,cfg.atk,cannon);
+  });
+  BB_G.animExplosions.push({x:tx,y:ty,startTime:Date.now(),radius:30});
+  BB_G.selCannon=false;BB_G.selCannonU=null;bbHideCancelBtn();
+  bbHint('大炮开火！');bbChkOver();bbUpdUI();bbAutoEnd();
+}
+function bbDoDrive(){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  BB_G._driving=true;BB_G._driveU=u;
+  BB_G._driveOriginX=u.x;BB_G._driveOriginY=u.y;
+  if(u.type==='tank')BB_G._driveMax=BB_CM*2;
+  else if(u.type==='car')BB_G._driveMax=BB_CM*3;
+  else if(u.type==='heli')BB_G._driveMax=BB_CM*3;
+  else if(u.type==='jet')BB_G._driveMax=BB_CM*4;
+  else if(u.type==='bomber')BB_G._driveMax=BB_CM*4;
+  else if(u.type==='carrier')BB_G._driveMax=BB_CM*2;
+  else if(u.type==='ship')BB_G._driveMax=BB_CM*2;
+  else BB_G._driveMax=BB_CM*2;
+  bbShowCancelBtn();
+  if(window.innerWidth<600)document.getElementById('bbDrivePad').style.display='flex';
+  var maxCm=Math.round(BB_G._driveMax/BB_CM*10)/10;
+  var typeMap={jet:'战斗机',heli:'直升机',tank:'坦克',car:'车',bomber:'轰炸机',carrier:'航母',ship:'战舰'};
+  var type=typeMap[u.type]||'载具';
+  bbHint(type+' WASD移动 QE旋转 空格确认 ('+maxCm+'cm)');
+}
+function bbDriveMove(dx,dy,rot){
+  if(!BB_G._driving||!BB_G._driveU)return;
+  var u=BB_G._driveU;
+  var nx=u.x+dx,ny=u.y+dy;
+  // 检查新位置是否超出范围
+  if(nx<BB_UR||nx>BB_MS-BB_UR||ny<BB_UR||ny>BB_MS-BB_UR)return;
+  // 地面单位不能进入海洋，空中和海上单位可以
+  if(!u.air&&!u.sea&&bbIsInSea(nx,ny))return;
+  // 检查是否超出最大移动半径
+  var distMoved=dist({x:nx,y:ny},{x:BB_G._driveOriginX,y:BB_G._driveOriginY});
+  if(distMoved>BB_G._driveMax)return;
+  u.x=nx;u.y=ny;
+  u.facing=(u.facing||0)+rot;
+}
+function bbDriveEnd(){
+  if(!BB_G._driving)return;
+  BB_G.step++;
+  BB_G._driving=false;BB_G._driveU=null;
+  bbHideCancelBtn();
+  document.getElementById('bbDrivePad').style.display='none';
+  bbHint('驾驶完成');bbUpdUI();bbAutoEnd();
+}
+function bbDoCarrierDeploy(type){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  // 检查数量限制
+  var existing=BB_G.units.filter(function(x){return!x.eliminated&&x.team===u.team&&x.type===type&&x._deployedBy===u.id;});
+  var maxNum=type==='jet'?3:2;
+  if(existing.length>=maxNum){bbHint('已达到最大部署数量('+maxNum+')');return;}
+  // 在航母旁边放置
+  var nx=u.x+50,ny=u.y;
+  if(bbOverlap({x:nx,y:ny},BB_UR)){bbHint('位置重叠');return;}
+  var nu=bbMakeUnit(type,u.team,nx,ny,0);
+  nu._deployedBy=u.id;
+  BB_G.units.push(nu);BB_G.step++;
+  bbHint((type==='jet'?'战斗机':'直升机')+'已部署');bbUpdUI();bbAutoEnd();
+}
+function bbDoShipDeploy(){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  // 检查是否已有战舰部署的直升机存活
+  var existing=BB_G.units.filter(function(x){return!x.eliminated&&x.team===u.team&&x.type==='heli'&&x._deployedBy===u.id;});
+  if(existing.length>=1){bbHint('已有战舰部署的直升机存活');return;}
+  var nx=u.x+50,ny=u.y;
+  if(bbOverlap({x:nx,y:ny},BB_UR)){bbHint('位置重叠');return;}
+  var nu=bbMakeUnit('heli',u.team,nx,ny,0);
+  nu._deployedBy=u.id;
+  BB_G.units.push(nu);BB_G.step++;
+  bbHint('直升机已部署');bbUpdUI();bbAutoEnd();
+}
+function bbDoCarMine(){
+  bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
+  if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
+  BB_G.carMineMode=true;BB_G.carMineU=u;bbShowCancelBtn();
+  bbHint('点击车附近(1cm)放置地雷');
+}
+function bbCarPlaceMine(mx,my){
+  var car=BB_G.carMineU;if(!car)return;
+  if(dist(car,{x:mx,y:my})>BB_CM){bbHint('地雷必须在车1cm范围内！');return;}
+  var mine=bbMakeUnit('mine',car.team,mx,my,0);
+  BB_G.units.push(mine);BB_G.step++;
+  BB_G.carMineMode=false;BB_G.carMineU=null;bbHideCancelBtn();
+  bbHint('地雷已放置');bbUpdUI();bbAutoEnd();
+}
+
+// ===== FIRE =====
+function bbFire(shooter,angle){
+  if(!shooter||shooter.eliminated)return;
+  if(shooter.trapped){bbHint('单位被困，无法射击');return;}
+  if(shooter.ammo<=0){bbHint('弹药不足');return;}
+  shooter.ammo--;shooter.bulletsFired=(shooter.bulletsFired||0)+1;BB_G.step++;
+  var sx=shooter.x,sy=shooter.y,hitList=[],stop=BB_MS*1.5,pen=0;
+  var cfg=BB_CFG[shooter.type];
+  var isVehicle=['tank','car','cannon'].indexOf(shooter.type)>=0;
+  var isAir=shooter.type==='jet'||shooter.type==='heli';
+
+  for(var d=6;d<BB_MS*1.5;d+=6){
+    var px=sx+Math.cos(angle)*d,py=sy+Math.sin(angle)*d;
+    if(px<0||px>BB_MS||py<0||py>BB_MS){stop=d;break;}
+    // mines
+    for(var i=0;i<BB_G.units.length;i++){
+      var m=BB_G.units[i];
+      if(m.type!=='mine'||m.eliminated)continue;
+      if(m.team===shooter.team)continue;
+      if(dist({x:px,y:py},m)<(BB_CFG.mine.triggerRange||140))bbDetonateMine(m);
+    }
+    // walls
+    for(var i=0;i<BB_G.units.length;i++){
+      var w=BB_G.units[i];
+      if(w.type!=='wall'||w.eliminated)continue;
+      if(hitList.find(function(h){return h.target===w;}))continue;
+      if(dist({x:px,y:py},w)<(w.w||50)/2){
+        if(shooter.type==='sniper'&&pen<1){hitList.push({target:w,dmg:Math.floor(cfg.atk/2),dist:d});pen++;break;}
+        else{hitList.push({target:w,dmg:cfg.atk,dist:d});stop=d;break;}
+      }
+    }
+    if(stop!==BB_MS*1.5&&shooter.type!=='sniper')break;
+    if(pen>=2)break;
+    // map shelters
+    for(var i=0;i<(BB_G.shelters||[]).length;i++){
+      var s=BB_G.shelters[i],cx=px,cy=py;
+      if(s.angle){var ox=s.x+BB_SW/2,oy=s.y+BB_SH/2,cs=Math.cos(-s.angle),sn=Math.sin(-s.angle),dx=cx-ox,dy=cy-oy;cx=dx*cs-dy*sn+ox;cy=dx*sn+dy*cs+oy;}
+      if(Math.abs(cy-(s.y+BB_SH/2))<BB_SH/2&&Math.abs(cx-(s.x+BB_SW/2))<BB_SW/2){if(shooter.type==='sniper'&&pen<1)pen++;else{stop=d;}break;}
+    }
+    if(stop!==BB_MS*1.5&&shooter.type!=='sniper')break;
+    if(pen>=2)break;
+    // units
+    for(var i=0;i<BB_G.units.length;i++){
+      var u=BB_G.units[i];
+      if(u.eliminated||u===shooter||u.type==='wall'||u.type==='mine')continue;
+      if(u.trapped)continue;
+      if(u.type==='heli'&&(shooter.type==='sniper'||shooter.type==='doctor'))continue;
+      if(shooter.type==='sniper'&&['tank','car','cannon'].indexOf(u.type)>=0)continue;
+      if(shooter.type==='doctor'&&['tank','car','cannon'].indexOf(u.type)>=0)continue;
+      if(u.air&&shooter.type!=='soldier')continue;
+      if(u.type==='camp'&&['soldier','sniper','doctor','engineer'].indexOf(shooter.type)>=0)continue;
+      if(dist({x:px,y:py},u)<BB_UR+6){
+        if(!hitList.find(function(h){return h.target===u;})){
+          var dmg=cfg.atk;
+          if(shooter.type==='sniper'){for(var p=0;p<pen;p++)dmg=Math.max(1,Math.floor(dmg/2));}
+          hitList.push({target:u,dmg:dmg,dist:d});
+          if(shooter.type!=='sniper'){stop=d;}pen++;break;
+        }
+      }
+    }
+    if(stop!==BB_MS*1.5&&shooter.type!=='sniper')break;
+    if(pen>=2&&shooter.type==='sniper')break;
+    // camps - 只有步兵(普通兵/狙击兵/工程兵/医生)不能攻击营地
+    if(['soldier','sniper','doctor','engineer'].indexOf(shooter.type)<0){
+      ['red','blue'].forEach(function(t){
+        var c=BB_G.camps[t];if(!c||c.eliminated)return;
+        if(c.team===shooter.team)return;
+        if(dist({x:px,y:py},c)<BB_CS){
+          if(!hitList.find(function(h){return h.target===c;})){
+            hitList.push({target:c,dmg:cfg.atk,dist:d});stop=d;
+          }
+        }
+      });
+    }
+    if(stop!==BB_MS*1.5)break;
+  }
+  BB_G.animBullets.push({sx:sx,sy:sy,angle:angle,stop:stop,startTime:Date.now()});
+  setTimeout(function(){
+    for(var i=0;i<hitList.length;i++)bbDmgU(hitList[i].target,hitList[i].dmg,shooter);
+    bbChkOver();bbUpdUI();bbAutoEnd();
+  },200);
+  BB_G.selU=null;bbUpdUI();
+}
+function bbDetonateMine(mine){
+  var cfg=BB_CFG.mine;
+  for(var i=0;i<BB_G.units.length;i++){
+    var u=BB_G.units[i];
+    if(u.eliminated||u.team===mine.team||u.type==='camp'||u.type==='wall')continue;
+    if(u.air)continue;
+    if(dist(u,mine)<cfg.triggerRange)bbDmgU(u,cfg.atk,mine);
+  }
+  mine.eliminated=true;
+  BB_G.animExplosions.push({x:mine.x,y:mine.y,startTime:Date.now(),radius:25});
+  bbHint('地雷引爆！');
+}
+function bbDmgU(u,d,source){
+  if(u.eliminated)return;
+  if(u.type==='jet'&&source&&source.team!==u.team){if(Math.random()<0.2){bbHint('战斗机干扰弹拦截！');return;}}
+  u.hp-=d;
+  if(u.hp<=0){
+    u.hp=0;u.eliminated=true;
+    if(source&&source.team!==u.team&&u.type!=='wall'){BB_G.killCoins[source.team]=(BB_G.killCoins[source.team]||0)+1;bbUpdKillCoins();}
+    if(u.type==='wall')bbCheckTrap();
+    if(u.type==='camp'){bbHint((u.team==='red'?'Red':'Blue')+'营地被摧毁！');}
+    else{bbHint(u.label+' 被摧毁！');}
+  }
+}
+
+// ===== TURN =====
+function bbAutoEnd(){if(BB_G.state===BB_SD)return;setTimeout(function(){bbSwTurn();},100);}
+function bbSwTurn(){
+  if(BB_G.over)return;
+  if(BB_G.phase==='red')BB_G.phase='blue';
+  else{BB_G.phase='red';BB_G.turn++;if(BB_G.turn>3)BB_G.state=BB_SB;}
+  BB_G.step=0;BB_G.selU=null;BB_G.selT=null;BB_G.pa=0;BB_G.aimMode=false;
+  bbAiRetryCount=0;
+  BB_G.selCannon=false;BB_G.selCannonU=null;BB_G.healMode=false;BB_G.healer=null;BB_G._driving=false;BB_G._driveU=null;document.getElementById('bbDrivePad').style.display='none';
+  BB_G.carMineMode=false;BB_G.carMineU=null;
+  bbClosePop();bbHideAngleKnob();bbHideCancelBtn();
+  document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
+  document.getElementById('bbMobileFireBtn').style.display='none';
+  document.getElementById('bbMobileToolPanel').style.display='none';
+  document.querySelector('.bb-mtp-close').style.display='none';
+  bbUpdUI();
+  bbHint('T'+BB_G.turn+' '+(BB_G.phase==='red'?'Red':'Blue')+(BB_G.turn<=3?' (Truce)':''));
+  // AI 模式：蓝方回合自动执行 AI
+  if(BB_G.aiMode&&BB_G.phase==='blue'&&!BB_G.over){
+    setTimeout(function(){bbAiTurn();},500);
+  }
+}
+function bbStartGame(){
+  if(!BB_G.camps||!BB_G.camps.red||!BB_G.camps.blue){bbHint('请先放置双方营地');return;}
+  BB_G.state=BB_ST;BB_G.turn=1;BB_G.phase='red';BB_G.step=0;
+  document.getElementById('bbStartBtn').style.display='none';
+  bbUpdUI();bbHint('休战期！前3回合只能部署');
+}
+function bbUpdUI(){
+  if(!BB_G)return;
+  document.getElementById('bbTopInfo').textContent='T'+BB_G.turn+' '+(BB_G.state===BB_SD?'Draw':(BB_G.state===BB_ST?'Truce':'Battle'));
+  var ti=document.getElementById('bbTurnInd');
+  if(BB_G.state===BB_SD){ti.textContent='Draw Map';ti.style.color='#8a7a5a';document.getElementById('bbStartBtn').style.display='';}
+  else{ti.textContent=BB_G.phase==='red'?'[Red Turn]':'[Blue Turn]';ti.style.color=BB_G.phase==='red'?'#c44':'#48f';document.getElementById('bbStartBtn').style.display='none';}
+  document.getElementById('bbHpR').textContent='Red:'+(BB_G.camps&&BB_G.camps.red?BB_G.camps.red.hp:'-');
+  document.getElementById('bbHpB').textContent='Blue:'+(BB_G.camps&&BB_G.camps.blue?BB_G.camps.blue.hp:'-');
+  document.querySelectorAll('.bb-unit-tool').forEach(function(b){
+    if(BB_G.state===BB_SD)b.classList.add('ht');
+    else if((b.classList.contains('r')&&BB_G.phase==='red')||(b.classList.contains('b')&&BB_G.phase==='blue'))b.classList.remove('ht');
+    else b.classList.add('ht');
+  });
+  document.querySelectorAll('.bb-draw-tool').forEach(function(b){
+    if(BB_G.state===BB_SD)b.classList.remove('ht');else b.classList.add('ht');
+  });
+  var ds=document.getElementById('bbDrawST');
+  if(ds)ds.style.display=BB_G.state===BB_SD?'block':'none';
+  document.querySelectorAll('#bbMtpList .bb-tb').forEach(function(b){
+    var tool=b.dataset.tool;if(!tool)return;
+    if(BB_G.state===BB_SD){
+      if(!tool.startsWith('shelter')&&!tool.startsWith('camp')&&tool!=='sea_line'&&tool!=='sea_fill')b.classList.add('ht');
+      else b.classList.remove('ht');
+    }else{
+      if(tool.startsWith('shelter')||tool.startsWith('camp')||tool==='sea_line'||tool==='sea_fill')b.classList.add('ht');
+      else{var te=tool.endsWith('_r')?'red':'blue';if(te!==BB_G.phase)b.classList.add('ht');else b.classList.remove('ht');}
+    }
+  });
+}
+function bbUpdKillCoins(){document.getElementById('bbKcRed').textContent=BB_G.killCoins.red;document.getElementById('bbKcBlue').textContent=BB_G.killCoins.blue;}
+function bbChkOver(){
+  if(BB_G.camps.red&&BB_G.camps.red.hp<=0)bbEndG('blue');
+  else if(BB_G.camps.blue&&BB_G.camps.blue.hp<=0)bbEndG('red');
+}
+function bbEndG(w){
+  BB_G.over=true;
+  if(BB_G.animId)cancelAnimationFrame(BB_G.animId);
+  setTimeout(function(){showModal(w==='red'?'Red Wins!':'Blue Wins!','Big Battle - Game Over');},500);
+}
+// ===== AI (大战场模式) =====
+var bbAiRetryCount=0;
+
+function bbBuildGameContext(){
+  var ctx=[];
+  ctx.push('回合'+BB_G.turn+'，阶段:'+(BB_G.state===BB_ST?'休战':'战斗')+'，蓝方回合(AI)');
+  ctx.push('坐标系:X右Y下,0-800。1cm='+BB_CM+'像素。射击为360度无射角限制。');
+  if(BB_G.camps.red)ctx.push('红方营地:('+Math.round(BB_G.camps.red.x)+','+Math.round(BB_G.camps.red.y)+') HP'+BB_G.camps.red.hp+'/200');
+  if(BB_G.camps.blue)ctx.push('蓝方营地:('+Math.round(BB_G.camps.blue.x)+','+Math.round(BB_G.camps.blue.y)+') HP'+BB_G.camps.blue.hp+'/200');
+  ctx.push('人头币: 红'+BB_G.killCoins.red+' 蓝'+BB_G.killCoins.blue);
+
+  var bu=BB_G.units.filter(function(u){return!u.eliminated&&u.team==='blue'&&u.type!=='wall'&&u.type!=='mine';});
+  var ru=BB_G.units.filter(function(u){return!u.eliminated&&u.team==='red'&&u.type!=='wall'&&u.type!=='mine';});
+
+  if(bu.length)ctx.push('蓝方单位(用unit_index调用,仅这些可控制):\n  '+bu.map(function(u,i){
+    var parts=['['+i+']'+u.label+'('+Math.round(u.x)+','+Math.round(u.y)+')HP'+u.hp+'/'+u.maxHp];
+    if(u.trapped)parts.push('【被困】');
+    if(u.air)parts.push('空中单位');
+    if(u.sea)parts.push('海上单位');
+
+    if(['soldier','sniper','doctor','tank','car','jet','heli','bomber','carrier','ship'].indexOf(u.type)>=0){
+      parts.push('弹'+u.ammo+'/'+u.maxAmmo);
+      if(u.ammo>0){
+        var canHit=[];
+        for(var j=0;j<ru.length;j++){
+          var r=ru[j];
+          if(r.air&&!u.type==='soldier')continue;
+          if((u.type==='sniper'||u.type==='doctor')&&['tank','car','cannon'].indexOf(r.type)>=0)continue;
+          if(u.type==='doctor'&&r.type==='heli')continue;
+          canHit.push(r.label+'('+Math.round(r.x)+','+Math.round(r.y)+')HP'+r.hp);
+        }
+        if(canHit.length)parts.push('可打:'+canHit.join(','));
+        // 能打红营?
+        var infOnly=['soldier','sniper','doctor','engineer'].indexOf(u.type)>=0;
+        if(!infOnly&&BB_G.camps.red&&!BB_G.camps.red.eliminated){
+          parts.push('可打红营');
+        }
+        parts.push('操作:fire(target_x/y)');
+      }else{
+        parts.push('操作:reload');
+      }
+    }
+
+    if(u.type==='engineer'){
+      parts.push('操作:build_wall(target_x/y,3cm内)/build_cannon(target_x/y,3cm内)/repair(修附近载具)');
+    }
+    if(u.type==='doctor')parts.push('操作:heal(target_x/y)');
+    if(u.type==='cannon'){
+      var hasOp=BB_G.units.some(function(s){return!s.eliminated&&s.team==='blue'&&['soldier','sniper','engineer','doctor'].indexOf(s.type)>=0&&dist(s,u)<BB_CM*3;});
+      parts.push(hasOp?'操作:fire_cannon(target_x/y,范围伤害,不能打空中)':'需要附近有士兵操控');
+    }
+    if(u.type==='car')parts.push('操作:car_mine(target_x/y,1cm内)');
+    if(u.type==='carrier')parts.push('操作:carrier_deploy(jet或heli)');
+    if(u.type==='ship')parts.push('操作:ship_deploy(heli)');
+    if(['tank','car','heli','jet','bomber','carrier','ship'].indexOf(u.type)>=0){
+      var dm=u.type==='tank'?'2cm':(u.type==='car'?'3cm':(u.type==='jet'||u.type==='bomber'?'4cm':(u.type==='heli'?'3cm':'2cm')));
+      parts.push('操作:drive(target_x/y,最多移动'+dm+')');
+    }
+    return parts.join(' ');
+  }).join('\n  '));
+  else ctx.push('蓝方尚无可控单位');
+
+  if(ru.length)ctx.push('红方单位:'+ru.map(function(u){
+    var p=u.label+'('+Math.round(u.x)+','+Math.round(u.y)+')HP'+u.hp;
+    if(u.air)p+='(空中)';
+    if(u.sea)p+='(海上)';
+    return p;
+  }).join('; '));
+
+  // 部署信息
+  var deployable=['soldier','sniper','engineer','doctor'];
+  var buyable=['tank','car','jet','heli','bomber','carrier','ship'];
+  ctx.push('可部署步兵(免费):'+deployable.join(','));
+  var buyInfo=buyable.map(function(t){var c=BB_CFG[t];return t+'(cost:'+c.cost+',HP'+c.hp+',ATK'+c.atk+')';}).join(' ');
+  ctx.push('可购买载具(需人头币):'+buyInfo);
+  ctx.push('部署范围:蓝方营地或蓝方单位周围'+Math.round(BB_CM*3)+'像素(='+Math.round(BB_CM*3/BB_CM)+'cm)内');
+
+  // 建议
+  if(BB_G.state===BB_ST){
+    ctx.push('休战期:只能部署。优先部署soldier和sniper在蓝方营地附近朝向红方营地');
+  }else{
+    // 优先级: 有弹可射击的>大炮可开火>需要装弹>驾驶载具接近>部署新单位
+    var fireable=bu.filter(function(u){return['soldier','sniper','doctor','tank','car','jet','heli','bomber','carrier','ship'].indexOf(u.type)>=0&&u.ammo>0&&!u.trapped;});
+    var cannonReady=bu.filter(function(u){return u.type==='cannon'&&!u.trapped&&BB_G.units.some(function(s){return!s.eliminated&&s.team==='blue'&&['soldier','sniper','engineer','doctor'].indexOf(s.type)>=0&&dist(s,u)<BB_CM*3;});});
+    var needReload=bu.filter(function(u){return['soldier','sniper','doctor','tank','car','jet','heli','bomber','carrier','ship'].indexOf(u.type)>=0&&u.ammo===0&&!u.trapped&&u.ammo<u.maxAmmo;});
+
+    if(fireable.length>0&&BB_G.camps.red){
+      var f=fireable[0];
+      var idx=bu.indexOf(f);
+      var infOnly=['soldier','sniper','doctor','engineer'].indexOf(f.type)>=0;
+      if(!infOnly){
+        ctx.push('建议:control_unit unit_index='+idx+' action=fire target_x='+Math.round(BB_G.camps.red.x)+' target_y='+Math.round(BB_G.camps.red.y)+' 打红营');
+      }else if(ru.length>0){
+        var tgt=ru[0];
+        ctx.push('建议:control_unit unit_index='+idx+' action=fire target_x='+Math.round(tgt.x)+' target_y='+Math.round(tgt.y)+' 打'+tgt.label);
+      }else{
+        ctx.push('建议:部署新单位');
+      }
+    }else if(cannonReady.length>0&&BB_G.camps.red){
+      ctx.push('建议:control_unit unit_index='+bu.indexOf(cannonReady[0])+' action=fire_cannon target_x='+Math.round(BB_G.camps.red.x)+' target_y='+Math.round(BB_G.camps.red.y)+' 大炮轰红营');
+    }else if(needReload.length>0){
+      ctx.push('建议:control_unit unit_index='+bu.indexOf(needReload[0])+' action=reload 装弹');
+    }else{
+      ctx.push('建议:部署新单位或让载具drive接近红方');
+    }
+  }
+  return ctx.join('\n');
+}
+
+const BB_AI_TOOLS=[
+  {type:'function',function:{
+    name:'deploy_unit',
+    description:'部署一个新单位到蓝方营地或蓝方单位周围3cm内',
+    parameters:{
+      type:'object',
+      properties:{
+        unit_type:{type:'string',enum:['soldier','sniper','engineer','doctor','tank','car','jet','heli','bomber','carrier','ship'],description:'兵种类型。soldier/sniper/engineer/doctor免费;tank(5币)/car(2币)/jet(4币)/heli(3币)/bomber(25币)/carrier(10币)/ship(5币)需人头币'},
+        x:{type:'number',description:'部署X坐标(0-800)'},
+        y:{type:'number',description:'部署Y坐标(0-800)'},
+        facing:{type:'number',description:'朝向角度(度,0=上,90=右,180=下,270=左)'}
+      },
+      required:['unit_type','x','y']
+    }
+  }},
+  {type:'function',function:{
+    name:'control_unit',
+    description:'控制蓝方单位执行行动(射击/装弹/建造/治疗/大炮/驾驶/部署/地雷)',
+    parameters:{
+      type:'object',
+      properties:{
+        unit_index:{type:'integer',description:'蓝方单位在列表中的序号(0开始)'},
+        action:{type:'string',enum:['fire','reload','build_wall','build_cannon','repair','heal','fire_cannon','drive','carrier_deploy','ship_deploy','car_mine'],description:'fire=射击(需target_x/y); reload=装弹; build_wall=建掩体(需engineer,target_x/y); build_cannon=建大炮(需engineer,target_x/y); repair=修理附近载具(需engineer); heal=治疗队友(需doctor,target_x/y); fire_cannon=大炮开火(需cannon,target_x/y); drive=驾驶移动(需target_x/y); carrier_deploy=航母部署载具(需carrier,deploy_type=jet/heli); ship_deploy=战舰部署直升机(需ship); car_mine=放地雷(需car,target_x/y)'},
+        target_x:{type:'number',description:'目标X坐标'},
+        target_y:{type:'number',description:'目标Y坐标'},
+        deploy_type:{type:'string',enum:['jet','heli'],description:'carrier_deploy时指定部署战斗机还是直升机'}
+      },
+      required:['unit_index','action']
+    }
+  }}
+];
+
+async function bbAiTurn(){
+  if(!BB_G||!BB_G.aiMode||BB_G.phase!=='blue'||BB_G.over)return;
+  var context=bbBuildGameContext();
+  var extra='';
+  if(bbAiRetryCount>0)extra='\n⚠️ 上次操作失败，请换一个合法操作。';
+
+  var messages=[
+    {role:'system',content:'你正在玩"核邪部队"大战场模式，作为蓝方指挥官，目标是摧毁红方营地(200HP)获得胜利。\n\n每回合只能执行1个操作（部署1个单位或控制1个单位行动）。\n\n==兵种详解==\nsoldier 普通兵(10HP,5弹,5伤,可打空中): fire射击(360度) / reload装弹\nsniper 狙击兵(5HP,2弹,20伤,可穿1面墙,不能打载具): fire / reload\nengineer 工程兵(15HP,2伤): build_wall建掩体(3cm内) / build_cannon建大炮(3cm内) / repair修附近载具\ndoctor 医生(10HP,2伤,不能打载具/直升机): fire射击 / heal治疗队友(满血)\ncannon 大炮(15HP,20伤范围伤害,不能打空中,需附近有步兵操控): fire_cannon\ntank 坦克(60HP,3弹,20伤,cost5): fire / drive移动(2cm)\ncar 车(30HP,2弹,15伤,cost2): fire / drive(3cm) / car_mine放地雷\njet 战斗机(30HP,2弹,30伤,空中,cost4): fire / drive(4cm) 有50%干扰弹\nheli 直升机(20HP,2弹,15伤,空中,cost3): fire / drive(3cm)\nbomber 轰炸机(25HP,1弹,30伤,空中,cost25): fire / drive(4cm)\ncarrier 航母(70HP,2弹,10伤,海上,cost10): fire / carrier_deploy部署jet或heli / drive(2cm)\nship 战舰(60HP,2弹,20伤,海上,cost5): fire / ship_deploy部署heli / drive(2cm)\n\n坐标系:X右Y下,0-800。1cm='+BB_CM+'像素。射击为360度无射角限制。\n\n休战期(前3回合):只能部署。优先部署soldier和sniper在蓝方营地附近。\n战斗期(第4回合起):优先攻击红方营地或红方单位。弹尽装弹。载具可drive接近目标。'},
+    {role:'user',content:context+extra}
+  ];
+
+  console.log('=== BB AI CONTEXT ===');console.log(context);
+
+  try{
+    bbHint('AI思考中...');
+    var resp=await fetch(AI_API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_API_KEY},
+      body:JSON.stringify({model:AI_MODEL,messages:messages,tools:BB_AI_TOOLS,tool_choice:'required',temperature:0.6,max_tokens:400})
+    });
+    var data=await resp.json();
+    console.log('=== BB AI RAW ===');console.log(JSON.stringify(data).slice(0,500));
+
+    var msg=data.choices&&data.choices[0]&&data.choices[0].message;
+    if(!msg){bbHint('AI无响应');bbSwTurn();return;}
+
+    if(msg.tool_calls&&msg.tool_calls.length>0){
+      var tc=msg.tool_calls[0];
+      var fn=tc.function;
+      console.log('BB AI调用工具:',fn.name,fn.arguments);
+      var args=JSON.parse(fn.arguments);
+      bbExecAiTool(fn.name,args);
+    }else{
+      bbAiRetryCount++;
+      if(bbAiRetryCount<5){console.log('BB AI: no tool_call, retry');setTimeout(function(){bbAiTurn();},200);return;}
+      bbSwTurn();
+    }
+  }catch(e){
+    console.error('BB AI error:',e);
+    bbAiRetryCount++;
+    if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},500);return;}
+    bbHint('AI出错');setTimeout(function(){bbSwTurn();},500);
+  }
+}
+
+function bbExecAiTool(name,args){
+  console.log('bbExecAiTool:',name,args);
+  if(name==='deploy_unit'){
+    var type=args.unit_type;
+    var cfg=BB_CFG[type];
+    if(!cfg){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+
+    // 检查cost
+    if(cfg.cost&&BB_G.killCoins.blue<cfg.cost){bbHint('人头币不足！需要'+cfg.cost);bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+
+    // 位置修正：必须在蓝方营地或蓝方单位3cm内
+    var ox=args.x,oy=args.y;
+    if(ox===undefined||oy===undefined){ox=BB_G.camps.blue?BB_G.camps.blue.x:400;oy=BB_G.camps.blue?BB_G.camps.blue.y:400;}
+    var bc=BB_G.camps.blue;
+    var bases=[];
+    if(bc)bases.push(bc);
+    for(var i=0;i<BB_G.units.length;i++)if(!BB_G.units[i].eliminated&&BB_G.units[i].team==='blue'&&BB_G.units[i].type!=='wall'&&BB_G.units[i].type!=='mine')bases.push(BB_G.units[i]);
+
+    var bestX=null,bestY=null;
+    for(var attempt=0;attempt<100;attempt++){
+      var tx,ty;
+      if(attempt===0){tx=ox;ty=oy;}
+      else{
+        var base=bases[Math.floor(Math.random()*bases.length)];
+        var ang=Math.random()*Math.PI*2;
+        var r=Math.random()*BB_CM*2.5+BB_CM*0.5;
+        tx=base.x+Math.cos(ang)*r;
+        ty=base.y+Math.sin(ang)*r;
+      }
+      tx=Math.max(BB_UR,Math.min(BB_MS-BB_UR,tx));
+      ty=Math.max(BB_UR,Math.min(BB_MS-BB_UR,ty));
+      var p={x:tx,y:ty};
+      var ok=true,inR=false;
+      for(var b=0;b<bases.length;b++){if(dist(p,bases[b])<=BB_CM*3){inR=true;break;}}
+      if(!inR)continue;
+      if(!cfg.air&&!cfg.sea){
+        if(bbIsInSea(tx,ty))continue;
+        if(bbOverlap(p,BB_UR)){ok=false;}
+      }
+      if(ok){bestX=tx;bestY=ty;break;}
+    }
+    if(bestX===null){
+      var camp=bc||bases[0]||{x:400,y:400};
+      bestX=camp.x+(Math.random()-0.5)*BB_CM*2;
+      bestY=camp.y+(Math.random()-0.5)*BB_CM*2;
+      bestX=Math.max(BB_UR,Math.min(BB_MS-BB_UR,bestX));
+      bestY=Math.max(BB_UR,Math.min(BB_MS-BB_UR,bestY));
+    }
+
+    // facing: AI给的度数(0=上)转弧度
+    var facing=(args.facing||0)*Math.PI/180;
+    // 如果有红方营地且未给facing，朝向红方营地
+    if(args.facing===undefined&&BB_G.camps.red){
+      var ra=Math.atan2(BB_G.camps.red.y-bestY,BB_G.camps.red.x-bestX);
+      facing=ra+Math.PI/2;
+    }
+
+    var u=bbMakeUnit(type,'blue',bestX,bestY,facing);
+    if(cfg.cost){BB_G.killCoins.blue-=cfg.cost;bbUpdKillCoins();}
+    BB_G.units.push(u);BB_G.step++;bbAiRetryCount=0;
+    bbHint('AI部署了'+cfg.label);bbUpdUI();bbAutoEnd();
+  }
+  else if(name==='control_unit'){
+    var bu=BB_G.units.filter(function(u){return!u.eliminated&&u.team==='blue'&&u.type!=='wall'&&u.type!=='mine';});
+    var uIdx=parseInt(args.unit_index);
+    var u=bu[uIdx];
+    if(!u){console.log('BB AI: unit not found, idx=',uIdx);bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+    if(u.trapped){console.log('BB AI: unit trapped');bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+    if(BB_G.step>=1){bbHint('本回合步数已用完');bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+
+    BB_G.selU=u;
+    var action=args.action;
+
+    if(action==='fire'){
+      if(u.ammo<=0){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var tx=args.target_x!==undefined?args.target_x:(BB_G.camps.red?BB_G.camps.red.x:400);
+      var ty=args.target_y!==undefined?args.target_y:(BB_G.camps.red?BB_G.camps.red.y:400);
+      var a=Math.atan2(ty-u.y,tx-u.x);
+      bbAiRetryCount=0;
+      bbFire(u,a);
+    }
+    else if(action==='reload'){
+      if(u.ammo>=u.maxAmmo){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      u.ammo=u.maxAmmo;u.bulletsFired=0;BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI装弹');bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='build_wall'){
+      if(u.type!=='engineer'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var wx=args.target_x!==undefined?args.target_x:u.x+50;
+      var wy=args.target_y!==undefined?args.target_y:u.y;
+      // 确保在工程兵3cm内
+      if(dist(u,{x:wx,y:wy})>BB_CM*3){
+        var dx=wx-u.x,dy=wy-u.y,len=Math.sqrt(dx*dx+dy*dy)||1;
+        wx=u.x+dx/len*BB_CM*2.5;wy=u.y+dy/len*BB_CM*2.5;
+      }
+      var wall=bbMakeUnit('wall','blue',wx,wy,0);
+      BB_G.units.push(wall);BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI建造掩体');bbCheckTrap();bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='build_cannon'){
+      if(u.type!=='engineer'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var cx=args.target_x!==undefined?args.target_x:u.x+50;
+      var cy=args.target_y!==undefined?args.target_y:u.y;
+      if(dist(u,{x:cx,y:cy})>BB_CM*3){
+        var ddx=cx-u.x,ddy=cy-u.y,ll=Math.sqrt(ddx*ddx+ddy*ddy)||1;
+        cx=u.x+ddx/ll*BB_CM*2.5;cy=u.y+ddy/ll*BB_CM*2.5;
+      }
+      if(bbOverlap({x:cx,y:cy},BB_UR)){
+        cx=u.x+(Math.random()-0.5)*BB_CM*2;cy=u.y+(Math.random()-0.5)*BB_CM*2;
+      }
+      var cannon=bbMakeUnit('cannon','blue',cx,cy,0);
+      BB_G.units.push(cannon);BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI建造大炮');bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='repair'){
+      if(u.type!=='engineer'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var targets=BB_G.units.filter(function(t){return!t.eliminated&&t.team==='blue'&&['tank','car','cannon'].indexOf(t.type)>=0&&dist(t,u)<=BB_CM*3;});
+      if(targets.length===0){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      for(var i=0;i<targets.length;i++)targets[i].hp=targets[i].maxHp;
+      BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI修理了'+targets.length+'个载具/大炮');bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='heal'){
+      if(u.type!=='doctor'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var hx=args.target_x!==undefined?args.target_x:u.x;
+      var hy=args.target_y!==undefined?args.target_y:u.y;
+      var target=bbFindU(hx,hy);
+      if(!target||target.team!=='blue'||target===u||target.eliminated){
+        // 找最近的受伤蓝方单位
+        var wounded=BB_G.units.filter(function(t){return!t.eliminated&&t.team==='blue'&&t!==u&&t.hp<t.maxHp&&t.type!=='wall'&&t.type!=='mine';});
+        if(wounded.length>0){
+          wounded.sort(function(a,b){return dist(a,u)-dist(b,u);});
+          target=wounded[0];
+        }
+      }
+      if(target&&target.team==='blue'&&target!==u&&!target.eliminated){
+        target.hp=target.maxHp;u.hp=Math.min(u.maxHp,u.hp+2);
+        BB_G.step++;bbAiRetryCount=0;
+        bbHint('AI治疗了'+target.label);bbUpdUI();bbAutoEnd();
+      }else{bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();}
+    }
+    else if(action==='fire_cannon'){
+      if(u.type!=='cannon'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      // 检查附近有步兵
+      var hasOp2=BB_G.units.some(function(s){return!s.eliminated&&s.team==='blue'&&['soldier','sniper','engineer','doctor'].indexOf(s.type)>=0&&dist(s,u)<BB_CM*3;});
+      if(!hasOp2){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var ctx2=args.target_x!==undefined?args.target_x:(BB_G.camps.red?BB_G.camps.red.x:400);
+      var cty2=args.target_y!==undefined?args.target_y:(BB_G.camps.red?BB_G.camps.red.y:400);
+      var cfg2=BB_CFG.cannon;
+      BB_G.step++;
+      for(var i2=0;i2<BB_G.units.length;i2++){
+        var tu=BB_G.units[i2];
+        if(tu.eliminated||tu.team==='blue'||tu.type==='wall'||tu.type==='mine')continue;
+        if(cfg2.cantHitAir&&tu.air)continue;
+        if(dist(tu,{x:ctx2,y:cty2})<BB_CM)bbDmgU(tu,cfg2.atk,u);
+      }
+      ['red','blue'].forEach(function(t){
+        var c=BB_G.camps[t];if(!c||c.team==='blue'||c.hp<=0)return;
+        if(dist(c,{x:ctx2,y:cty2})<BB_CM)bbDmgU(c,cfg2.atk,u);
+      });
+      BB_G.animExplosions.push({x:ctx2,y:cty2,startTime:Date.now(),radius:30});
+      bbAiRetryCount=0;
+      bbHint('AI大炮开火！');bbChkOver();bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='drive'){
+      if(['tank','car','heli','jet','bomber','carrier','ship'].indexOf(u.type)<0){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var dx2=args.target_x!==undefined?args.target_x:u.x;
+      var dy2=args.target_y!==undefined?args.target_y:u.y;
+      // 计算移动距离限制
+      var maxDist=BB_CM*2;
+      if(u.type==='car'||u.type==='heli')maxDist=BB_CM*3;
+      else if(u.type==='jet'||u.type==='bomber')maxDist=BB_CM*4;
+      // 限制移动距离
+      var mdx=dx2-u.x,mdy=dy2-u.y,mdist=Math.sqrt(mdx*mdx+mdy*mdy);
+      if(mdist>maxDist){mdx=mdx/mdist*maxDist;mdy=mdy/mdist*maxDist;}
+      var nx2=u.x+mdx,ny2=u.y+mdy;
+      nx2=Math.max(BB_UR,Math.min(BB_MS-BB_UR,nx2));
+      ny2=Math.max(BB_UR,Math.min(BB_MS-BB_UR,ny2));
+      if(!u.air&&!u.sea&&bbIsInSea(nx2,ny2)){
+        // 地面单位不能进海，尝试边缘
+        nx2=u.x+mdx*0.5;ny2=u.y+mdy*0.5;
+        nx2=Math.max(BB_UR,Math.min(BB_MS-BB_UR,nx2));
+        ny2=Math.max(BB_UR,Math.min(BB_MS-BB_UR,ny2));
+        if(bbIsInSea(nx2,ny2)){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      }
+      u.x=nx2;u.y=ny2;
+      u.facing=Math.atan2(mdy,mdx)+Math.PI/2;
+      BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI驾驶'+u.label+'移动');bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='carrier_deploy'){
+      if(u.type!=='carrier'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var dtype=args.deploy_type||'jet';
+      var existing=BB_G.units.filter(function(x){return!x.eliminated&&x.team==='blue'&&x.type===dtype&&x._deployedBy===u.id;});
+      var maxNum=dtype==='jet'?3:2;
+      if(existing.length>=maxNum){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var dnx=u.x+50,dny=u.y;
+      if(bbOverlap({x:dnx,y:dny},BB_UR)){dnx=u.x-50;dny=u.y;}
+      if(bbOverlap({x:dnx,y:dny},BB_UR)){dnx=u.x;dny=u.y+50;}
+      var dnu=bbMakeUnit(dtype,'blue',dnx,dny,0);
+      dnu._deployedBy=u.id;
+      BB_G.units.push(dnu);BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI航母部署'+(dtype==='jet'?'战斗机':'直升机'));bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='ship_deploy'){
+      if(u.type!=='ship'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var existing2=BB_G.units.filter(function(x){return!x.eliminated&&x.team==='blue'&&x.type==='heli'&&x._deployedBy===u.id;});
+      if(existing2.length>=1){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var snx=u.x+50,sny=u.y;
+      if(bbOverlap({x:snx,y:sny},BB_UR)){snx=u.x-50;sny=u.y;}
+      var snu=bbMakeUnit('heli','blue',snx,sny,0);
+      snu._deployedBy=u.id;
+      BB_G.units.push(snu);BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI战舰部署直升机');bbUpdUI();bbAutoEnd();
+    }
+    else if(action==='car_mine'){
+      if(u.type!=='car'){bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();return;}
+      var mx2=args.target_x!==undefined?args.target_x:u.x;
+      var my2=args.target_y!==undefined?args.target_y:u.y;
+      if(dist(u,{x:mx2,y:my2})>BB_CM){
+        var ddx2=mx2-u.x,ddy2=my2-u.y,dll2=Math.sqrt(ddx2*ddx2+ddy2*ddy2)||1;
+        mx2=u.x+ddx2/dll2*BB_CM*0.8;my2=u.y+ddy2/dll2*BB_CM*0.8;
+      }
+      var mine=bbMakeUnit('mine','blue',mx2,my2,0);
+      BB_G.units.push(mine);BB_G.step++;bbAiRetryCount=0;
+      bbHint('AI放置地雷');bbUpdUI();bbAutoEnd();
+    }
+    else{bbAiRetryCount++;if(bbAiRetryCount<5){setTimeout(function(){bbAiTurn();},200);return;}bbSwTurn();}
+  }
+  else{bbSwTurn();}
+}
+
+function bbDestroy(){
+  if(BB_G&&BB_G.animId)cancelAnimationFrame(BB_G.animId);
+  BB_G=null;
+  document.getElementById('bbUnitPopup').style.display='none';
+  document.getElementById('bbCancelBtn').style.display='none';
+  document.getElementById('bbAngleKnob').style.display='none';
+  document.getElementById('bbMobileFireBtn').style.display='none';
+  document.getElementById('bbMobileToolPanel').style.display='none';
+}
+
 </script>
 </body></html>
