@@ -3635,6 +3635,7 @@ function bbFire(shooter,angle){
     if(stop!==BB_MS*1.5&&shooter.type!=='sniper')break;
     if(pen>=2)break;
     // units
+    var canHitAir=shooter.type==='soldier'||shooter.air||shooter.type==='tank'||shooter.type==='car'||shooter.sea;
     for(var i=0;i<BB_G.units.length;i++){
       var u=BB_G.units[i];
       if(u.eliminated||u===shooter||u.type==='wall'||u.type==='mine')continue;
@@ -3642,7 +3643,7 @@ function bbFire(shooter,angle){
       if(u.type==='heli'&&(shooter.type==='sniper'||shooter.type==='doctor'))continue;
       if(shooter.type==='sniper'&&['tank','car'].indexOf(u.type)>=0)continue;
       if(shooter.type==='doctor'&&['tank','car','cannon'].indexOf(u.type)>=0)continue;
-      if(u.air&&shooter.type!=='soldier')continue;
+      if(u.air&&!canHitAir)continue;
       if(u.type==='camp'&&['soldier','sniper','doctor','engineer'].indexOf(shooter.type)>=0)continue;
       if(dist({x:px,y:py},u)<BB_UR+6){
         if(!hitList.find(function(h){return h.target===u;})){
@@ -3800,7 +3801,8 @@ function bbBuildGameContext(){
         var canHit=[];
         for(var j=0;j<ru.length;j++){
           var r=ru[j];
-          if(r.air&&!u.type==='soldier')continue;
+          var canHitAir2=u.type==='soldier'||u.air||u.type==='tank'||u.type==='car'||u.sea;
+          if(r.air&&!canHitAir2)continue;
           if((u.type==='sniper'||u.type==='doctor')&&['tank','car','cannon'].indexOf(r.type)>=0)continue;
           if(u.type==='doctor'&&r.type==='heli')continue;
           canHit.push(r.label+'('+Math.round(r.x)+','+Math.round(r.y)+')HP'+r.hp);
@@ -3922,7 +3924,7 @@ async function bbAiTurn(){
   if(bbAiRetryCount>0)extra='\n⚠️ 上次操作失败，请换一个合法操作。';
 
   var messages=[
-    {role:'system',content:'你正在玩"核邪部队"大战场模式，作为蓝方指挥官，目标是摧毁红方营地(200HP)获得胜利。\n\n每回合只能执行1个操作（部署1个单位或控制1个单位行动）。\n\n==兵种详解==\nsoldier 普通兵(10HP,5弹,5伤,可打空中): fire射击(360度) / reload装弹\nsniper 狙击兵(5HP,2弹,20伤,可穿1面墙,不能打载具): fire / reload\nengineer 工程兵(15HP,2伤): build_wall建掩体(3cm内) / build_cannon建大炮(3cm内) / repair修附近载具\ndoctor 医生(10HP,2伤,不能打载具/直升机): fire射击 / heal治疗队友(满血)\ncannon 大炮(15HP,20伤范围伤害,不能打空中,需附近有步兵操控): fire_cannon\ntank 坦克(60HP,3弹,20伤,cost5): fire / drive移动(2cm)\ncar 车(30HP,2弹,15伤,cost2): fire / drive(3cm) / car_mine放地雷\njet 战斗机(30HP,2弹,30伤,空中,cost4): fire / drive(4cm) 有50%干扰弹\nheli 直升机(20HP,2弹,15伤,空中,cost3): fire / drive(3cm)\nbomber 轰炸机(25HP,1弹,30伤,空中,cost25): fire / drive(4cm)\ncarrier 航母(70HP,2弹,10伤,海上,cost10): fire / carrier_deploy部署jet或heli / drive(2cm)\nship 战舰(60HP,2弹,20伤,海上,cost5): fire / ship_deploy部署heli / drive(2cm)\n\n坐标系:X右Y下,0-800。1cm='+BB_CM+'像素。射击为360度无射角限制。\n\n休战期(前3回合):只能部署。优先部署soldier和sniper在蓝方营地附近。\n战斗期(第4回合起):优先攻击红方营地或红方单位。弹尽装弹。载具可drive接近目标。'},
+    {role:'system',content:'你正在玩"核邪部队"大战场模式，作为蓝方指挥官，目标是摧毁红方营地(200HP)获得胜利。\n\n每回合只能执行1个操作（部署1个单位或控制1个单位行动）。\n\n==兵种详解==\nsoldier 普通兵(10HP,5弹,5伤,可打空中/海上): fire射击(360度) / reload装弹\nsniper 狙击兵(5HP,2弹,20伤,可穿1面墙,不能打载具,可打大炮): fire / reload\nengineer 工程兵(15HP,2伤): build_wall建掩体(3cm内) / build_cannon建大炮(3cm内) / repair修附近载具\ndoctor 医生(10HP,2伤,不能打载具/直升机): fire射击 / heal治疗队友(满血)\ncannon 大炮(15HP,20伤范围伤害,不能打空中,需附近有步兵操控,1弹,射程3cm): fire_cannon / reload_cannon装弹\ntank 坦克(60HP,3弹,20伤,可打空中/海上,cost5): fire / drive移动(2cm)\ncar 车(30HP,2弹,15伤,可打空中/海上,cost2): fire / drive(3cm) / car_mine放地雷\njet 战斗机(30HP,2弹,30伤,空中,cost4,可打任意目标): fire / drive(4cm) 有20%干扰弹\nheli 直升机(20HP,2弹,15伤,空中,cost3,可打任意目标): fire / drive(3cm)\nbomber 轰炸机(25HP,1弹,30伤,空中,cost25,直线轰炸): fire / drive(4cm)\ncarrier 航母(70HP,2弹,10伤,海上,cost10,可打任意目标): fire / carrier_deploy部署jet或heli(2cm内自选位置) / drive(2cm)\nship 战舰(60HP,2弹,20伤,海上,cost5,可打任意目标): fire / ship_deploy部署heli(2cm内自选位置) / drive(2cm)\n\n坐标系:X右Y下,0-800。1cm='+BB_CM+'像素。射击为360度无射角限制。\n\n休战期(前3回合):只能部署。优先部署soldier和sniper在蓝方营地附近。\n战斗期(第4回合起):优先攻击红方营地或红方单位。弹尽装弹。载具可drive接近目标。'},
     {role:'user',content:context+extra}
   ];
 
