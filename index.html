@@ -358,19 +358,17 @@ canvas{display:block;cursor:crosshair;touch-action:none}
   </div>
   <div class="bb-mtp-list" id="bbMtpList"></div>
 </div>
-<div id="bbDrivePad" style="display:none;position:fixed;bottom:100px;right:10px;z-index:800;background:#1a1a00;border:2px solid #654321;border-radius:8px;padding:6px;width:130px">
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;grid-template-rows:1fr 1fr 1fr">
-    <span></span><button class="bb-dp-btn" onmousedown="bbDPMove(0,-8)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(0,-8)" ontouchend="bbDPStop()">▲</button><span></span>
-    <button class="bb-dp-btn" onmousedown="bbDPMove(-8,0)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(-8,0)" ontouchend="bbDPStop()">◄</button>
-    <span></span>
-    <button class="bb-dp-btn" onmousedown="bbDPMove(8,0)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(8,0)" ontouchend="bbDPStop()">►</button>
-    <span></span><button class="bb-dp-btn" onmousedown="bbDPMove(0,8)" onmouseup="bbDPStop()" ontouchstart="bbDPMove(0,8)" ontouchend="bbDPStop()">▼</button><span></span>
+<div id="bbDrivePad" style="display:none;position:fixed;z-index:800;pointer-events:none">
+  <!-- 左旋转按钮 -->
+  <button id="bbDPRotL" style="position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(40,30,0,0.4);border:2px solid rgba(200,169,110,0.5);color:rgba(200,169,110,0.8);font-size:22px;pointer-events:auto;user-select:none;-webkit-user-select:none;backdrop-filter:blur(2px)">↺</button>
+  <!-- 右旋转按钮 -->
+  <button id="bbDPRotR" style="position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(40,30,0,0.4);border:2px solid rgba(200,169,110,0.5);color:rgba(200,169,110,0.8);font-size:22px;pointer-events:auto;user-select:none;-webkit-user-select:none;backdrop-filter:blur(2px)">↻</button>
+  <!-- 虚拟摇杆底座 -->
+  <div id="bbStickBase" style="position:absolute;width:130px;height:130px;border-radius:50%;background:rgba(40,30,0,0.35);border:2px solid rgba(200,169,110,0.5);pointer-events:auto;backdrop-filter:blur(2px)">
+    <div id="bbStickKnob" style="position:absolute;left:50%;top:50%;width:54px;height:54px;margin-left:-27px;margin-top:-27px;border-radius:50%;background:rgba(80,60,20,0.6);border:2px solid rgba(200,169,110,0.7);pointer-events:none"></div>
   </div>
-  <div style="display:flex;gap:4px;margin-top:4px">
-    <button class="bb-dp-btn" style="flex:1" onmousedown="bbDPRot(-0.1)" onmouseup="bbDPStop()" ontouchstart="bbDPRot(-0.1)" ontouchend="bbDPStop()">↺</button>
-    <button class="bb-dp-btn" style="flex:1" onmousedown="bbDPRot(0.1)" onmouseup="bbDPStop()" ontouchstart="bbDPRot(0.1)" ontouchend="bbDPStop()">↻</button>
-    <button class="bb-dp-btn" style="flex:1;background:#2a4a2a;border-color:#2a6a2a;color:#4aff4a" onclick="bbDriveEnd()">✓</button>
-  </div>
+  <!-- 确定按钮 -->
+  <button id="bbDPOK" style="position:absolute;width:60px;height:32px;border-radius:6px;background:rgba(40,80,40,0.5);border:2px solid rgba(120,200,120,0.6);color:rgba(180,255,180,0.95);font-size:14px;font-weight:bold;pointer-events:auto;backdrop-filter:blur(2px)">✓ 确定</button>
 </div>
 
 <script>
@@ -1627,6 +1625,7 @@ function fire(shooter,angle){
     for(const t of['red','blue']){
       const c=G.camps[t];if(!c)continue;
       if(dist({x:px,y:py},c)<CS+4){
+        if(hitList.find(h=>h.target===c))continue; // 防止同一营地重复命中
         const dmg=shooter.type==='sniper'&&pen>0?1:shooter.atk;
         hitList.push({target:c,dmg,dist:d,isCamp:true});
         if(shooter.type!=='sniper'){stop=d;}pen++;break;
@@ -2368,7 +2367,7 @@ function bbInitGame(){
     selU:null,selT:null,buildWall:false,builder:null,
     aimMode:false,selCannon:false,selCannonU:null,
     healMode:false,healer:null,carMineMode:false,carMineU:null,
-    killCoins:{red:0,blue:0},
+    killCoins:{red:1000,blue:1000},
     seaLine:null,seaFilled:false,
     sa:0,pa:0,mx:0,my:0,over:false,
     animBullets:[],animExplosions:[],animId:null,
@@ -2733,7 +2732,11 @@ function bbDoCancel(){
   BB_G.carMineMode=false;BB_G.carMineU=null;BB_G._seaLineStart=null;BB_G._buildCannon=false;BB_G._cannonBuilder=null;
   BB_G._bomberLine=false;BB_G._bomberU=null;BB_G._bomberP1=null;
   BB_G._carrierDeploy=false;BB_G._carrierU=null;BB_G._shipDeploy=false;BB_G._shipU=null;
-  BB_G._driving=false;BB_G._driveU=null;document.getElementById('bbDrivePad').style.display='none';
+  // 驾驶中取消：恢复原位
+  if(BB_G._driving&&BB_G._driveU&&BB_G._driveOriginX!==undefined){
+    BB_G._driveU.x=BB_G._driveOriginX;BB_G._driveU.y=BB_G._driveOriginY;
+  }
+  BB_G._driving=false;BB_G._driveU=null;BB_G._driveOriginX=undefined;BB_G._driveOriginY=undefined;BB_G._driveMoved=false;bbHideDrivePad();
   bbClosePop();
   document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
   bbHint('');document.getElementById('bbCancelBtn').style.display='none';
@@ -2812,6 +2815,98 @@ function switchBBMtpTab(tab){
 }
 function bbDPMove(dx,dy){if(!BB_G||!BB_G._driving)return;var u=BB_G._driveU;var a=u.facing||0;var cs=Math.cos(a),sn=Math.sin(a);bbDriveMove(dx*cs-dy*sn,dx*sn+dy*cs,0);}function bbDPRot(r){if(!BB_G||!BB_G._driving)return;bbDriveMove(0,0,r);}function bbDPStop(){}function bbMobileFire(){if(BB_G&&BB_G.aimMode&&BB_G.selU)bbDoAimFire(BB_G.mx,BB_G.my);}
 
+// ===== 移动端驾驶摇杆 =====
+var BB_STICK_STATE={active:false,startX:0,startY:0,knob:null,base:null,dx:0,dy:0,interval:null};
+function bbInitStick(){
+  if(BB_STICK_STATE.knob)return;
+  BB_STICK_STATE.knob=document.getElementById('bbStickKnob');
+  BB_STICK_STATE.base=document.getElementById('bbStickBase');
+  var base=BB_STICK_STATE.base;
+  function onStart(e){
+    e.preventDefault();e.stopPropagation();
+    var p=e.touches?e.touches[0]:e;
+    var r=base.getBoundingClientRect();
+    BB_STICK_STATE.startX=r.left+r.width/2;
+    BB_STICK_STATE.startY=r.top+r.height/2;
+    BB_STICK_STATE.active=true;
+    bbStickMove(p);
+    if(!BB_STICK_STATE.interval)BB_STICK_STATE.interval=setInterval(function(){
+      if(BB_STICK_STATE.active&&BB_G&&BB_G._driving){
+        var r2=Math.sqrt(BB_STICK_STATE.dx*BB_STICK_STATE.dx+BB_STICK_STATE.dy*BB_STICK_STATE.dy);
+        if(r2>10){
+          var step=Math.min(r2,55)/55*8;
+          var ux=BB_STICK_STATE.dx/r2*step,uy=BB_STICK_STATE.dy/r2*step;
+          // 绝对方向映射：摇杆偏移直接作为世界移动量
+          bbDriveMove(ux,uy,0);
+        }
+      }
+    },30);
+  }
+  function onMove(e){
+    if(!BB_STICK_STATE.active)return;
+    e.preventDefault();e.stopPropagation();
+    var p=e.touches?e.touches[0]:e;
+    bbStickMove(p);
+  }
+  function onEnd(e){
+    if(!BB_STICK_STATE.active)return;
+    BB_STICK_STATE.active=false;
+    BB_STICK_STATE.dx=0;BB_STICK_STATE.dy=0;
+    if(BB_STICK_STATE.knob){BB_STICK_STATE.knob.style.left='50%';BB_STICK_STATE.knob.style.top='50%';}
+  }
+  function bbStickMove(p){
+    var dx=p.clientX-BB_STICK_STATE.startX,dy=p.clientY-BB_STICK_STATE.startY;
+    var r=Math.sqrt(dx*dx+dy*dy);
+    var maxR=55;
+    if(r>maxR){dx=dx/r*maxR;dy=dy/r*maxR;r=maxR;}
+    BB_STICK_STATE.dx=dx;BB_STICK_STATE.dy=dy;
+    if(BB_STICK_STATE.knob){
+      BB_STICK_STATE.knob.style.left=(65+dx)+'px';
+      BB_STICK_STATE.knob.style.top=(65+dy)+'px';
+    }
+  }
+  base.addEventListener('touchstart',onStart,{passive:false});
+  base.addEventListener('touchmove',onMove,{passive:false});
+  base.addEventListener('touchend',onEnd);
+  base.addEventListener('touchcancel',onEnd);
+  base.addEventListener('mousedown',onStart);
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onEnd);
+}
+function bbShowDrivePad(){
+  if(window.innerWidth>=600)return;
+  bbInitStick();
+  var pad=document.getElementById('bbDrivePad');
+  pad.style.display='block';
+  // 计算摇杆位置：屏幕中心偏下
+  var stickX=window.innerWidth/2-65;
+  var stickY=window.innerHeight-180-65;
+  var rotL=document.getElementById('bbDPRotL');
+  var rotR=document.getElementById('bbDPRotR');
+  var base=document.getElementById('bbStickBase');
+  var ok=document.getElementById('bbDPOK');
+  base.style.left=stickX+'px';base.style.top=stickY+'px';
+  rotL.style.left=(stickX-60)+'px';rotL.style.top=(stickY+40)+'px';
+  rotR.style.left=(stickX+130+10)+'px';rotR.style.top=(stickY+40)+'px';
+  ok.style.left=(stickX+35)+'px';ok.style.top=(stickY+140)+'px';
+  // 绑定旋转按钮
+  rotL.ontouchstart=function(e){e.preventDefault();e.stopPropagation();if(!BB_G||!BB_G._driving)return;bbDriveMove(0,0,-0.1);};
+  rotL.onmousedown=function(e){e.preventDefault();e.stopPropagation();if(!BB_G||!BB_G._driving)return;bbDriveMove(0,0,-0.1);};
+  rotR.ontouchstart=function(e){e.preventDefault();e.stopPropagation();if(!BB_G||!BB_G._driving)return;bbDriveMove(0,0,0.1);};
+  rotR.onmousedown=function(e){e.preventDefault();e.stopPropagation();if(!BB_G||!BB_G._driving)return;bbDriveMove(0,0,0.1);};
+  ok.onclick=function(e){e.stopPropagation();bbDriveEnd();};
+  ok.ontouchstart=function(e){e.stopPropagation();};
+  // 驾驶状态显示已有取消按钮，但不隐藏（移动后才隐藏）
+  bbShowCancelBtn();
+}
+function bbHideDrivePad(){
+  var pad=document.getElementById('bbDrivePad');
+  if(pad)pad.style.display='none';
+  BB_STICK_STATE.active=false;
+  BB_STICK_STATE.dx=0;BB_STICK_STATE.dy=0;
+  if(BB_STICK_STATE.knob){BB_STICK_STATE.knob.style.left='50%';BB_STICK_STATE.knob.style.top='50%';}
+  if(BB_STICK_STATE.interval){clearInterval(BB_STICK_STATE.interval);BB_STICK_STATE.interval=null;}
+}
 // ===== EVENTS =====
 BB_CV.addEventListener('mousemove',function(e){
   if(!BB_G)return;
@@ -2922,6 +3017,8 @@ BB_CV.addEventListener('touchmove',function(e){
 },{passive:false});
 BB_CV.addEventListener('touchend',function(e){
   if(!BB_G)return;
+  // 驾驶状态锁定：禁止任何画布操作
+  if(BB_G._driving)return;
   if(e.touches.length<2)BB_G._twoFingerStart=undefined;
   // 海洋分界线移动端松开完成
   if(BB_G._seaDrawing){
@@ -3017,6 +3114,8 @@ document.addEventListener('keydown',function(e){
 });
 BB_CV.addEventListener('click',function(e){
   if(!BB_G||BB_G.over)return;
+  // 驾驶状态锁定：禁止点击画布
+  if(BB_G._driving)return;
   var r=BB_CV.getBoundingClientRect();
   var mx=(e.clientX-r.left)*BB_MS/r.width,my=(e.clientY-r.top)*BB_MS/r.height;
   if(BB_G._buildCannon){bbBuildCannonAt(mx,my);return;}
@@ -3385,7 +3484,7 @@ function bbFireCannon(tx,ty){
 function bbDoDrive(){
   bbClosePop();var u=BB_G.selU;if(!u||u.eliminated)return;
   if(BB_G.step>=1){bbHint('本回合步数已用完');return;}
-  BB_G._driving=true;BB_G._driveU=u;
+  BB_G._driving=true;BB_G._driveU=u;BB_G._driveMoved=false;
   BB_G._driveOriginX=u.x;BB_G._driveOriginY=u.y;
   if(u.type==='tank')BB_G._driveMax=BB_CM*2;
   else if(u.type==='car')BB_G._driveMax=BB_CM*3;
@@ -3395,12 +3494,18 @@ function bbDoDrive(){
   else if(u.type==='carrier')BB_G._driveMax=BB_CM*2;
   else if(u.type==='ship')BB_G._driveMax=BB_CM*2;
   else BB_G._driveMax=BB_CM*2;
-  bbShowCancelBtn();
-  if(window.innerWidth<600)document.getElementById('bbDrivePad').style.display='flex';
   var maxCm=Math.round(BB_G._driveMax/BB_CM*10)/10;
   var typeMap={jet:'战斗机',heli:'直升机',tank:'坦克',car:'车',bomber:'轰炸机',carrier:'航母',ship:'战舰'};
   var type=typeMap[u.type]||'载具';
-  bbHint(type+' WASD移动 QE旋转 空格确认 ('+maxCm+'cm)');
+  // 电脑端：显示底部hint并使用键盘
+  if(window.innerWidth>=600){
+    bbShowCancelBtn();
+    bbHint(type+' WASD移动 QE旋转 空格确认 ('+maxCm+'cm)');
+  }else{
+    // 移动端：显示虚拟摇杆
+    bbShowDrivePad();
+    bbHint(type+' 摇杆移动 两侧按钮旋转 右下取消 ('+maxCm+'cm)');
+  }
 }
 function bbDriveMove(dx,dy,rot){
   if(!BB_G._driving||!BB_G._driveU)return;
@@ -3417,13 +3522,15 @@ function bbDriveMove(dx,dy,rot){
   if(distMoved>BB_G._driveMax)return;
   u.x=nx;u.y=ny;
   u.facing=(u.facing||0)+rot;
+  // 首次移动后隐藏取消按钮
+  if(!BB_G._driveMoved){BB_G._driveMoved=true;bbHideCancelBtn();}
 }
 function bbDriveEnd(){
   if(!BB_G._driving)return;
   BB_G.step++;
   BB_G._driving=false;BB_G._driveU=null;
-  bbHideCancelBtn();
-  document.getElementById('bbDrivePad').style.display='none';
+  BB_G._driveOriginX=undefined;BB_G._driveOriginY=undefined;BB_G._driveMoved=false;
+  bbHideCancelBtn();bbHideDrivePad();
   bbHint('驾驶完成');bbUpdUI();bbAutoEnd();
 }
 function bbDoCarrierDeploy(type){
@@ -3607,7 +3714,7 @@ function bbSwTurn(){
   else{BB_G.phase='red';BB_G.turn++;if(BB_G.turn>3)BB_G.state=BB_SB;}
   BB_G.step=0;BB_G.selU=null;BB_G.selT=null;BB_G.pa=0;BB_G.aimMode=false;
   bbAiRetryCount=0;
-  BB_G.selCannon=false;BB_G.selCannonU=null;BB_G.healMode=false;BB_G.healer=null;BB_G._driving=false;BB_G._driveU=null;document.getElementById('bbDrivePad').style.display='none';
+  BB_G.selCannon=false;BB_G.selCannonU=null;BB_G.healMode=false;BB_G.healer=null;BB_G._driving=false;BB_G._driveU=null;BB_G._driveOriginX=undefined;BB_G._driveOriginY=undefined;BB_G._driveMoved=false;bbHideDrivePad();
   BB_G.carMineMode=false;BB_G.carMineU=null;BB_G._bomberLine=false;BB_G._bomberU=null;BB_G._bomberP1=null;
   BB_G._carrierDeploy=false;BB_G._carrierU=null;BB_G._shipDeploy=false;BB_G._shipU=null;
   bbClosePop();bbHideAngleKnob();bbHideCancelBtn();
