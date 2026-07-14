@@ -2,7 +2,6 @@
 <html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>核邪部队</title>
-<script src="移动端解决方案/updater.js"></script>
 <style>
 *{margin:0;padding:0}
 body{background:#000;color:#0f0;font-family:'Courier New',monospace;overflow:hidden;width:100vw;height:100vh}
@@ -87,19 +86,8 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 .bb-dp-btn{padding:8px 6px;background:#2a2a00;border:1px solid #654321;color:#c8a96e;cursor:pointer;font-family:Courier New;font-size:14px;text-align:center;border-radius:4px;user-select:none;-webkit-user-select:none;touch-action:none}.bb-dp-btn:active{background:#3a3a00;border-color:#c8a96e}
 /* 地图操控浮动按钮（菜单栏中已有内联按钮，此浮动按钮仅作为快捷入口，已隐藏避免与开始按钮重叠） */
 #camToggle,#bbCamToggle{display:none}
-/* 移动端摇杆 */
-#camStick{position:fixed;left:24px;bottom:24px;z-index:740;width:140px;height:140px;display:none;touch-action:none;user-select:none;-webkit-user-select:none}
-#camStick.show{display:block}
-#camStickBase{position:absolute;left:0;top:0;width:140px;height:140px;border-radius:50%;background:rgba(40,30,0,0.35);border:2px solid rgba(200,169,110,0.5);backdrop-filter:blur(2px);pointer-events:none}
-#camStickKnob{position:absolute;left:50%;top:50%;width:60px;height:60px;margin-left:-30px;margin-top:-30px;border-radius:50%;background:rgba(80,60,20,0.55);border:2px solid rgba(200,169,110,0.7);backdrop-filter:blur(2px);pointer-events:none;transition:none}
-#bbCamStick{position:fixed;left:24px;bottom:24px;z-index:740;width:140px;height:140px;display:none;touch-action:none;user-select:none;-webkit-user-select:none}
-#bbCamStick.show{display:block}
-#bbCamStickBase{position:absolute;left:0;top:0;width:140px;height:140px;border-radius:50%;background:rgba(40,30,0,0.35);border:2px solid rgba(200,169,110,0.5);backdrop-filter:blur(2px);pointer-events:none}
-#bbCamStickKnob{position:absolute;left:50%;top:50%;width:60px;height:60px;margin-left:-30px;margin-top:-30px;border-radius:50%;background:rgba(80,60,20,0.55);border:2px solid rgba(200,169,110,0.7);backdrop-filter:blur(2px);pointer-events:none;transition:none}
 @media(max-width:600px){
-  #camStick,#bbCamStick{left:12px;bottom:12px;width:120px;height:120px}
-  #camStickBase,#bbCamStickBase{width:120px;height:120px}
-  #camStickKnob,#bbCamStickKnob{width:50px;height:50px;margin-left:-25px;margin-top:-25px}
+  #camStick,#bbCamStick{display:none}
   #mobileToolPanel .bb-tb,#mobileToolPanel .tb{font-size:11px;padding:6px 4px}
 }
 #mobileToolPanel .mtp-tabs{display:flex;flex-shrink:0;border-bottom:2px solid #3a2a00}
@@ -282,12 +270,6 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 <div id="modal"><div class="box" id="modalBox"></div></div>
 <!-- 地图操控按钮（右下角） -->
 <button id="camToggle" onclick="camToggleMode()" title="移动/缩放地图" ontouchstart="" style="display:none">◉</button>
-<!-- 移动端摇杆 -->
-<div id="camStick" ontouchstart="camStickStart(event)" ontouchmove="camStickMove(event)" ontouchend="camStickEnd(event)">
-  <div id="camStickBase"></div>
-  <div id="camStickKnob"></div>
-</div>
-
 <!-- 取消按钮（代替T键） -->
 <button id="cancelBtn" onclick="doCancel()">✕ 取消</button>
 <!-- 角度旋钮 -->
@@ -401,11 +383,6 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 </div>
 <!-- 地图操控按钮（右下角） -->
 <button id="bbCamToggle" onclick="bbCamToggleMode()" title="移动/缩放地图" ontouchstart="" style="display:none">◉</button>
-<!-- 移动端摇杆 -->
-<div id="bbCamStick" ontouchstart="bbCamStickStart(event)" ontouchmove="bbCamStickMove(event)" ontouchend="bbCamStickEnd(event)">
-  <div id="bbCamStickBase"></div>
-  <div id="bbCamStickKnob"></div>
-</div>
 <div id="bbDrivePad" style="display:none;position:fixed;z-index:800;pointer-events:none">
   <!-- 左旋转按钮 -->
   <button id="bbDPRotL" style="position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(40,30,0,0.4);border:2px solid rgba(200,169,110,0.5);color:rgba(200,169,110,0.8);font-size:22px;pointer-events:auto;user-select:none;-webkit-user-select:none;backdrop-filter:blur(2px)">↺</button>
@@ -608,7 +585,7 @@ const MS=800,UR=12,CS=22,CM=70,SW=85,SH=20;
 // 相机
 let camX=0,camY=0,camZoom=1;
 let camMoveMode=false;
-let camStickActive=false,camStickCx=0,camStickCy=0,camStickOffsetX=0,camStickOffsetY=0,camStickInterval=null;
+
 const SD='draw',ST='truce',SB='battle';
 let G=null;
 const MC=document.getElementById('menuCanvas'),MCC=MC.getContext('2d');
@@ -620,19 +597,9 @@ MC.width=window.innerWidth;MC.height=window.innerHeight;
 function genSandTexture(w,h){
   const c=document.createElement('canvas');c.width=w;c.height=h;
   const cx=c.getContext('2d');
-  const id=cx.createImageData(w,h);
-  for(let i=0;i<id.data.length;i+=4){
-    const b=100+Math.random()*30|0;
-    id.data[i]=b+15;id.data[i+1]=b+5;id.data[i+2]=b-10;id.data[i+3]=255;
-  }
-  cx.putImageData(id,0,0);
-  // 一些深色斑点模拟沙砾
-  for(let i=0;i<300;i++){
-    const x=Math.random()*w,y=Math.random()*h;
-    const g=80+Math.random()*25|0;
-    cx.fillStyle=`rgb(${g},${g-5},${g-15})`;
-    cx.fillRect(x,y,1+Math.random()*2|0,1+Math.random()*2|0);
-  }
+  // 白色背景
+  cx.fillStyle='#fff';
+  cx.fillRect(0,0,w,h);
   return c;
 }
 const SAND=genSandTexture(MS,MS);
@@ -645,28 +612,31 @@ function screenToWorld(sx,sy){
 // 相机边界约束：防止地图完全移出屏幕（允许边缘溢出50px，提升拖动手感）
 function clampCam(){
   var cv=GC.getBoundingClientRect();
+  var scale=MS/cv.width;
+  var viewW=MS,viewH=MS; // 画布逻辑尺寸
   var overflow=50;
   var mapW=MS*camZoom,mapH=MS*camZoom;
-  var minX=cv.width-mapW-overflow;
+  var minX=viewW-mapW-overflow;
   var maxX=overflow;
-  var minY=cv.height-mapH-overflow;
+  var minY=viewH-mapH-overflow;
   var maxY=overflow;
-  if(minX>=maxX){camX=(cv.width-mapW)/2;}
+  if(minX>=maxX){camX=(viewW-mapW)/2;}
   else{camX=Math.min(maxX,Math.max(minX,camX));}
-  if(minY>=maxY){camY=(cv.height-mapH)/2;}
+  if(minY>=maxY){camY=(viewH-mapH)/2;}
   else{camY=Math.min(maxY,Math.max(minY,camY));}
 }
 function bbClampCam(){
   var cv=BB_CV.getBoundingClientRect();
+  var viewW=BB_MS,viewH=BB_MS;
   var overflow=50;
   var mapW=BB_MS*bbCamZoom,mapH=BB_MS*bbCamZoom;
-  var minX=cv.width-mapW-overflow;
+  var minX=viewW-mapW-overflow;
   var maxX=overflow;
-  var minY=cv.height-mapH-overflow;
+  var minY=viewH-mapH-overflow;
   var maxY=overflow;
-  if(minX>=maxX){bbCamX=(cv.width-mapW)/2;}
+  if(minX>=maxX){bbCamX=(viewW-mapW)/2;}
   else{bbCamX=Math.min(maxX,Math.max(minX,bbCamX));}
-  if(minY>=maxY){bbCamY=(cv.height-mapH)/2;}
+  if(minY>=maxY){bbCamY=(viewH-mapH)/2;}
   else{bbCamY=Math.min(maxY,Math.max(minY,bbCamY));}
 }
 function camToggleMode(){
@@ -680,11 +650,6 @@ function camToggleMode(){
       else b.classList.remove('act');
     }
   });
-  var stick=document.getElementById('camStick');
-  if(stick){
-    if(camMoveMode&&('ontouchstart' in window))stick.className='show';
-    else stick.className='';
-  }
   // 锁定/解锁工具面板
   var tp=document.getElementById('toolPanel');
   if(tp)tp.className=camMoveMode?tp.className+' camLocked':tp.className.replace(/\s*camLocked/g,'');
@@ -712,85 +677,12 @@ function camToggleMode(){
         delete el.dataset.camWasShown;
       }
     });
-    if(camStickInterval){clearInterval(camStickInterval);camStickInterval=null;}
-    camStickOffsetX=0;camStickOffsetY=0;
     draw();
   }
 }
-function camStickStart(e){
-  e.preventDefault();
-  if(!camMoveMode)return;
-  var t=e.touches[0];
-  var base=document.getElementById('camStickBase');
-  var r=base.getBoundingClientRect();
-  camStickCx=r.left+r.width/2;
-  camStickCy=r.top+r.height/2;
-  camStickActive=true;
-  // 双指缩放初始距离
-  if(e.touches.length===2){
-    var t1=e.touches[0],t2=e.touches[1];
-    camStickOffsetX=Math.hypot(t1.clientX-t2.clientX);
-  }
-  // 启动摇杆持续移动定时器
-  if(!camStickInterval){
-    camStickInterval=setInterval(function(){
-      if(camStickActive&&camMoveMode){
-        camX-=camStickOffsetX;
-        camY-=camStickOffsetY;
-        draw();
-      }
-    },30);
-  }
-  camStickMove(e);
-}
-function camStickMove(e){
-  e.preventDefault();
-  if(!camMoveMode)return;
-  // 双指缩放（以两指中点为中心）
-  if(e.touches.length===2){
-    var t1=e.touches[0],t2=e.touches[1];
-    var d=Math.hypot(t1.clientX-t2.clientX);
-    if(camStickOffsetX>0){
-      var cv=GC.getBoundingClientRect();
-      var mx=(t1.clientX+t2.clientX)/2,my=(t1.clientY+t2.clientY)/2;
-      var px=(mx-cv.left)*MS/cv.width;
-      var py=(my-cv.top)*MS/cv.height;
-      var ratio=d/camStickOffsetX;
-      var oldZoom=camZoom;
-      camZoom=Math.max(0.3,Math.min(3,camZoom*ratio));
-      camX=px-(px-camX)*(camZoom/oldZoom);
-      camY=py-(py-camY)*(camZoom/oldZoom);
-    }
-    camStickOffsetX=d;
-    draw();return;
-  }
-  if(e.touches.length!==1)return;
-  var t=e.touches[0];
-  var knob=document.getElementById('camStickKnob');
-  var dx=t.clientX-camStickCx,dy=t.clientY-camStickCy;
-  var dist=Math.min(Math.hypot(dx,dy),50);
-  var ang=Math.atan2(dy,dx);
-  var kx=Math.cos(ang)*dist,ky=Math.sin(ang)*dist;
-  if(knob){knob.style.transform='translate('+kx+'px,'+ky+'px)';}
-  camStickOffsetX=kx*0.5;
-  camStickOffsetY=ky*0.5;
-}
-function camStickEnd(e){
-  e.preventDefault();
-  camStickActive=false;
-  var knob=document.getElementById('camStickKnob');
-  if(knob)knob.style.transform='translate(0,0)';
-  camStickOffsetX=0;camStickOffsetY=0;
-  if(camStickInterval){clearInterval(camStickInterval);camStickInterval=null;}
-}
+
 function drawDesertBG(ctx,w,h){
   ctx.drawImage(SAND,0,0,w,h);
-  // 淡绿色网格
-  ctx.strokeStyle='rgba(60,80,40,0.15)';ctx.lineWidth=0.5;
-  for(let i=0;i<=w;i+=50){
-    ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,h);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(w,i);ctx.stroke();
-  }
 }
 
 function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2)}
@@ -2732,8 +2624,6 @@ function bbDraw(){
   BB_CTX.scale(bbCamZoom,bbCamZoom);
   BB_CTX.clearRect(-bbCamX/bbCamZoom,-bbCamY/bbCamZoom,BB_MS/bbCamZoom,BB_MS/bbCamZoom);
   BB_CTX.drawImage(BB_SAND,0,0,BB_MS,BB_MS);
-  BB_CTX.strokeStyle='rgba(60,80,40,0.15)';BB_CTX.lineWidth=0.5;
-  for(var i=0;i<=BB_MS;i+=50){BB_CTX.beginPath();BB_CTX.moveTo(i,0);BB_CTX.lineTo(i,BB_MS);BB_CTX.stroke();BB_CTX.beginPath();BB_CTX.moveTo(0,i);BB_CTX.lineTo(BB_MS,i);BB_CTX.stroke();}
   bbDrawSea();
   bbDrawShelters();
   bbDrawCamps();
@@ -3282,11 +3172,6 @@ function bbCamToggleMode(){
       else b.classList.remove('act');
     }
   });
-  var stick=document.getElementById('bbCamStick');
-  if(stick){
-    if(bbCamMoveMode&&('ontouchstart' in window))stick.className='show';
-    else stick.className='';
-  }
   // 锁定/解锁 BB 工具面板
   var tp=document.getElementById('bbToolPanel');
   if(tp)tp.className=bbCamMoveMode?tp.className+' camLocked':tp.className.replace(/\s*camLocked/g,'');
@@ -3317,57 +3202,7 @@ function bbCamToggleMode(){
     bbDraw();
   }
 }
-function bbCamStickStart(e){
-  e.preventDefault();
-  if(!bbCamMoveMode)return;
-  var t=e.touches[0];
-  var base=document.getElementById('bbCamStickBase');
-  var r=base.getBoundingClientRect();
-  bbCamStickCx=r.left+r.width/2;
-  bbCamStickCy=r.top+r.height/2;
-  if(e.touches.length===2){
-    var t1=e.touches[0],t2=e.touches[1];
-    bbCamStickOffsetX=Math.hypot(t1.clientX-t2.clientX);
-  }
-  bbCamStickMove(e);
-}
-function bbCamStickMove(e){
-  e.preventDefault();
-  if(!bbCamMoveMode)return;
-  if(e.touches.length===2){
-    var t1=e.touches[0],t2=e.touches[1];
-    var d=Math.hypot(t1.clientX-t2.clientX);
-    if(bbCamStickOffsetX>0){
-      var cv=BB_CV.getBoundingClientRect();
-      var mx=(t1.clientX+t2.clientX)/2,my=(t1.clientY+t2.clientY)/2;
-      var px=(mx-cv.left)*BB_MS/cv.width;
-      var py=(my-cv.top)*BB_MS/cv.height;
-      var ratio=d/bbCamStickOffsetX;
-      var oldZoom=bbCamZoom;
-      bbCamZoom=Math.max(0.3,Math.min(3,bbCamZoom*ratio));
-      bbCamX=px-(px-bbCamX)*(bbCamZoom/oldZoom);
-      bbCamY=py-(py-bbCamY)*(bbCamZoom/oldZoom);
-    }
-    bbCamStickOffsetX=d;
-    bbDraw();return;
-  }
-  if(e.touches.length!==1)return;
-  var t=e.touches[0];
-  var knob=document.getElementById('bbCamStickKnob');
-  var dx=t.clientX-bbCamStickCx,dy=t.clientY-bbCamStickCy;
-  var dist=Math.min(Math.hypot(dx,dy),50);
-  var ang=Math.atan2(dy,dx);
-  var kx=Math.cos(ang)*dist,ky=Math.sin(ang)*dist;
-  if(knob)knob.style.transform='translate('+kx+'px,'+ky+'px)';
-  bbCamX-=kx*0.5;bbCamY-=ky*0.5;
-  bbDraw();
-}
-function bbCamStickEnd(e){
-  e.preventDefault();
-  var knob=document.getElementById('bbCamStickKnob');
-  if(knob)knob.style.transform='translate(0,0)';
-  bbCamStickOffsetX=0;bbCamStickOffsetY=0;
-}
+
 // ===== EVENTS =====
 BB_CV.addEventListener('mousemove',function(e){
   if(!BB_G)return;
