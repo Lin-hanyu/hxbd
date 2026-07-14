@@ -2,6 +2,7 @@
 <html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>核邪部队</title>
+<script src="updater.js"></script>
 <style>
 *{margin:0;padding:0}
 body{background:#000;color:#0f0;font-family:'Courier New',monospace;overflow:hidden;width:100vw;height:100vh}
@@ -29,6 +30,7 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 #topBar .btn:hover{background:#3a3a00;border-color:#8a6a41}
 #toolPanel{position:fixed;top:44px;right:0;bottom:36px;width:170px;z-index:600;
   background:#1a1a00;border-left:3px solid #654321;overflow-y:auto;padding:6px}
+#toolPanel.camLocked,.bb-tool-panel.camLocked{pointer-events:none;opacity:0.5}
 #toolPanel .st{color:#8a7a5a;font-size:11px;padding:3px 0;border-bottom:1px solid #3a2a00;
   margin-top:6px;letter-spacing:1px}
 .tb{display:block;width:100%;padding:5px 8px;margin:2px 0;
@@ -83,6 +85,23 @@ canvas{display:block;cursor:crosshair;touch-action:none}
   background:#1a1a00;border-top:3px solid #654321;max-height:45vh;overflow:hidden;
   flex-direction:column}
 .bb-dp-btn{padding:8px 6px;background:#2a2a00;border:1px solid #654321;color:#c8a96e;cursor:pointer;font-family:Courier New;font-size:14px;text-align:center;border-radius:4px;user-select:none;-webkit-user-select:none;touch-action:none}.bb-dp-btn:active{background:#3a3a00;border-color:#c8a96e}
+/* 地图操控浮动按钮（菜单栏中已有内联按钮，此浮动按钮仅作为快捷入口，已隐藏避免与开始按钮重叠） */
+#camToggle,#bbCamToggle{display:none}
+/* 移动端摇杆 */
+#camStick{position:fixed;left:24px;bottom:24px;z-index:740;width:140px;height:140px;display:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#camStick.show{display:block}
+#camStickBase{position:absolute;left:0;top:0;width:140px;height:140px;border-radius:50%;background:rgba(40,30,0,0.35);border:2px solid rgba(200,169,110,0.5);backdrop-filter:blur(2px);pointer-events:none}
+#camStickKnob{position:absolute;left:50%;top:50%;width:60px;height:60px;margin-left:-30px;margin-top:-30px;border-radius:50%;background:rgba(80,60,20,0.55);border:2px solid rgba(200,169,110,0.7);backdrop-filter:blur(2px);pointer-events:none;transition:none}
+#bbCamStick{position:fixed;left:24px;bottom:24px;z-index:740;width:140px;height:140px;display:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#bbCamStick.show{display:block}
+#bbCamStickBase{position:absolute;left:0;top:0;width:140px;height:140px;border-radius:50%;background:rgba(40,30,0,0.35);border:2px solid rgba(200,169,110,0.5);backdrop-filter:blur(2px);pointer-events:none}
+#bbCamStickKnob{position:absolute;left:50%;top:50%;width:60px;height:60px;margin-left:-30px;margin-top:-30px;border-radius:50%;background:rgba(80,60,20,0.55);border:2px solid rgba(200,169,110,0.7);backdrop-filter:blur(2px);pointer-events:none;transition:none}
+@media(max-width:600px){
+  #camStick,#bbCamStick{left:12px;bottom:12px;width:120px;height:120px}
+  #camStickBase,#bbCamStickBase{width:120px;height:120px}
+  #camStickKnob,#bbCamStickKnob{width:50px;height:50px;margin-left:-25px;margin-top:-25px}
+  #mobileToolPanel .bb-tb,#mobileToolPanel .tb{font-size:11px;padding:6px 4px}
+}
 #mobileToolPanel .mtp-tabs{display:flex;flex-shrink:0;border-bottom:2px solid #3a2a00}
 #mobileToolPanel .mtp-tab{flex:1;padding:8px 4px;text-align:center;font-family:'Courier New';
   font-size:12px;color:#8a7a5a;background:#1a1a00;border:none;border-right:1px solid #3a2a00;cursor:pointer}
@@ -248,6 +267,9 @@ canvas{display:block;cursor:crosshair;touch-action:none}
     <button class="tb unit-tool b" data-tool="mortar_b" onclick="selTool('mortar_b')">/\ 迫击炮 [1HP]</button>
     <button class="tb unit-tool r" data-tool="interceptor_r" onclick="selTool('interceptor_r')">][ 拦截装置 [1HP]</button>
     <button class="tb unit-tool b" data-tool="interceptor_b" onclick="selTool('interceptor_b')">][ 拦截装置 [1HP]</button>
+    <div class="st">系统按键</div>
+    <button class="tb" id="camToggleInline" onclick="camToggleMode()">◉ 移动/缩放地图</button>
+    <button class="tb" id="camCenterInline" onclick="centerCam()">⌖ 居中地图</button>
   </div>
   <div id="bottomBar">
     <span id="turnInd">准备中...</span>
@@ -258,6 +280,13 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 
 <div id="unitPopup"></div>
 <div id="modal"><div class="box" id="modalBox"></div></div>
+<!-- 地图操控按钮（右下角） -->
+<button id="camToggle" onclick="camToggleMode()" title="移动/缩放地图" ontouchstart="" style="display:none">◉</button>
+<!-- 移动端摇杆 -->
+<div id="camStick" ontouchstart="camStickStart(event)" ontouchmove="camStickMove(event)" ontouchend="camStickEnd(event)">
+  <div id="camStickBase"></div>
+  <div id="camStickKnob"></div>
+</div>
 
 <!-- 取消按钮（代替T键） -->
 <button id="cancelBtn" onclick="doCancel()">✕ 取消</button>
@@ -282,8 +311,13 @@ canvas{display:block;cursor:crosshair;touch-action:none}
     <button class="mtp-tab active" data-mtab="draw" onclick="switchMtpTab('draw')">地图</button>
     <button class="mtp-tab" data-mtab="red" onclick="switchMtpTab('red')">红方</button>
     <button class="mtp-tab" data-mtab="blue" onclick="switchMtpTab('blue')">蓝方</button>
+    <button class="mtp-tab" data-mtab="sys" onclick="switchMtpTab('sys')">系统</button>
   </div>
   <div class="mtp-list" id="mtpList"></div>
+  <div class="mtp-sys" id="mtpSys" style="display:none;padding:4px;border-top:1px solid #3a2a00">
+    <button class="bb-tb" id="camToggleInlineM" onclick="camToggleMode()">◉ 移动/缩放地图</button>
+    <button class="bb-tb" id="camCenterInlineM" onclick="centerCam()">⌖ 居中地图</button>
+  </div>
 </div>
 
 <!-- ===== 大战场模式 UI ===== -->
@@ -302,8 +336,7 @@ canvas{display:block;cursor:crosshair;touch-action:none}
     <button class="bb-tb bb-draw-tool" data-tool="shelter" onclick="bbSelTool('shelter')">■ 掩体 [无限]</button>
     <button class="bb-tb r bb-draw-tool" data-tool="camp_red" onclick="bbSelTool('camp_red')">■ 营地(红) [200HP]</button>
     <button class="bb-tb b bb-draw-tool" data-tool="camp_blue" onclick="bbSelTool('camp_blue')">■ 营地(蓝) [200HP]</button>
-    <button class="bb-tb bb-draw-tool" data-tool="sea_line" onclick="bbSelTool('sea_line')">~ 海洋分界线</button>
-    <button class="bb-tb bb-draw-tool" data-tool="sea_fill" onclick="bbSelTool('sea_fill')">≈ 填充海洋</button>
+    <button class="bb-tb bb-draw-tool" data-tool="sea_paint" onclick="bbSelTool('sea_paint')">~ 绘制海洋</button>
     <div class="st">部署兵种</div>
     <button class="bb-tb r bb-unit-tool" data-tool="soldier_r" onclick="bbSelTool('soldier_r')">○ 普通兵 [10HP/5AT]</button>
     <button class="bb-tb b bb-unit-tool" data-tool="soldier_b" onclick="bbSelTool('soldier_b')">○ 普通兵 [10HP/5AT]</button>
@@ -330,6 +363,9 @@ canvas{display:block;cursor:crosshair;touch-action:none}
     <button class="bb-tb b bb-unit-tool" data-tool="carrier_b" onclick="bbSelTool('carrier_b')">⊡ 航母 [70HP/10AT] 💰10</button>
     <button class="bb-tb r bb-unit-tool" data-tool="ship_r" onclick="bbSelTool('ship_r')">◫ 战舰 [60HP/20AT] 💰5</button>
     <button class="bb-tb b bb-unit-tool" data-tool="ship_b" onclick="bbSelTool('ship_b')">◫ 战舰 [60HP/20AT] 💰5</button>
+    <div class="st">系统按键</div>
+    <button class="bb-tb" id="bbCamToggleInline" onclick="bbCamToggleMode()">◉ 移动/缩放地图</button>
+    <button class="bb-tb" id="bbCamCenterInline" onclick="bbCenterCam()">⌖ 居中地图</button>
   </div>
   <div id="bbBottomBar">
     <span id="bbTurnInd">准备中...</span>
@@ -355,8 +391,20 @@ canvas{display:block;cursor:crosshair;touch-action:none}
     <button class="bb-mtp-tab active" data-mtab="draw" onclick="switchBBMtpTab('draw')">地图</button>
     <button class="bb-mtp-tab" data-mtab="red" onclick="switchBBMtpTab('red')">红方</button>
     <button class="bb-mtp-tab" data-mtab="blue" onclick="switchBBMtpTab('blue')">蓝方</button>
+    <button class="bb-mtp-tab" data-mtab="sys" onclick="switchBBMtpTab('sys')">系统</button>
   </div>
   <div class="bb-mtp-list" id="bbMtpList"></div>
+  <div class="bb-mtp-sys" id="bbMtpSys" style="display:none;padding:4px;border-top:1px solid #3a2a00">
+    <button class="bb-tb" id="bbCamToggleInlineM" onclick="bbCamToggleMode()">◉ 移动/缩放地图</button>
+    <button class="bb-tb" id="bbCamCenterInlineM" onclick="bbCenterCam()">⌖ 居中地图</button>
+  </div>
+</div>
+<!-- 地图操控按钮（右下角） -->
+<button id="bbCamToggle" onclick="bbCamToggleMode()" title="移动/缩放地图" ontouchstart="" style="display:none">◉</button>
+<!-- 移动端摇杆 -->
+<div id="bbCamStick" ontouchstart="bbCamStickStart(event)" ontouchmove="bbCamStickMove(event)" ontouchend="bbCamStickEnd(event)">
+  <div id="bbCamStickBase"></div>
+  <div id="bbCamStickKnob"></div>
 </div>
 <div id="bbDrivePad" style="display:none;position:fixed;z-index:800;pointer-events:none">
   <!-- 左旋转按钮 -->
@@ -557,6 +605,10 @@ function drawImg(ctx, key, x, y, angle, scale) {
 
 // ===== 常量 =====
 const MS=800,UR=12,CS=22,CM=70,SW=85,SH=20;
+// 相机
+let camX=0,camY=0,camZoom=1;
+let camMoveMode=false;
+let camStickActive=false,camStickCx=0,camStickCy=0,camStickOffsetX=0,camStickOffsetY=0,camStickInterval=null;
 const SD='draw',ST='truce',SB='battle';
 let G=null;
 const MC=document.getElementById('menuCanvas'),MCC=MC.getContext('2d');
@@ -585,6 +637,152 @@ function genSandTexture(w,h){
 }
 const SAND=genSandTexture(MS,MS);
 
+function screenToWorld(sx,sy){
+  var r=GC.getBoundingClientRect();
+  var px=(sx-r.left)*MS/r.width,py=(sy-r.top)*MS/r.height;
+  return {x:(px-camX)/camZoom,y:(py-camY)/camZoom};
+}
+// 相机边界约束：防止地图完全移出屏幕（允许边缘溢出50px，提升拖动手感）
+function clampCam(){
+  var cv=GC.getBoundingClientRect();
+  var overflow=50;
+  var mapW=MS*camZoom,mapH=MS*camZoom;
+  var minX=cv.width-mapW-overflow;
+  var maxX=overflow;
+  var minY=cv.height-mapH-overflow;
+  var maxY=overflow;
+  if(minX>=maxX){camX=(cv.width-mapW)/2;}
+  else{camX=Math.min(maxX,Math.max(minX,camX));}
+  if(minY>=maxY){camY=(cv.height-mapH)/2;}
+  else{camY=Math.min(maxY,Math.max(minY,camY));}
+}
+function bbClampCam(){
+  var cv=BB_CV.getBoundingClientRect();
+  var overflow=50;
+  var mapW=BB_MS*bbCamZoom,mapH=BB_MS*bbCamZoom;
+  var minX=cv.width-mapW-overflow;
+  var maxX=overflow;
+  var minY=cv.height-mapH-overflow;
+  var maxY=overflow;
+  if(minX>=maxX){bbCamX=(cv.width-mapW)/2;}
+  else{bbCamX=Math.min(maxX,Math.max(minX,bbCamX));}
+  if(minY>=maxY){bbCamY=(cv.height-mapH)/2;}
+  else{bbCamY=Math.min(maxY,Math.max(minY,bbCamY));}
+}
+function camToggleMode(){
+  camMoveMode=!camMoveMode;
+  var btn=document.getElementById('camToggle');
+  if(btn)btn.className=camMoveMode?'active':'';
+  ['camToggleInline','camToggleInlineM'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){
+      if(camMoveMode)b.classList.add('act');
+      else b.classList.remove('act');
+    }
+  });
+  var stick=document.getElementById('camStick');
+  if(stick){
+    if(camMoveMode&&('ontouchstart' in window))stick.className='show';
+    else stick.className='';
+  }
+  // 锁定/解锁工具面板
+  var tp=document.getElementById('toolPanel');
+  if(tp)tp.className=camMoveMode?tp.className+' camLocked':tp.className.replace(/\s*camLocked/g,'');
+  var bb=document.getElementById('bottomBar');
+  if(bb)bb.style.pointerEvents=camMoveMode?'none':'';
+  // 居中按钮在 camMoveMode 下也可用
+  var cb=document.getElementById('camCenterInline');
+  if(cb)cb.style.pointerEvents='auto';
+  var cbm=document.getElementById('camCenterInlineM');
+  if(cbm)cbm.style.pointerEvents='auto';
+  // 移动模式下：隐藏角度旋钮/取消按钮/单位弹窗/开火按钮；退出时恢复
+  if(camMoveMode){
+    ['angleKnob','cancelBtn','mobileFireBtn','unitPopup'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&el.style.display!=='none'&&el.style.display!==''){
+        el.dataset.camWasShown='1';el.style.display='none';
+      }
+    });
+    draw();
+  }else{
+    ['angleKnob','cancelBtn','mobileFireBtn','unitPopup'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&el.dataset.camWasShown==='1'){
+        el.style.display=id==='angleKnob'?'flex':'block';
+        delete el.dataset.camWasShown;
+      }
+    });
+    if(camStickInterval){clearInterval(camStickInterval);camStickInterval=null;}
+    camStickOffsetX=0;camStickOffsetY=0;
+    draw();
+  }
+}
+function camStickStart(e){
+  e.preventDefault();
+  if(!camMoveMode)return;
+  var t=e.touches[0];
+  var base=document.getElementById('camStickBase');
+  var r=base.getBoundingClientRect();
+  camStickCx=r.left+r.width/2;
+  camStickCy=r.top+r.height/2;
+  camStickActive=true;
+  // 双指缩放初始距离
+  if(e.touches.length===2){
+    var t1=e.touches[0],t2=e.touches[1];
+    camStickOffsetX=Math.hypot(t1.clientX-t2.clientX);
+  }
+  // 启动摇杆持续移动定时器
+  if(!camStickInterval){
+    camStickInterval=setInterval(function(){
+      if(camStickActive&&camMoveMode){
+        camX-=camStickOffsetX;
+        camY-=camStickOffsetY;
+        draw();
+      }
+    },30);
+  }
+  camStickMove(e);
+}
+function camStickMove(e){
+  e.preventDefault();
+  if(!camMoveMode)return;
+  // 双指缩放（以两指中点为中心）
+  if(e.touches.length===2){
+    var t1=e.touches[0],t2=e.touches[1];
+    var d=Math.hypot(t1.clientX-t2.clientX);
+    if(camStickOffsetX>0){
+      var cv=GC.getBoundingClientRect();
+      var mx=(t1.clientX+t2.clientX)/2,my=(t1.clientY+t2.clientY)/2;
+      var px=(mx-cv.left)*MS/cv.width;
+      var py=(my-cv.top)*MS/cv.height;
+      var ratio=d/camStickOffsetX;
+      var oldZoom=camZoom;
+      camZoom=Math.max(0.3,Math.min(3,camZoom*ratio));
+      camX=px-(px-camX)*(camZoom/oldZoom);
+      camY=py-(py-camY)*(camZoom/oldZoom);
+    }
+    camStickOffsetX=d;
+    draw();return;
+  }
+  if(e.touches.length!==1)return;
+  var t=e.touches[0];
+  var knob=document.getElementById('camStickKnob');
+  var dx=t.clientX-camStickCx,dy=t.clientY-camStickCy;
+  var dist=Math.min(Math.hypot(dx,dy),50);
+  var ang=Math.atan2(dy,dx);
+  var kx=Math.cos(ang)*dist,ky=Math.sin(ang)*dist;
+  if(knob){knob.style.transform='translate('+kx+'px,'+ky+'px)';}
+  camStickOffsetX=kx*0.5;
+  camStickOffsetY=ky*0.5;
+}
+function camStickEnd(e){
+  e.preventDefault();
+  camStickActive=false;
+  var knob=document.getElementById('camStickKnob');
+  if(knob)knob.style.transform='translate(0,0)';
+  camStickOffsetX=0;camStickOffsetY=0;
+  if(camStickInterval){clearInterval(camStickInterval);camStickInterval=null;}
+}
 function drawDesertBG(ctx,w,h){
   ctx.drawImage(SAND,0,0,w,h);
   // 淡绿色网格
@@ -600,6 +798,11 @@ function inR(a,b){return dist(a,b)<=CM*3}
 
 // ===== 菜单界面 =====
 function drawMenu(){
+  // 确保 canvas 内部尺寸与 CSS 显示尺寸一致
+  var rect=MC.getBoundingClientRect();
+  if(rect.width>0&&rect.height>0&&(MC.width!==rect.width||MC.height!==rect.height)){
+    MC.width=rect.width;MC.height=rect.height;
+  }
   const w=MC.width,h=MC.height;
   MCC.fillStyle='#000';MCC.fillRect(0,0,w,h);
   const grd=MCC.createRadialGradient(w/2,h+100,50,w/2,h+100,400);
@@ -619,6 +822,10 @@ function drawMenu(){
 // ===== 游戏初始化 =====
 function showGame(){
   const aiMode=G&&G.aiMode?true:false;
+  // 重置相机
+  camX=0;camY=0;camZoom=1;camMoveMode=false;
+  document.getElementById('camToggle').className='';
+  document.getElementById('bbCamToggle').style.display='none';
   loadImages().then(() => {
     document.getElementById('mainMenu').style.display='none';
     document.getElementById('gameUI').style.display='block';
@@ -665,17 +872,24 @@ window.addEventListener('resize',()=>{if(G)resizeCanvas();if(!G)drawMenu();});
 // ===== 绘制 =====
 function draw(){
   if(!G)return;
-  GCC.clearRect(0,0,MS,MS);
+  clampCam();
+  GCC.save();
+  GCC.translate(camX,camY);
+  GCC.scale(camZoom,camZoom);
+  GCC.clearRect(-camX/camZoom,-camY/camZoom,MS/camZoom,MS/camZoom);
   drawDesertBG(GCC,MS,MS);
   drawShelters();
   drawCamps();
   drawUnits();
   drawWalls();
-  drawSel();
-  drawAnglePrev();
-  drawPlacePrev();
+  if(!camMoveMode){
+    drawSel();
+    drawAnglePrev();
+    drawPlacePrev();
+    drawMortarPrev();
+  }
   drawTrap();
-  drawMortarPrev();
+  GCC.restore();
 }
 
 function drawShelters(){
@@ -1073,11 +1287,11 @@ function updKnob(){
   document.getElementById('angleLabel').textContent=Math.round(a*180/Math.PI)+'°';
   const ind=document.getElementById('knobIndicator');
   ind.style.transform=`rotate(${a}rad)`;
-  // 根据显示状态决定旋钮位置
-  k.style.display='flex';
+  // 不在这里设置 display，避免与 hide/show 冲突
 }
 
 function showAngleKnob(){
+  if(camMoveMode)return; // 移动地图模式下不显示角度旋钮
   const k=document.getElementById('angleKnob');
   k.style.display='flex';
   updKnob();
@@ -1088,6 +1302,7 @@ function hideAngleKnob(){
 }
 
 function show取消Btn(){
+  if(camMoveMode)return; // 移动地图模式下不显示取消按钮
   document.getElementById('cancelBtn').style.display='block';
 }
 
@@ -1144,6 +1359,14 @@ function switchMtpTab(tab){
     b.classList.toggle('active',b.dataset.mtab===tab);
   });
   const list=document.getElementById('mtpList');
+  const sys=document.getElementById('mtpSys');
+  if(tab==='sys'){
+    list.style.display='none';
+    if(sys)sys.style.display='block';
+    return;
+  }
+  list.style.display='';
+  if(sys)sys.style.display='none';
   const tools=MTP_TOOLS[tab]||[];
   list.innerHTML=tools.map(t=>
     `<button class="tb ${t.cls}" data-tool="${t.tool}" onclick="selTool('${t.tool}')">${t.label}</button>`
@@ -1164,14 +1387,54 @@ function mobileFire(){
 }
 
 // ===== Canvas事件 =====
+// 长按拖拽变量
+let camMouseDown=false,camMouseDownX=0,camMouseDownY=0,camMouseDownT=0,camMouseDownCX=0,camMouseDownCY=0;
+
 GC.addEventListener('mousemove',e=>{
-  const r=GC.getBoundingClientRect();
-  G.mx=(e.clientX-r.left)*MS/r.width;G.my=(e.clientY-r.top)*MS/r.height;
+  // 移动模式下：长按鼠标左键拖拽（考虑画布缩放比例）
+  if(camMoveMode&&camMouseDown){
+    const rect=GC.getBoundingClientRect();
+    const scale=MS/rect.width;
+    camX=camMouseDownCX+(e.clientX-camMouseDownX)*scale;
+    camY=camMouseDownCY+(e.clientY-camMouseDownY)*scale;
+    draw();
+    return;
+  }
+  const rect=GC.getBoundingClientRect();
+  var cp=screenToWorld(e.clientX,e.clientY);G.mx=cp.x;G.my=cp.y;
   draw();
+});
+
+GC.addEventListener('mousedown',e=>{
+  if(camMoveMode&&e.button===0){
+    camMouseDown=true;camMouseDownX=e.clientX;camMouseDownY=e.clientY;
+    camMouseDownCX=camX;camMouseDownCY=camY;
+    camMouseDownT=Date.now();
+    e.preventDefault();
+  }
+});
+GC.addEventListener('mouseup',e=>{
+  if(camMoveMode&&e.button===0){
+    camMouseDown=false;
+  }
 });
 
 GC.addEventListener('wheel',e=>{
   e.preventDefault();
+  // 移动模式：滚轮缩放（以鼠标位置为中心）
+  if(camMoveMode){
+    var r=GC.getBoundingClientRect();
+    var px=(e.clientX-r.left)*MS/r.width;
+    var py=(e.clientY-r.top)*MS/r.height;
+    var oldZoom=camZoom;
+    if(e.deltaY<0)camZoom=Math.min(3,camZoom*1.1);
+    else camZoom=Math.max(0.3,camZoom/1.1);
+    // 调整 camX/camY 使鼠标位置的世界坐标不变
+    camX=px-(px-camX)*(camZoom/oldZoom);
+    camY=py-(py-camY)*(camZoom/oldZoom);
+    draw();
+    return;
+  }
   const d=e.deltaY>0?0.1:-0.1;
   if(G.selT==='shelter'&&G.state===SD){
     G.sa=(G.sa||0)+d;updKnob();
@@ -1194,9 +1457,25 @@ GC.setAttribute('tabindex','0');
 GC.addEventListener('touchstart',e=>{
   e.preventDefault();
   const r=GC.getBoundingClientRect();
+  // 移动模式：单指拖地图
+  if(camMoveMode&&e.touches.length===1){
+    const t=e.touches[0];
+    if(!G._camPanStart){
+      G._camPanStart={x:t.clientX,y:t.clientY,cx:camX,cy:camY};
+    }
+    return;
+  }
+  // 移动模式：双指缩放
+  if(camMoveMode&&e.touches.length===2){
+    const t1=e.touches[0],t2=e.touches[1];
+    if(!G._camPinchStart){
+      G._camPinchStart=Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);
+    }
+    return;
+  }
   if(e.touches.length===1){
     const t=e.touches[0];
-    G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
+    var cp=screenToWorld(t.clientX,t.clientY);G.mx=cp.x;G.my=cp.y;
     G._touchStart={x:G.mx,y:G.my};
   }
   if(e.touches.length===2){
@@ -1209,6 +1488,32 @@ GC.addEventListener('touchstart',e=>{
 GC.addEventListener('touchmove',e=>{
   e.preventDefault();
   const r=GC.getBoundingClientRect();
+  // 移动模式：单指拖地图（考虑画布缩放比例）
+  if(camMoveMode&&e.touches.length===1&&G._camPanStart){
+    const t=e.touches[0];
+    const scale=MS/r.width; // 屏幕像素 -> 画布逻辑像素
+    camX=G._camPanStart.cx+(t.clientX-G._camPanStart.x)*scale;
+    camY=G._camPanStart.cy+(t.clientY-G._camPanStart.y)*scale;
+    draw();return;
+  }
+  // 移动模式：双指缩放（以两指中点为中心）
+  if(camMoveMode&&e.touches.length===2&&G._camPinchStart){
+    const t1=e.touches[0],t2=e.touches[1];
+    const d=Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);
+    if(G._camPinchStart>0){
+      const cv=GC.getBoundingClientRect();
+      const mx=(t1.clientX+t2.clientX)/2,my=(t1.clientY+t2.clientY)/2;
+      const px=(mx-cv.left)*MS/cv.width;
+      const py=(my-cv.top)*MS/cv.height;
+      const ratio=d/G._camPinchStart;
+      const oldZoom=camZoom;
+      camZoom=Math.max(0.3,Math.min(3,camZoom*ratio));
+      camX=px-(px-camX)*(camZoom/oldZoom);
+      camY=py-(py-camY)*(camZoom/oldZoom);
+    }
+    G._camPinchStart=d;
+    draw();return;
+  }
   if(e.touches.length===2&&G._twoFingerStart!==undefined){
     // 双指旋转 -> 调整角度
     const t1=e.touches[0],t2=e.touches[1];
@@ -1225,12 +1530,18 @@ GC.addEventListener('touchmove',e=>{
     updKnob();draw();
   }else if(e.touches.length===1){
     const t=e.touches[0];
-    G.mx=(t.clientX-r.left)*MS/r.width;G.my=(t.clientY-r.top)*MS/r.height;
+    var cp=screenToWorld(t.clientX,t.clientY);G.mx=cp.x;G.my=cp.y;
     draw();
   }
 },{passive:false});
 GC.addEventListener('touchend',e=>{
   // touchend 不可取消，不调 preventDefault（否则浏览器报 passive 警告）
+  // 移动模式：清空拖拽状态
+  if(camMoveMode){
+    if(e.touches.length<1){G._camPanStart=null;G._camPinchStart=null;}
+    else if(e.touches.length<2)G._camPinchStart=null;
+    return;
+  }
   // 双指手势结束
   if(e.touches.length<2){G._twoFingerStart=undefined;}
   if(e.touches.length>0)return; // 还有手指在屏幕上，不触发点击
@@ -1265,8 +1576,9 @@ document.addEventListener('keydown',e=>{
 
 GC.addEventListener('click',e=>{
   if(G.over)return;
-  const r=GC.getBoundingClientRect();
-  const mx=(e.clientX-r.left)*MS/r.width,my=(e.clientY-r.top)*MS/r.height;
+  // 移动模式下点击不触发游戏逻辑
+  if(camMoveMode)return;
+  var cp=screenToWorld(e.clientX,e.clientY);const mx=cp.x,my=cp.y;
   if(G.aimMode){doAimFire(mx,my);return;}
   if(G.buildWall){placeWall(mx,my);return;}
   if(G.selMortar){placeMortarT(mx,my);return;}
@@ -1655,8 +1967,13 @@ function animBullet(sx,sy,angle,hitList,stop){
     }
     const px=sx+Math.cos(angle)*d,py=sy+Math.sin(angle)*d;
     draw();
-    GCC.save();GCC.fillStyle='#ff0';GCC.shadowColor='#ff0';GCC.shadowBlur=10;
-    GCC.beginPath();GCC.arc(px,py,3,0,Math.PI*2);GCC.fill();GCC.restore();
+    // 子弹在相机变换后的坐标下绘制
+    GCC.save();
+    GCC.translate(camX,camY);
+    GCC.scale(camZoom,camZoom);
+    GCC.fillStyle='#ff0';GCC.shadowColor='#ff0';GCC.shadowBlur=10;
+    GCC.beginPath();GCC.arc(px,py,3,0,Math.PI*2);GCC.fill();
+    GCC.restore();
     while(app<hitList.length&&d>=hitList[app].dist){
       const h=hitList[app];
       console.log('animBullet: hit!',h.isCamp?'camp('+h.target.team+')':h.target.type+'('+h.target.team+')','dmg=',h.dmg,'hp_before=',h.isCamp?h.target.hp:h.target.hp);
@@ -1724,9 +2041,14 @@ function animP(u){let o=0;const iv=setInterval(()=>{o+=0.1;if(o>=1)clearInterval
 function animD(u){
   let o=1;
   const iv=setInterval(()=>{o-=0.06;if(o<=0){clearInterval(iv);draw();return;}
-    draw();GCC.save();GCC.globalAlpha=o;GCC.fillStyle='rgba(255,255,200,0.3)';
+    draw();
+    GCC.save();
+    GCC.translate(camX,camY);
+    GCC.scale(camZoom,camZoom);
+    GCC.globalAlpha=o;GCC.fillStyle='rgba(255,255,200,0.3)';
     GCC.font='18px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
-    GCC.fillText('✕',u.x,u.y);GCC.restore();
+    GCC.fillText('✕',u.x,u.y);
+    GCC.restore();
   },50);
 }
 
@@ -2269,6 +2591,7 @@ function doBackToMenu(){
   document.getElementById('menuAi').style.display='none';
   document.getElementById('mobileToolPanel').style.display='none';
   document.getElementById('mobileFireBtn').style.display='none';
+  document.getElementById('camToggle').style.display='none';
   G=null;MC.width=window.innerWidth;MC.height=window.innerHeight;drawMenu();
 }
 function showModal(t,d){
@@ -2285,6 +2608,11 @@ const BB_SD='draw',BB_ST='truce',BB_SB='battle';
 let BB_G=null;
 const BB_CV=document.getElementById('bbCanvas'),BB_CTX=BB_CV.getContext('2d');
 BB_CV.width=BB_CV.height=BB_MS;
+// 相机
+let bbCamX=0,bbCamY=0,bbCamZoom=1;
+let bbCamMoveMode=false;
+let bbCamMouseDown=false,bbCamMouseDownX=0,bbCamMouseDownY=0,bbCamMouseDownCX=0,bbCamMouseDownCY=0;
+let bbCamPanelOpen=false;
 const BB_SAND=genSandTexture(BB_MS,BB_MS);
 
 const BB_CFG={
@@ -2327,6 +2655,10 @@ function bbDrawImg(ctx,key,x,y,angle,scale){
 }
 
 function openBigBattle(){
+  // 重置相机
+  bbCamX=0;bbCamY=0;bbCamZoom=1;bbCamMoveMode=false;
+  document.getElementById('bbCamToggle').className='';
+  document.getElementById('camToggle').style.display='none';
   loadImages().then(function(){
     document.getElementById('mainMenu').style.display='none';
     document.getElementById('gameUI').style.display='none';
@@ -2350,6 +2682,7 @@ function closeBigBattle(){
   document.getElementById('bbMobileToolBtn').style.display='none';
   document.getElementById('bbMobileToolPanel').style.display='none';
   document.getElementById('bbDrivePad').style.display='none';
+  document.getElementById('bbCamToggle').style.display='none';
   bbDestroy();
 }
 function backToMenuBB(){
@@ -2366,7 +2699,7 @@ function bbInitGame(){
     aimMode:false,selCannon:false,selCannonU:null,
     healMode:false,healer:null,carMineMode:false,carMineU:null,
     killCoins:{red:0,blue:0},
-    seaLine:null,seaFilled:false,
+    seaPolygons:[],
     sa:0,pa:0,mx:0,my:0,over:false,
     animBullets:[],animExplosions:[],animId:null,
     aiMode:aiMode,
@@ -2392,7 +2725,12 @@ window.addEventListener('resize',function(){if(BB_G)bbResizeCanvas();});
 // ===== DRAW =====
 function bbDraw(){
   if(!BB_G)return;
-  BB_CTX.clearRect(0,0,BB_MS,BB_MS);
+  bbClampCam();
+  BB_CTX.save();
+  // 相机变换
+  BB_CTX.translate(bbCamX,bbCamY);
+  BB_CTX.scale(bbCamZoom,bbCamZoom);
+  BB_CTX.clearRect(-bbCamX/bbCamZoom,-bbCamY/bbCamZoom,BB_MS/bbCamZoom,BB_MS/bbCamZoom);
   BB_CTX.drawImage(BB_SAND,0,0,BB_MS,BB_MS);
   BB_CTX.strokeStyle='rgba(60,80,40,0.15)';BB_CTX.lineWidth=0.5;
   for(var i=0;i<=BB_MS;i+=50){BB_CTX.beginPath();BB_CTX.moveTo(i,0);BB_CTX.lineTo(i,BB_MS);BB_CTX.stroke();BB_CTX.beginPath();BB_CTX.moveTo(0,i);BB_CTX.lineTo(BB_MS,i);BB_CTX.stroke();}
@@ -2401,62 +2739,62 @@ function bbDraw(){
   bbDrawCamps();
   bbDrawUnits();
   bbDrawWalls();
-  bbDrawSel();
-  bbDrawAimPrev();
-  bbDrawPlacePrev();
+  if(!bbCamMoveMode){
+    bbDrawSel();
+    bbDrawAimPrev();
+    bbDrawPlacePrev();
+    bbDrawCannonPrev();
+    bbDrawBomberLinePrev();
+  }
   bbDrawTrap();
-  bbDrawCannonPrev();
-  bbDrawBomberLinePrev();
   bbDrawAnim();
+  BB_CTX.restore();
 }
 function bbDrawSea(){
   if(!BB_G)return;
   BB_CTX.save();
-  var sl=BB_G.seaLine;
-  var livePath=BB_G._seaDrawing?BB_G.seaPath:null;
-  var drawPath=sl?sl.path:livePath;
-  if(drawPath&&drawPath.length>=2){
-    // 先画海洋填充(更深的蓝色)
-    if(sl&&sl.seaSide){
-      BB_CTX.fillStyle='rgba(8,50,140,0.55)';
-      BB_CTX.beginPath();
-      if(sl.seaSide==='top'){
-        BB_CTX.moveTo(0,0);BB_CTX.lineTo(BB_MS,0);
-        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
-      }else if(sl.seaSide==='bottom'){
-        BB_CTX.moveTo(0,BB_MS);BB_CTX.lineTo(BB_MS,BB_MS);
-        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
-      }else if(sl.seaSide==='left'){
-        BB_CTX.moveTo(0,0);BB_CTX.lineTo(0,BB_MS);
-        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
-      }else{
-        BB_CTX.moveTo(BB_MS,0);BB_CTX.lineTo(BB_MS,BB_MS);
-        for(var i=drawPath.length-1;i>=0;i--)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
+  // 绘制已确认的海洋区域
+  if(BB_G.seaPolygons){
+    for(var p=0;p<BB_G.seaPolygons.length;p++){
+      var poly=BB_G.seaPolygons[p];
+      if(poly&&poly.length>=3){
+        BB_CTX.fillStyle='rgba(8,50,140,0.55)';
+        BB_CTX.beginPath();
+        BB_CTX.moveTo(poly[0].x,poly[0].y);
+        for(var i=1;i<poly.length;i++)BB_CTX.lineTo(poly[i].x,poly[i].y);
+        BB_CTX.closePath();BB_CTX.fill();
+        // 海浪纹理
+        BB_CTX.fillStyle='rgba(20,80,180,0.15)';
+        BB_CTX.beginPath();
+        for(var i=0;i<poly.length-1;i++){
+          var mx=(poly[i].x+poly[i+1].x)/2;
+          var my=(poly[i].y+poly[i+1].y)/2;
+          var ddx=poly[i+1].x-poly[i].x;
+          var ddy=poly[i+1].y-poly[i].y;
+          var dl=Math.sqrt(ddx*ddx+ddy*ddy);
+          if(dl>0){var n=-ddy/dl*8;BB_CTX.moveTo(mx+n,my+ddx/dl*8);BB_CTX.lineTo(mx-n,my-ddx/dl*8);}
+        }
+        BB_CTX.strokeStyle='rgba(40,120,220,0.2)';BB_CTX.lineWidth=1;
+        BB_CTX.stroke();
+        // 轮廓
+        BB_CTX.strokeStyle='rgba(50,150,240,0.6)';BB_CTX.lineWidth=1.5;
+        BB_CTX.beginPath();
+        BB_CTX.moveTo(poly[0].x,poly[0].y);
+        for(var i=1;i<poly.length;i++)BB_CTX.lineTo(poly[i].x,poly[i].y);
+        BB_CTX.closePath();BB_CTX.stroke();
       }
-      BB_CTX.closePath();BB_CTX.fill();
-      // 加上海浪纹理
-      BB_CTX.fillStyle='rgba(20,80,180,0.15)';
-      BB_CTX.beginPath();
-      for(var i=0;i<drawPath.length-1;i++){
-        var mx=(drawPath[i].x+drawPath[i+1].x)/2;
-        var my=(drawPath[i].y+drawPath[i+1].y)/2;
-        var ddx=drawPath[i+1].x-drawPath[i].x;
-        var ddy=drawPath[i+1].y-drawPath[i].y;
-        var dl=Math.sqrt(ddx*ddx+ddy*ddy);
-        if(dl>0){var n=-ddy/dl*8;BB_CTX.moveTo(mx+n,my+ddx/dl*8);BB_CTX.lineTo(mx-n,my-ddx/dl*8);}
-      }
-      BB_CTX.strokeStyle='rgba(40,120,220,0.2)';BB_CTX.lineWidth=1;
-      BB_CTX.stroke();
     }
-    // 绘制分界线
-    BB_CTX.strokeStyle='rgba(50,150,240,0.9)';BB_CTX.lineWidth=2.5;
-    BB_CTX.shadowColor='rgba(30,100,200,0.6)';BB_CTX.shadowBlur=6;
-    BB_CTX.setLineDash(livePath?[4,4]:[8,4]);
+  }
+  // 绘制正在拖动的路径
+  var livePath=BB_G._seaDrawing?BB_G.seaPath:null;
+  if(livePath&&livePath.length>=2){
+    BB_CTX.fillStyle='rgba(8,50,140,0.3)';
     BB_CTX.beginPath();
-    BB_CTX.moveTo(drawPath[0].x,drawPath[0].y);
-    for(var i=1;i<drawPath.length;i++)BB_CTX.lineTo(drawPath[i].x,drawPath[i].y);
+    BB_CTX.moveTo(livePath[0].x,livePath[0].y);
+    for(var i=1;i<livePath.length;i++)BB_CTX.lineTo(livePath[i].x,livePath[i].y);
+    BB_CTX.strokeStyle='rgba(50,150,240,0.9)';BB_CTX.lineWidth=2.5;
+    BB_CTX.setLineDash([4,4]);
     BB_CTX.stroke();BB_CTX.setLineDash([]);
-    BB_CTX.shadowBlur=0;
   }
   BB_CTX.restore();
 }
@@ -2595,7 +2933,7 @@ function bbDrawPlacePrev(){
   }else if(t==='camp_red'||t==='camp_blue'){
     BB_CTX.fillStyle=t==='camp_red'?'#5a2020':'#20305a';
     BB_CTX.fillRect(mx-BB_CS,my-BB_CS+5,BB_CS*2,BB_CS*2-5);
-  }else if(t==='sea_line'||t==='sea_fill'){
+  }else if(t==='sea_paint'){
     BB_CTX.strokeStyle='rgba(30,120,200,0.5)';BB_CTX.lineWidth=2;
     BB_CTX.beginPath();BB_CTX.arc(mx,my,8,0,Math.PI*2);BB_CTX.stroke();
   }else{
@@ -2676,10 +3014,10 @@ function bbStartAnim(){
 function bbSelTool(t){
   if(!BB_G)return;
   if(BB_G.state===BB_SD){
-    if(t==='shelter'||t==='camp_red'||t==='camp_blue'||t==='sea_line'||t==='sea_fill'){}
+    if(t==='shelter'||t==='camp_red'||t==='camp_blue'||t==='sea_paint'){}
     else{bbHint('绘制阶段只能使用地图工具');return;}
   }else{
-    if(t==='shelter'||t==='camp_red'||t==='camp_blue'||t==='sea_line'||t==='sea_fill'){bbHint('游戏开始后不能编辑地图');return;}
+    if(t==='shelter'||t==='camp_red'||t==='camp_blue'||t==='sea_paint'){bbHint('游戏开始后不能编辑地图');return;}
     var te=t.endsWith('_r')?'red':'blue';
     if(te!==BB_G.phase){bbHint('不是你的回合');return;}
   }
@@ -2693,14 +3031,13 @@ function bbSelTool(t){
   BB_G.selT=t;BB_G.pa=0;
   bbShowCancelBtn();
   // 不需要角度的工具：营地、海洋、大炮、地雷、工程兵、医生
-  var noAngle=(t==='camp_red'||t==='camp_blue'||t==='sea_line'||t==='sea_fill'||t.startsWith('cannon')||t.startsWith('mine')||t.startsWith('engineer')||t.startsWith('doctor'));
+  var noAngle=(t==='camp_red'||t==='camp_blue'||t==='sea_paint'||t.startsWith('cannon')||t.startsWith('mine')||t.startsWith('engineer')||t.startsWith('doctor'));
   if(BB_G.state===BB_SD&&noAngle){
     bbHideAngleKnob();
   }else{
     bbShowAngleKnob();
   }
-  if(t==='sea_line'){BB_G._seaDrawing=false;BB_G.seaPath=[];bbHint('长按左键拖动绘制分界线');}
-  else if(t==='sea_fill'){bbHint('点击分割后的一侧区域填充海洋');}
+  if(t==='sea_paint'){BB_G._seaDrawing=true;BB_G.seaPath=[];bbHint('在画布上点击拖动绘制海洋区域');}
   else if(noAngle)bbHint('点击放置');
   else bbHint('点击放置，滚轮调整角度');
   if(window.innerWidth<600){
@@ -2727,7 +3064,7 @@ function bbHint(t){document.getElementById('bbHintTxt').textContent=t;}
 function bbDoCancel(){
   BB_G.selU=null;BB_G.selT=null;BB_G.buildWall=false;BB_G.aimMode=false;
   BB_G.selCannon=false;BB_G.selCannonU=null;BB_G.healMode=false;BB_G.healer=null;
-  BB_G.carMineMode=false;BB_G.carMineU=null;BB_G._seaLineStart=null;BB_G._buildCannon=false;BB_G._cannonBuilder=null;
+  BB_G.carMineMode=false;BB_G.carMineU=null;BB_G._seaDrawing=false;BB_G.seaPath=null;BB_G._buildCannon=false;BB_G._cannonBuilder=null;
   BB_G._bomberLine=false;BB_G._bomberU=null;BB_G._bomberP1=null;
   BB_G._carrierDeploy=false;BB_G._carrierU=null;BB_G._shipDeploy=false;BB_G._shipU=null;
   // 驾驶中取消：恢复原位
@@ -2751,11 +3088,24 @@ function bbUpdKnob(){
   var a=(BB_G.selT==='shelter'&&BB_G.state===BB_SD)?BB_G.sa:(BB_G.pa||0);
   document.getElementById('bbAngleLabel').textContent=Math.round(a*180/Math.PI)+'deg';
   document.getElementById('bbKnobIndicator').style.transform='rotate('+a+'rad)';
-  document.getElementById('bbAngleKnob').style.display='flex';
+  // 不在这里设置 display，避免与 hide/show 冲突
 }
-function bbShowAngleKnob(){document.getElementById('bbAngleKnob').style.display='flex';bbUpdKnob();}
+// 画布居中
+function centerCam(){
+  camX=0;camY=0;camZoom=1;draw();
+}
+function bbCenterCam(){
+  bbCamX=0;bbCamY=0;bbCamZoom=1;bbDraw();
+}
+function bbShowAngleKnob(){
+  if(bbCamMoveMode)return; // 移动地图模式下不显示角度旋钮
+  document.getElementById('bbAngleKnob').style.display='flex';bbUpdKnob();
+}
 function bbHideAngleKnob(){document.getElementById('bbAngleKnob').style.display='none';}
-function bbShowCancelBtn(){document.getElementById('bbCancelBtn').style.display='block';}
+function bbShowCancelBtn(){
+  if(bbCamMoveMode)return; // 移动地图模式下不显示取消按钮
+  document.getElementById('bbCancelBtn').style.display='block';
+}
 function bbHideCancelBtn(){document.getElementById('bbCancelBtn').style.display='none';}
 
 // ===== MOBILE PANEL =====
@@ -2764,8 +3114,7 @@ var BB_MTP_TOOLS={
     {tool:'shelter',label:'■ 掩体',cls:''},
     {tool:'camp_red',label:'■ 营地(红)',cls:'r'},
     {tool:'camp_blue',label:'■ 营地(蓝)',cls:'b'},
-    {tool:'sea_line',label:'~ 分界线',cls:''},
-    {tool:'sea_fill',label:'~ 填充海',cls:''}
+    {tool:'sea_paint',label:'~ 绘制海洋',cls:''}
   ],
   red:[
     {tool:'soldier_r',label:'○ 普通兵 10HP',cls:'r'},
@@ -2809,7 +3158,16 @@ function toggleBBMobilePanel(){
 }
 function switchBBMtpTab(tab){
   document.querySelectorAll('.bb-mtp-tab').forEach(function(b){b.classList.toggle('active',b.dataset.mtab===tab);});
-  var list=document.getElementById('bbMtpList'),tools=BB_MTP_TOOLS[tab]||[];
+  var list=document.getElementById('bbMtpList');
+  var sys=document.getElementById('bbMtpSys');
+  if(tab==='sys'){
+    list.style.display='none';
+    if(sys)sys.style.display='block';
+    return;
+  }
+  list.style.display='';
+  if(sys)sys.style.display='none';
+  var tools=BB_MTP_TOOLS[tab]||[];
   list.innerHTML=tools.map(function(t){return'<button class="bb-tb '+t.cls+'" data-tool="'+t.tool+'" onclick="bbSelTool(\''+t.tool+'\')">'+t.label+'</button>';}).join('');
   if(BB_G&&BB_G.selT){var el=list.querySelector('[data-tool="'+BB_G.selT+'"]');if(el)el.classList.add('act');}
 }
@@ -2907,12 +3265,123 @@ function bbHideDrivePad(){
   if(BB_STICK_STATE.knob){BB_STICK_STATE.knob.style.left='50%';BB_STICK_STATE.knob.style.top='50%';}
   if(BB_STICK_STATE.interval){clearInterval(BB_STICK_STATE.interval);BB_STICK_STATE.interval=null;}
 }
+// ===== 相机控制函数 =====
+function bbCamScreenToWorld(sx,sy){
+  var r=BB_CV.getBoundingClientRect();
+  var px=(sx-r.left)*BB_MS/r.width,py=(sy-r.top)*BB_MS/r.height;
+  return {x:(px-bbCamX)/bbCamZoom,y:(py-bbCamY)/bbCamZoom};
+}
+function bbCamToggleMode(){
+  bbCamMoveMode=!bbCamMoveMode;
+  var btn=document.getElementById('bbCamToggle');
+  if(btn)btn.className=bbCamMoveMode?'active':'';
+  ['bbCamToggleInline','bbCamToggleInlineM'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){
+      if(bbCamMoveMode)b.classList.add('act');
+      else b.classList.remove('act');
+    }
+  });
+  var stick=document.getElementById('bbCamStick');
+  if(stick){
+    if(bbCamMoveMode&&('ontouchstart' in window))stick.className='show';
+    else stick.className='';
+  }
+  // 锁定/解锁 BB 工具面板
+  var tp=document.getElementById('bbToolPanel');
+  if(tp)tp.className=bbCamMoveMode?tp.className+' camLocked':tp.className.replace(/\s*camLocked/g,'');
+  var bb=document.getElementById('bbBottomBar');
+  if(bb)bb.style.pointerEvents=bbCamMoveMode?'none':'';
+  // 居中按钮在 bbCamMoveMode 下也可用
+  var cb=document.getElementById('bbCamCenterInline');
+  if(cb)cb.style.pointerEvents='auto';
+  var cbm=document.getElementById('bbCamCenterInlineM');
+  if(cbm)cbm.style.pointerEvents='auto';
+  // 移动模式下：隐藏角度旋钮/取消按钮/单位弹窗/开火按钮；退出时恢复
+  if(bbCamMoveMode){
+    ['bbAngleKnob','bbCancelBtn','bbMobileFireBtn','bbUnitPopup'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&el.style.display!=='none'&&el.style.display!==''){
+        el.dataset.camWasShown='1';el.style.display='none';
+      }
+    });
+    bbDraw();
+  }else{
+    ['bbAngleKnob','bbCancelBtn','bbMobileFireBtn','bbUnitPopup'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&el.dataset.camWasShown==='1'){
+        el.style.display=id==='bbAngleKnob'?'flex':'block';
+        delete el.dataset.camWasShown;
+      }
+    });
+    bbDraw();
+  }
+}
+function bbCamStickStart(e){
+  e.preventDefault();
+  if(!bbCamMoveMode)return;
+  var t=e.touches[0];
+  var base=document.getElementById('bbCamStickBase');
+  var r=base.getBoundingClientRect();
+  bbCamStickCx=r.left+r.width/2;
+  bbCamStickCy=r.top+r.height/2;
+  if(e.touches.length===2){
+    var t1=e.touches[0],t2=e.touches[1];
+    bbCamStickOffsetX=Math.hypot(t1.clientX-t2.clientX);
+  }
+  bbCamStickMove(e);
+}
+function bbCamStickMove(e){
+  e.preventDefault();
+  if(!bbCamMoveMode)return;
+  if(e.touches.length===2){
+    var t1=e.touches[0],t2=e.touches[1];
+    var d=Math.hypot(t1.clientX-t2.clientX);
+    if(bbCamStickOffsetX>0){
+      var cv=BB_CV.getBoundingClientRect();
+      var mx=(t1.clientX+t2.clientX)/2,my=(t1.clientY+t2.clientY)/2;
+      var px=(mx-cv.left)*BB_MS/cv.width;
+      var py=(my-cv.top)*BB_MS/cv.height;
+      var ratio=d/bbCamStickOffsetX;
+      var oldZoom=bbCamZoom;
+      bbCamZoom=Math.max(0.3,Math.min(3,bbCamZoom*ratio));
+      bbCamX=px-(px-bbCamX)*(bbCamZoom/oldZoom);
+      bbCamY=py-(py-bbCamY)*(bbCamZoom/oldZoom);
+    }
+    bbCamStickOffsetX=d;
+    bbDraw();return;
+  }
+  if(e.touches.length!==1)return;
+  var t=e.touches[0];
+  var knob=document.getElementById('bbCamStickKnob');
+  var dx=t.clientX-bbCamStickCx,dy=t.clientY-bbCamStickCy;
+  var dist=Math.min(Math.hypot(dx,dy),50);
+  var ang=Math.atan2(dy,dx);
+  var kx=Math.cos(ang)*dist,ky=Math.sin(ang)*dist;
+  if(knob)knob.style.transform='translate('+kx+'px,'+ky+'px)';
+  bbCamX-=kx*0.5;bbCamY-=ky*0.5;
+  bbDraw();
+}
+function bbCamStickEnd(e){
+  e.preventDefault();
+  var knob=document.getElementById('bbCamStickKnob');
+  if(knob)knob.style.transform='translate(0,0)';
+  bbCamStickOffsetX=0;bbCamStickOffsetY=0;
+}
 // ===== EVENTS =====
 BB_CV.addEventListener('mousemove',function(e){
   if(!BB_G)return;
+  // 移动模式：长按左键拖地图（考虑画布缩放比例）
+  if(bbCamMoveMode&&bbCamMouseDown){
+    var rect=BB_CV.getBoundingClientRect();
+    var scale=BB_MS/rect.width;
+    bbCamX=bbCamMouseDownCX+(e.clientX-bbCamMouseDownX)*scale;
+    bbCamY=bbCamMouseDownCY+(e.clientY-bbCamMouseDownY)*scale;
+    bbDraw();return;
+  }
   var r=BB_CV.getBoundingClientRect();
-  BB_G.mx=(e.clientX-r.left)*BB_MS/r.width;BB_G.my=(e.clientY-r.top)*BB_MS/r.height;
-  // 海洋分界线拖动绘制
+  var camPos=bbCamScreenToWorld(e.clientX,e.clientY);
+  BB_G.mx=camPos.x;BB_G.my=camPos.y;
   if(BB_G._seaDrawing){
     var last=BB_G.seaPath[BB_G.seaPath.length-1];
     if(!last||dist({x:BB_G.mx,y:BB_G.my},last)>5){
@@ -2921,9 +3390,15 @@ BB_CV.addEventListener('mousemove',function(e){
   }
 });
 BB_CV.addEventListener('mousedown',function(e){
-  if(!BB_G||e.button!==0)return;
+  if(!BB_G)return;
+  if(bbCamMoveMode&&e.button===0){
+    bbCamMouseDown=true;bbCamMouseDownX=e.clientX;bbCamMouseDownY=e.clientY;
+    bbCamMouseDownCX=bbCamX;bbCamMouseDownCY=bbCamY;
+    e.preventDefault();return;
+  }
+  if(e.button!==0)return;
   if(BB_G.state!==BB_SD)return;
-  if(BB_G.selT==='sea_line'){
+  if(BB_G.selT==='sea_paint'){
     BB_G._seaDrawing=true;
     BB_G.seaPath=[{x:BB_G.mx,y:BB_G.my}];
     e.preventDefault();
@@ -2931,33 +3406,15 @@ BB_CV.addEventListener('mousedown',function(e){
 });
 BB_CV.addEventListener('mouseup',function(e){
   if(!BB_G)return;
+  if(bbCamMoveMode&&e.button===0){bbCamMouseDown=false;return;}
   if(BB_G._seaDrawing){
     BB_G._seaDrawing=false;
-    if(BB_G.seaPath&&BB_G.seaPath.length>=2){
-      // 创建带路径的 seaLine
-      var path=BB_G.seaPath;
-      // 计算两端延伸到地图边缘
-      var first=path[0],last=path[path.length-1];
-      var dx=last.x-first.x,dy=last.y-first.y;
-      var len=Math.sqrt(dx*dx+dy*dy);
-      if(len>0){
-        var ux=dx/len,uy=dy/len;
-        // 延伸至地图边缘
-        function extendLine(p,dx,dy){
-          // 从p开始沿(dx,dy)方向延伸至地图边界
-          if(dx>0){var t=(BB_MS-p.x)/dx;p={x:p.x+dx*t,y:p.y+dy*t};}
-          else if(dx<0){var t=-p.x/dx;p={x:p.x+dx*t,y:p.y+dy*t};}
-          if(dy>0){var t=(BB_MS-p.y)/dy;p={x:p.x+dx*t,y:p.y+dy*t};}
-          else if(dy<0){var t=-p.y/dy;p={x:p.x+dx*t,y:p.y+dy*t};}
-          return p;
-        }
-        var startExt=extendLine(first,-ux,-uy);
-        var endExt=extendLine(last,ux,uy);
-        // 构建完整路径
-        BB_G.seaLine={path:[startExt].concat(path,[endExt]),seaSide:null};
-        BB_G.seaFilled=false;
-        bbHint('分界线已绘制，请用填充工具选择海洋侧');
-      }
+    if(BB_G.seaPath&&BB_G.seaPath.length>=3){
+      if(!BB_G.seaPolygons)BB_G.seaPolygons=[];
+      BB_G.seaPolygons.push(BB_G.seaPath.slice());
+      bbHint('海洋区域已绘制');
+    }else if(BB_G.seaPath&&BB_G.seaPath.length<3){
+      bbHint('至少需要3个点来绘制海洋区域');
     }
     BB_G.seaPath=null;
   }
@@ -2965,6 +3422,17 @@ BB_CV.addEventListener('mouseup',function(e){
 BB_CV.addEventListener('wheel',function(e){
   e.preventDefault();
   if(!BB_G)return;
+  if(bbCamMoveMode){
+    var r=BB_CV.getBoundingClientRect();
+    var px=(e.clientX-r.left)*BB_MS/r.width;
+    var py=(e.clientY-r.top)*BB_MS/r.height;
+    var oldZoom=bbCamZoom;
+    if(e.deltaY<0)bbCamZoom=Math.min(3,bbCamZoom*1.1);
+    else bbCamZoom=Math.max(0.3,bbCamZoom/1.1);
+    bbCamX=px-(px-bbCamX)*(bbCamZoom/oldZoom);
+    bbCamY=py-(py-bbCamY)*(bbCamZoom/oldZoom);
+    bbDraw();return;
+  }
   var d=e.deltaY>0?0.1:-0.1;
   if(BB_G.selT==='shelter'&&BB_G.state===BB_SD){BB_G.sa=(BB_G.sa||0)+d;bbUpdKnob();}
   else if(BB_G.buildWall){BB_G.pa=(BB_G.pa||0)+d;bbUpdKnob();}
@@ -2976,12 +3444,29 @@ BB_CV.setAttribute('tabindex','0');
 BB_CV.addEventListener('touchstart',function(e){
   e.preventDefault();if(!BB_G)return;
   var r=BB_CV.getBoundingClientRect();
+  // 移动模式：单指拖地图
+  if(bbCamMoveMode&&e.touches.length===1){
+    var t=e.touches[0];
+    if(!BB_G._camPanStart){
+      BB_G._camPanStart={x:t.clientX,y:t.clientY,cx:bbCamX,cy:bbCamY};
+    }
+    return;
+  }
+  // 移动模式：双指缩放
+  if(bbCamMoveMode&&e.touches.length===2){
+    var t1=e.touches[0],t2=e.touches[1];
+    if(!BB_G._camPinchStart){
+      BB_G._camPinchStart=Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);
+    }
+    return;
+  }
   if(e.touches.length===1){
     var t=e.touches[0];
-    BB_G.mx=(t.clientX-r.left)*BB_MS/r.width;BB_G.my=(t.clientY-r.top)*BB_MS/r.height;
+    var camPos=bbCamScreenToWorld(t.clientX,t.clientY);
+    BB_G.mx=camPos.x;BB_G.my=camPos.y;
     BB_G._touchStart={x:BB_G.mx,y:BB_G.my};
-    // 海洋分界线移动端绘制
-    if(BB_G.state===BB_SD&&BB_G.selT==='sea_line'){
+    // 海洋自由绘制
+    if(BB_G.state===BB_SD&&BB_G.selT==='sea_paint'){
       BB_G._seaDrawing=true;
       BB_G.seaPath=[{x:BB_G.mx,y:BB_G.my}];
     }
@@ -2995,6 +3480,32 @@ BB_CV.addEventListener('touchstart',function(e){
 BB_CV.addEventListener('touchmove',function(e){
   e.preventDefault();if(!BB_G)return;
   var r=BB_CV.getBoundingClientRect();
+  // 移动模式：单指拖地图（考虑画布缩放比例）
+  if(bbCamMoveMode&&e.touches.length===1&&BB_G._camPanStart){
+    var t=e.touches[0];
+    var scale=BB_MS/r.width; // 屏幕像素 -> 画布逻辑像素
+    bbCamX=BB_G._camPanStart.cx+(t.clientX-BB_G._camPanStart.x)*scale;
+    bbCamY=BB_G._camPanStart.cy+(t.clientY-BB_G._camPanStart.y)*scale;
+    bbDraw();return;
+  }
+  // 移动模式：双指缩放（以两指中点为中心）
+  if(bbCamMoveMode&&e.touches.length===2&&BB_G._camPinchStart){
+    var t1=e.touches[0],t2=e.touches[1];
+    var d=Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);
+    if(BB_G._camPinchStart>0){
+      var cv=BB_CV.getBoundingClientRect();
+      var mx=(t1.clientX+t2.clientX)/2,my=(t1.clientY+t2.clientY)/2;
+      var px=(mx-cv.left)*BB_MS/cv.width;
+      var py=(my-cv.top)*BB_MS/cv.height;
+      var ratio=d/BB_G._camPinchStart;
+      var oldZoom=bbCamZoom;
+      bbCamZoom=Math.max(0.3,Math.min(3,bbCamZoom*ratio));
+      bbCamX=px-(px-bbCamX)*(bbCamZoom/oldZoom);
+      bbCamY=py-(py-bbCamY)*(bbCamZoom/oldZoom);
+    }
+    BB_G._camPinchStart=d;
+    bbDraw();return;
+  }
   if(e.touches.length===2&&BB_G._twoFingerStart!==undefined){
     var t1=e.touches[0],t2=e.touches[1],cur=Math.atan2(t2.clientY-t1.clientY,t2.clientX-t1.clientX);
     var diff=cur-BB_G._twoFingerStart;
@@ -3005,7 +3516,8 @@ BB_CV.addEventListener('touchmove',function(e){
     bbUpdKnob();
   }else if(e.touches.length===1){
     var t=e.touches[0];
-    BB_G.mx=(t.clientX-r.left)*BB_MS/r.width;BB_G.my=(t.clientY-r.top)*BB_MS/r.height;
+    var camPos=bbCamScreenToWorld(t.clientX,t.clientY);
+    BB_G.mx=camPos.x;BB_G.my=camPos.y;
     // 海洋分界线移动端拖动
     if(BB_G._seaDrawing){
       var last=BB_G.seaPath[BB_G.seaPath.length-1];
@@ -3017,32 +3529,24 @@ BB_CV.addEventListener('touchmove',function(e){
 },{passive:false});
 BB_CV.addEventListener('touchend',function(e){
   if(!BB_G)return;
+  // 移动模式：清空拖拽状态
+  if(bbCamMoveMode){
+    if(e.touches.length<1){BB_G._camPanStart=null;BB_G._camPinchStart=null;}
+    else if(e.touches.length<2)BB_G._camPinchStart=null;
+    return;
+  }
   // 驾驶状态锁定：禁止任何画布操作
   if(BB_G._driving)return;
   if(e.touches.length<2)BB_G._twoFingerStart=undefined;
-  // 海洋分界线移动端松开完成
+  // 海洋自由绘制 - 移动端松开完成
   if(BB_G._seaDrawing){
     BB_G._seaDrawing=false;
-    if(BB_G.seaPath&&BB_G.seaPath.length>=2){
-      var path=BB_G.seaPath;
-      var first=path[0],last=path[path.length-1];
-      var dx=last.x-first.x,dy=last.y-first.y;
-      var len=Math.sqrt(dx*dx+dy*dy);
-      if(len>0){
-        var ux=dx/len,uy=dy/len;
-        function extLine(p,ddx,ddy){
-          if(ddx>0){var t=(BB_MS-p.x)/ddx;return{x:p.x+ddx*t,y:p.y+ddy*t};}
-          else if(ddx<0){var t=-p.x/ddx;return{x:p.x+ddx*t,y:p.y+ddy*t};}
-          if(ddy>0){var t=(BB_MS-p.y)/ddy;return{x:p.x+ddx*t,y:p.y+ddy*t};}
-          else if(ddy<0){var t=-p.y/ddy;return{x:p.x+ddx*t,y:p.y+ddy*t};}
-          return p;
-        }
-        var se=extLine(first,-ux,-uy);
-        var ee=extLine(last,ux,uy);
-        BB_G.seaLine={path:[se].concat(path,[ee]),seaSide:null};
-        BB_G.seaFilled=false;
-        bbHint('分界线已绘制，请用填充工具选择海洋侧');
-      }
+    if(BB_G.seaPath&&BB_G.seaPath.length>=3){
+      if(!BB_G.seaPolygons)BB_G.seaPolygons=[];
+      BB_G.seaPolygons.push(BB_G.seaPath.slice());
+      bbHint('海洋区域已绘制');
+    }else if(BB_G.seaPath&&BB_G.seaPath.length<3){
+      bbHint('至少需要3个点来绘制海洋区域');
     }
     BB_G.seaPath=null;
     BB_G._touchStart=null;
@@ -3114,10 +3618,12 @@ document.addEventListener('keydown',function(e){
 });
 BB_CV.addEventListener('click',function(e){
   if(!BB_G||BB_G.over)return;
+  // 移动模式下点击不触发游戏逻辑
+  if(bbCamMoveMode)return;
   // 驾驶状态锁定：禁止点击画布
   if(BB_G._driving)return;
-  var r=BB_CV.getBoundingClientRect();
-  var mx=(e.clientX-r.left)*BB_MS/r.width,my=(e.clientY-r.top)*BB_MS/r.height;
+  var camPos=bbCamScreenToWorld(e.clientX,e.clientY);
+  var mx=camPos.x,my=camPos.y;
   if(BB_G._buildCannon){bbBuildCannonAt(mx,my);return;}
   if(BB_G._carrierDeploy){bbDoCarrierDeployAt(mx,my);return;}
   if(BB_G._shipDeploy){bbDoShipDeployAt(mx,my);return;}
@@ -3147,46 +3653,9 @@ function bbPlace(mx,my){
     }else if(t==='camp_blue'){
       if(BB_G.camps.blue){bbHint('蓝方营地已存在');return;}
       BB_G.camps.blue={x:mx,y:my,hp:200,maxHp:200,team:'blue',type:'camp',label:'钀ュ湴',eliminated:false};
-    }else if(t==='sea_line'){
-      // sea_line 现在由 mousedown/mousemove/mouseup 处理拖动绘制
+    }else if(t==='sea_paint'){
+      // sea_paint 由 mousedown/mousemove/mouseup 处理拖动绘制
       return;
-    }else if(t==='sea_fill'){
-      if(!BB_G.seaLine||!BB_G.seaLine.path){bbHint('请先长按拖动绘制分界线');return;}
-      var path=BB_G.seaLine.path;
-      // 找到路径上离点击点最近的点
-      var minDist=Infinity,nearIdx=0;
-      for(var i=0;i<path.length;i++){
-        var d=dist({x:mx,y:my},path[i]);
-        if(d<minDist){minDist=d;nearIdx=i;}
-      }
-      var p=path[nearIdx];
-      var before=path[Math.max(0,nearIdx-1)];
-      var after=path[Math.min(path.length-1,nearIdx+1)];
-      var tdx=after.x-before.x,tdy=after.y-before.y;
-      var tlen=Math.sqrt(tdx*tdx+tdy*tdy);
-      if(tlen>0){tdx/=tlen;tdy/=tlen;}
-      // 法线：(-tdy, tdx) 是切线方向的"左侧"法线
-      var nx=-tdy,ny=tdx;
-      var vx=mx-p.x,vy=my-p.y;
-      var dot=vx*nx+vy*ny;
-      // dot>0 表示点击在法线方向侧(路径左侧)，dot<0 在右侧
-      // 用整体趋势来判断"top/bottom/left/right"
-      var totalDx=path[path.length-1].x-path[0].x;
-      var totalDy=path[path.length-1].y-path[0].y;
-      if(Math.abs(totalDx)>Math.abs(totalDy)){
-        // 大致水平方向的路径：上方=top，下方=bottom
-        // 路径从左到右时，法线指向上；从右到左时，法线指向下
-        if(totalDx>0){BB_G.seaLine.seaSide=dot>0?'top':'bottom';}
-        else{BB_G.seaLine.seaSide=dot>0?'bottom':'top';}
-      }else{
-        // 大致垂直方向的路径：左=left，右=right
-        if(totalDy>0){BB_G.seaLine.seaSide=dot>0?'left':'right';}
-        else{BB_G.seaLine.seaSide=dot>0?'right':'left';}
-      }
-      BB_G.seaFilled=true;
-      bbHint('海洋已填充');BB_G.selT=null;bbHideAngleKnob();bbHideCancelBtn();
-      document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
-      bbUpdUI();return;
     }
     bbHideAngleKnob();bbHideCancelBtn();bbUpdUI();return;
   }
@@ -3251,19 +3720,21 @@ function bbOverlap(p,rr){
   return false;
 }
 function bbIsInSea(mx,my){
-  // 未填充海洋不算
-  if(!BB_G.seaLine||!BB_G.seaLine.seaSide)return false;
-  var path=BB_G.seaLine.path;
-  if(!path||path.length<2)return false;
-  // 使用 ray casting 算法判断点是否在多边形内
-  var inside=false;
-  for(var i=0,j=path.length-1;i<path.length;j=i++){
-    var xi=path[i].x,yi=path[i].y;
-    var xj=path[j].x,yj=path[j].y;
-    var intersect=((yi>my)!==(yj>my))&&(mx<(xj-xi)*(my-yi)/(yj-yi)+xi);
-    if(intersect)inside=!inside;
+  if(!BB_G.seaPolygons||BB_G.seaPolygons.length===0)return false;
+  // 使用 ray casting 算法判断点是否在任一海洋多边形内
+  for(var p=0;p<BB_G.seaPolygons.length;p++){
+    var path=BB_G.seaPolygons[p];
+    if(!path||path.length<3)continue;
+    var inside=false;
+    for(var i=0,j=path.length-1;i<path.length;j=i++){
+      var xi=path[i].x,yi=path[i].y;
+      var xj=path[j].x,yj=path[j].y;
+      var intersect=((yi>my)!==(yj>my))&&(mx<(xj-xi)*(my-yi)/(yj-yi)+xi);
+      if(intersect)inside=!inside;
+    }
+    if(inside)return true;
   }
-  return inside;
+  return false;
 }
 
 // ===== MAKE UNIT =====
