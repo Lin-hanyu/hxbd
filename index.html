@@ -2,13 +2,14 @@
 <html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>核邪部队</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 *{margin:0;padding:0}
 body{background:#000;color:#0f0;font-family:'Courier New',monospace;overflow:hidden;width:100vw;height:100vh}
 canvas{display:block;cursor:crosshair;touch-action:none}
 #mainMenu{position:fixed;inset:0;z-index:1000;background:#000}
 #mainMenu canvas{position:absolute;inset:0;width:100%;height:100%}
-#menuBtns{position:absolute;left:50%;top:50%;transform:translate(-50%,20px);z-index:1001;display:flex;flex-direction:column;align-items:center;gap:12px}
+#menuBtns{position:absolute;left:50%;top:50%;transform:translate(-50%,-10px);z-index:1001;display:flex;flex-direction:column;align-items:center;gap:12px}
 #menuMain,#menuAi{display:flex;flex-direction:column;align-items:center;gap:12px}
 .menu-btn{width:220px;padding:10px 20px;background:#1a1a00;border:2px solid #654321;
   color:#a0906a;cursor:pointer;font-family:'Courier New',monospace;font-size:15px;text-align:center;
@@ -223,6 +224,12 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 /* 回放按钮（菜单中） */
 #replayBtnInMenu{width:220px;padding:10px 20px;background:#1a1a00;border:2px solid #654321;color:#a0906a;cursor:pointer;font-family:'Courier New',monospace;font-size:15px;text-align:center;transition:background 0.15s,border-color 0.15s,color 0.15s}
 #replayBtnInMenu:hover{background:#3a2a10;border-color:#c8a96e;color:#e8c87a}
+/* 局域网模式选择弹窗 */
+#lanModeSelect{position:fixed;inset:0;z-index:3000;display:none;background:rgba(0,0,0,0.8);align-items:center;justify-content:center}
+#lanModeSelect .box{background:#1a1a00;border:3px solid #654321;padding:30px;text-align:center;max-width:350px}
+#lanModeSelect h2{color:#e8c87a;font-size:20px;margin-bottom:15px}
+#lanModeSelect .lan-btn{display:block;width:100%;padding:8px;margin:6px 0;background:#2a2a00;border:2px solid #654321;color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:14px;text-align:center;border-radius:4px}
+#lanModeSelect .lan-btn:hover{background:#3a3a00;border-color:#c8a96e;color:#e8c87a}
 </style></head><body>
 
 <div id="mainMenu">
@@ -233,11 +240,37 @@ canvas{display:block;cursor:crosshair;touch-action:none}
       <button class="menu-btn" onclick="openBigBattle()">🏴 大战场模式</button>
       <button class="menu-btn" onclick="document.getElementById('menuMain').style.display='none';document.getElementById('menuAi').style.display='flex';">🤖 AI对战</button>
       <button id="replayBtnInMenu" onclick="showReplayList()">▶ 回放记录</button>
+      <button class="menu-btn" onclick="showLanMenu()">🌐 局域网联机</button>
     </div>
     <div id="menuAi" style="display:none">
       <button class="menu-btn" onclick="G={aiMode:true};showGame();">⚔ 战术模式</button>
       <button class="menu-btn" onclick="BB_G={aiMode:true};openBigBattle()">🏴 大战场模式(AI)</button>
       <button class="menu-btn" onclick="document.getElementById('menuMain').style.display='flex';document.getElementById('menuAi').style.display='none';">← 返回</button>
+    </div>
+    <div id="menuLan" style="display:none;flex-direction:column;align-items:center;gap:12px">
+      <div style="color:#c8a96e;font-size:18px;font-weight:bold">🌐 局域网联机</div>
+      <button class="menu-btn" onclick="lanGoCreate()">🖥 创建房间</button>
+      <button class="menu-btn" onclick="lanGoJoin()">🔗 加入房间</button>
+      <button class="menu-btn" onclick="document.getElementById('menuLan').style.display='none';document.getElementById('menuMain').style.display='flex';">← 返回</button>
+    </div>
+    <div id="menuLanCreate" style="display:none;flex-direction:column;align-items:center;gap:12px">
+      <div style="color:#c8a96e;font-size:16px">创建房间</div>
+      <input id="lanCreateInput" style="width:220px;padding:10px;background:#1a1a00;border:2px solid #654321;color:#c8a96e;font-family:'Courier New';font-size:16px;text-align:center" placeholder="设置房间码（任意字符）" maxlength="20">
+      <button class="menu-btn" onclick="lanCreateRoom()" style="background:#2a4a2a;border-color:#2a6a2a;color:#4aff4a">Let's Go!</button>
+      <button class="menu-btn" onclick="lanBack('menuLanCreate','menuLan')">← 返回</button>
+    </div>
+    <div id="menuLanJoin" style="display:none;flex-direction:column;align-items:center;gap:12px">
+      <div style="color:#c8a96e;font-size:16px">加入房间</div>
+      <input id="lanJoinInput" style="width:220px;padding:10px;background:#1a1a00;border:2px solid #654321;color:#c8a96e;font-family:'Courier New';font-size:16px;text-align:center" placeholder="输入房间码" maxlength="20">
+      <button class="menu-btn" onclick="lanJoinRoom()" style="background:#2a4a2a;border-color:#2a6a2a;color:#4aff4a">Let's Go!</button>
+      <button class="menu-btn" onclick="lanBack('menuLanJoin','menuLan')">← 返回</button>
+    </div>
+    <div id="menuLanWait" style="display:none;flex-direction:column;align-items:center;gap:12px">
+      <div style="color:#c8a96e;font-size:18px;font-weight:bold">🌐 等待加入</div>
+      <div style="color:#8a7a5a;font-size:13px">房间码</div>
+      <div id="lanRoomDisplay" style="color:#e8c87a;font-size:28px;font-weight:bold;letter-spacing:4px;background:#2a2a00;border:2px solid #654321;padding:10px 30px;border-radius:6px"></div>
+      <div id="lanWaitStatus" style="color:#4a8a4a;font-size:13px">等待对方连接...</div>
+      <button class="menu-btn" onclick="lanCancel()" style="background:#3a2a00;border-color:#654321;color:#8a7a5a">取消</button>
     </div>
   </div>
 </div>
@@ -396,6 +429,15 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 </div>
 <!-- 地图操控按钮（右下角） -->
 <button id="bbCamToggle" onclick="bbCamToggleMode()" title="移动/缩放地图" ontouchstart="" style="display:none">◉</button>
+<!-- 局域网模式选择 -->
+<div id="lanModeSelect">
+  <div class="box">
+    <h2 id="lanModeTitle">选择模式</h2>
+    <button class="lan-btn" onclick="startLanGame('tactical')">⚔ 战术模式</button>
+    <button class="lan-btn" onclick="startLanGame('bigbattle')">🏴 大战场模式</button>
+    <button class="lan-btn" onclick="cancelLanGame()" style="background:#3a2a00;color:#8a7a5a">取消</button>
+  </div>
+</div>
 <div id="bbDrivePad" style="display:none;position:fixed;z-index:800;pointer-events:none">
   <!-- 左旋转按钮 -->
   <button id="bbDPRotL" style="position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(40,30,0,0.4);border:2px solid rgba(200,169,110,0.5);color:rgba(200,169,110,0.8);font-size:22px;pointer-events:auto;user-select:none;-webkit-user-select:none;backdrop-filter:blur(2px)">↺</button>
@@ -702,6 +744,265 @@ function camToggleMode(){
   }
 }
 
+// ===== 局域网联机 =====
+var LAN={peer:null,conn:null,isHost:false,roomId:'',mode:'',gameStarted:false};
+function showLanMenu(){
+  document.getElementById('menuMain').style.display='none';
+  document.getElementById('menuLan').style.display='flex';
+}
+function lanBack(hide,show){
+  document.getElementById(hide).style.display='none';
+  document.getElementById(show).style.display='flex';
+}
+function lanGoCreate(){
+  document.getElementById('menuLan').style.display='none';
+  document.getElementById('menuLanCreate').style.display='flex';
+}
+function lanGoJoin(){
+  document.getElementById('menuLan').style.display='none';
+  document.getElementById('menuLanJoin').style.display='flex';
+}
+function lanCreateRoom(){
+  var roomId=document.getElementById('lanCreateInput').value.trim();
+  if(!roomId){return;}
+  LAN.isHost=true;
+  LAN.roomId=roomId;
+  LAN.peer=new Peer(roomId);
+  document.getElementById('menuLanCreate').style.display='none';
+  document.getElementById('menuLanWait').style.display='flex';
+  document.getElementById('lanRoomDisplay').textContent=roomId;
+  document.getElementById('lanWaitStatus').textContent='等待对方连接...';
+  LAN.peer.on('connection',function(c){
+    LAN.conn=c;
+    LAN.conn.on('data',function(data){handleLanData(data);});
+    LAN.conn.on('close',function(){lanDisconnect();});
+    document.getElementById('lanWaitStatus').textContent='已连接！';
+    if(LAN.gameStarted)return; // 游戏已开始，不重复弹窗
+    document.getElementById('lanModeTitle').textContent='选择模式';
+    document.getElementById('lanModeSelect').style.display='flex';
+  });
+  LAN.peer.on('error',function(err){
+    if(err.type==='unavailable-id'){
+      document.getElementById('lanWaitStatus').textContent='房间码已被使用，换一个';
+      LAN.peer=null;
+    }else{
+      document.getElementById('lanWaitStatus').textContent='连接错误: '+err.type;
+    }
+  });
+  LAN.peer.on('disconnected',function(){lanDisconnect();});
+}
+function lanJoinRoom(){
+  var roomId=document.getElementById('lanJoinInput').value.trim();
+  if(!roomId){return;}
+  LAN.isHost=false;
+  LAN.roomId=roomId;
+  LAN.peer=new Peer();
+  document.getElementById('menuLanJoin').style.display='none';
+  document.getElementById('menuLanWait').style.display='flex';
+  document.getElementById('lanRoomDisplay').textContent=roomId;
+  document.getElementById('lanWaitStatus').textContent='正在连接...';
+  LAN.peer.on('open',function(){
+    LAN.conn=LAN.peer.connect(roomId);
+    LAN.conn.on('open',function(){
+      document.getElementById('lanWaitStatus').textContent='已连接！等待主机选择模式...';
+      LAN.conn.on('data',function(data){handleLanData(data);});
+      LAN.conn.on('close',function(){lanDisconnect();});
+    });
+    LAN.conn.on('error',function(){
+      document.getElementById('lanWaitStatus').textContent='连接失败，检查房间码';
+    });
+  });
+  LAN.peer.on('disconnected',function(){lanDisconnect();});
+}
+function lanCancel(){
+  if(LAN.conn)try{LAN.conn.close();}catch(e){}
+  if(LAN.peer)try{LAN.peer.destroy();}catch(e){}
+  LAN={peer:null,conn:null,isHost:false,roomId:'',mode:'',gameStarted:false};
+  document.getElementById('menuLanWait').style.display='none';
+  document.getElementById('mainMenu').style.display='flex';
+  document.getElementById('menuMain').style.display='flex';
+}
+function lanDisconnect(){
+  if(LAN.gameStarted){
+    document.getElementById('modalBox').innerHTML='<h2>对方已退出联机</h2><p>连接已断开，游戏无法继续</p><button onclick="document.getElementById(\'modal\').style.display=\'none\';doBackToMenu()">返回菜单</button>';
+    document.getElementById('modal').style.display='flex';
+  }else{
+    document.getElementById('lanWaitStatus').textContent='对方已断开连接';
+  }
+  if(LAN.conn)try{LAN.conn.close();}catch(e){}
+  if(LAN.peer)try{LAN.peer.destroy();}catch(e){}
+  LAN={peer:null,conn:null,isHost:false,roomId:'',mode:'',gameStarted:false};
+}
+function handleLanData(data){
+  if(data.type==='start_game'){
+    LAN.mode=data.mode;
+    document.getElementById('lanModeSelect').style.display='none';
+    document.getElementById('menuLanWait').style.display='none';
+    document.getElementById('mainMenu').style.display='none';
+    startLanGameInner(data.mode,false);
+  }else if(data.type==='game_state'){
+    applyOpponentState(data.state);
+  }else if(data.type==='lan_anim'){
+    if(data.animType==='bullet')playLanBullet(data.data);
+    else if(data.animType==='mortar')playLanMor(data.data);
+    else if(data.animType==='death')playLanDeath(data.data);
+  }
+}
+function startLanGame(mode){
+  if(!LAN.conn||!LAN.isHost)return;
+  document.getElementById('lanModeSelect').style.display='none';
+  document.getElementById('menuLanWait').style.display='none';
+  document.getElementById('mainMenu').style.display='none';
+  LAN.conn.send({type:'start_game',mode:mode});
+  LAN.mode=mode;
+  startLanGameInner(mode,true);
+}
+function cancelLanGame(){
+  document.getElementById('lanModeSelect').style.display='none';
+  if(LAN.conn)try{LAN.conn.close();}catch(e){}
+  if(LAN.peer)try{LAN.peer.destroy();}catch(e){}
+  LAN={peer:null,conn:null,isHost:false,roomId:'',mode:'',gameStarted:false};
+  document.getElementById('mainMenu').style.display='flex';
+  document.getElementById('menuMain').style.display='flex';
+}
+function startLanGameInner(mode,isHost){
+  LAN.gameStarted=true;
+  var modeLabel=mode==='bigbattle'?'大战场':'战术';
+  if(mode==='bigbattle'){
+    bbCamX=0;bbCamY=0;bbCamZoom=1;bbCamMoveMode=false;
+    document.getElementById('bbCamToggle').className='';
+    document.getElementById('camToggle').style.display='none';
+    loadImages().then(function(){
+      document.getElementById('gameUI').style.display='none';
+      document.getElementById('bigBattleUI').style.display='block';
+      document.getElementById('mobileToolBtn').style.display='none';
+      document.getElementById('mobileFireBtn').style.display='none';
+      document.getElementById('mobileToolPanel').style.display='none';
+      BB_G={
+        state:BB_SD,turn:0,phase:'red',step:0,maxStep:1,
+        units:[],camps:{red:null,blue:null},shelters:[],
+        selU:null,selT:null,buildWall:false,builder:null,
+        aimMode:false,selCannon:false,selCannonU:null,
+        healMode:false,healer:null,carMineMode:false,carMineU:null,
+        killCoins:{red:0,blue:0},
+        seaPolygons:[],
+        sa:0,pa:0,mx:0,my:0,over:false,
+        animBullets:[],animExplosions:[],animId:null,
+        aiMode:false,lanMode:true,isHost:isHost
+      };
+      bbHideAngleKnob();bbHideCancelBtn();
+      bbResizeCanvas();bbUpdUI();bbDraw();bbStartAnim();
+      if(!isHost){document.getElementById('bbToolPanel').style.pointerEvents='none';document.getElementById('bbToolPanel').style.opacity='0.5';document.getElementById('bbHintTxt').textContent='观战模式 - 等待房主操作';}
+    });
+  }else{
+    camX=0;camY=0;camZoom=1;camMoveMode=false;
+    document.getElementById('camToggle').className='';
+    document.getElementById('bbCamToggle').style.display='none';
+    loadImages().then(function(){
+      document.getElementById('mainMenu').style.display='none';
+      document.getElementById('gameUI').style.display='block';
+      document.getElementById('bigBattleUI').style.display='none';
+      GC.width=MS;GC.height=MS;
+      G={
+        state:SD,turn:0,phase:'red',step:0,maxStep:1,
+        units:[],camps:{red:null,blue:null},shelters:[],
+        selU:null,selT:null,buildWall:false,builder:null,
+        selMortar:false,aimMode:false,
+        sa:0,pa:0,mx:0,my:0,over:false,
+        aiMode:false,lanMode:true,isHost:isHost,
+        replay:[],replayIdx:-1,replayMode:false,dmgFloats:[]
+      };
+      hideAngleKnob();hide取消Btn();
+      resizeCanvas();
+      updUI();draw();
+    });
+  }
+}
+// 联机模式下实时同步状态
+function syncIfLan(){
+  if(LAN.gameStarted&&LAN.conn){sendLanState();}
+}
+function sendLanState(){
+  if(!LAN.conn||!LAN.gameStarted)return;
+  if(LAN.mode==='bigbattle'&&BB_G){
+    LAN.conn.send({type:'game_state',state:{units:BB_G.units,camps:BB_G.camps,shelters:BB_G.shelters,state:BB_G.state,turn:BB_G.turn,phase:BB_G.phase,step:BB_G.step,killCoins:BB_G.killCoins,seaPolygons:BB_G.seaPolygons}});
+  }else if(LAN.mode==='tactical'&&G){
+    LAN.conn.send({type:'game_state',state:{units:G.units,camps:G.camps,shelters:G.shelters,state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
+  }
+}
+function applyOpponentState(state){
+  if(LAN.mode==='bigbattle'&&BB_G){
+    BB_G.units=state.units;BB_G.camps=state.camps;BB_G.shelters=state.shelters;
+    BB_G.state=state.state;BB_G.turn=state.turn;BB_G.phase=state.phase;BB_G.step=state.step;
+    BB_G.killCoins=state.killCoins;BB_G.seaPolygons=state.seaPolygons;
+    bbUpdUI();bbDraw();
+    document.getElementById('bbHintTxt').textContent='观战模式 - 等待房主操作';
+  }else if(LAN.mode==='tactical'&&G){
+    G.units=state.units;G.camps=state.camps;G.shelters=state.shelters;
+    G.state=state.state;G.turn=state.turn;G.phase=state.phase;G.step=state.step;
+    updUI();draw();
+  }
+}
+// 联机模式下发送动画指令到对方，让对方也能播放视觉效果
+function sendLanAnim(animType,data){
+  if(!LAN.gameStarted||!LAN.conn)return;
+  LAN.conn.send({type:'lan_anim',animType:animType,data:data});
+}
+// 对方播放子弹飞行动画（纯视觉，不改变游戏状态）
+function playLanBullet(data){
+  let d=0,app=0;
+  const iv=setInterval(()=>{
+    d+=25;
+    if(d>data.stop+10){clearInterval(iv);draw();return;}
+    const px=data.sx+Math.cos(data.angle)*d,py=data.sy+Math.sin(data.angle)*d;
+    draw();
+    GCC.save();GCC.translate(camX,camY);GCC.scale(camZoom,camZoom);
+    GCC.fillStyle='#f44';GCC.shadowColor='#f44';GCC.shadowBlur=10;
+    GCC.beginPath();GCC.arc(px,py,3,0,Math.PI*2);GCC.fill();GCC.restore();
+    while(app<data.hits.length&&d>=data.hits[app].dist){
+      showDmgFloat(data.hits[app].x,data.hits[app].y,data.hits[app].dmg);
+      app++;
+    }
+  },12);
+}
+// 对方播放迫击炮爆炸动画（纯视觉）
+function playLanMor(data){
+  const{tx,ty,sx,sy}=data;
+  let prog=0;
+  const flyIv=setInterval(function(){
+    prog+=0.05;
+    if(prog>=1){clearInterval(flyIv);}
+    draw();
+    var cx=sx+(tx-sx)*prog,cy=sy+(ty-sy)*prog-80*Math.sin(prog*Math.PI);
+    GCC.save();GCC.fillStyle='#f44';GCC.shadowColor='#f44';GCC.shadowBlur=8;
+    GCC.beginPath();GCC.arc(cx,cy,4,0,Math.PI*2);GCC.fill();GCC.restore();
+  },20);
+  setTimeout(function(){
+    let r=0;const mx=CM*1;
+    const iv=setInterval(()=>{
+      r+=12;
+      if(r>mx){clearInterval(iv);draw();return;}
+      draw();
+      GCC.save();GCC.fillStyle=`rgba(200,80,0,${0.25*(1-r/mx)})`;
+      GCC.beginPath();GCC.arc(tx,ty,r,0,Math.PI*2);GCC.fill();
+      GCC.strokeStyle='#c40';GCC.lineWidth=1.5;GCC.stroke();GCC.restore();
+    },20);
+  },500);
+}
+// 对方播放死亡特效（纯视觉）
+function playLanDeath(data){
+  let o=1;
+  const iv=setInterval(()=>{
+    o-=0.06;if(o<=0){clearInterval(iv);draw();return;}
+    draw();
+    GCC.save();GCC.translate(camX,camY);GCC.scale(camZoom,camZoom);
+    GCC.globalAlpha=o;GCC.fillStyle='rgba(200,50,50,0.5)';
+    GCC.font='18px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillText('✕',data.x,data.y);
+    GCC.restore();
+  },50);
+}
+
 function drawDesertBG(ctx,w,h){
   ctx.drawImage(SAND,0,0,w,h);
 }
@@ -724,17 +1025,17 @@ function drawMenu(){
   MCC.fillStyle='#c8a96e';MCC.font='bold 64px "Courier New",monospace';
   MCC.textAlign='center';MCC.textBaseline='middle';
   MCC.shadowColor='#4a3a00';MCC.shadowBlur=8;
-  MCC.fillText('核邪部队',w/2,h/2-80);
+  MCC.fillText('核邪部队',w/2,h/2-100);
   MCC.shadowBlur=0;
   MCC.fillStyle='#8a7a5a';MCC.font='16px "Courier New",monospace';
-  MCC.fillText('- 战 术 对 弈 -',w/2,h/2-30);
+  MCC.fillText('- 战 术 对 弈 -',w/2,h/2-45);
 }
 
 // 不再需要 mousemove/click 事件（按钮改为 HTML）
 
 // ===== 游戏初始化 =====
 function showGame(){
-  const aiMode=G&&G.aiMode?true:false;
+  var aiMode=G&&G.aiMode?true:false;
   // 重置相机
   camX=0;camY=0;camZoom=1;camMoveMode=false;
   document.getElementById('camToggle').className='';
@@ -759,7 +1060,8 @@ function initGame(aiMode){
     dmgFloats:[]
   };
   // 记录初始状态到回放
-  G.replay.push({type:'init',units:[],camps:{red:null,blue:null},shelters:[],state:SD,turn:0,phase:'red',step:0,mode:'tactical'});
+  var gameMode=G.lanMode?'联机':(G.aiMode?'AI':'单人');
+  G.replay.push({type:'init',units:[],camps:{red:null,blue:null},shelters:[],state:SD,turn:0,phase:'red',step:0,mode:gameMode,subMode:'tactical'});
   hideAngleKnob();hide取消Btn();
   resizeCanvas();
   updUI();draw();
@@ -1521,14 +1823,16 @@ function place(mx,my){
       if(G.camps&&G.camps.red){hint('红方营地已存在');return;}
       if(!G.camps)G.camps={};
       G.camps.red={x:mx,y:my,hp:5,team:'red'};hint('红方营地已放置');
+      syncIfLan();
       if(!G.replayMode&&G.replay)G.replay.push({type:'place',unit:{x:mx,y:my,team:'red',type:'camp',hp:5,label:'营地'},prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify({red:null,blue:G.camps.blue?{x:G.camps.blue.x,y:G.camps.blue.y,hp:G.camps.blue.hp,team:'blue'}:null})),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
     }else if(t==='camp_blue'){
       if(G.camps&&G.camps.blue){hint('蓝方营地已存在');return;}
       if(!G.camps)G.camps={};
       G.camps.blue={x:mx,y:my,hp:5,team:'blue'};hint('蓝方营地已放置');
+      syncIfLan();
       if(!G.replayMode&&G.replay)G.replay.push({type:'place',unit:{x:mx,y:my,team:'blue',type:'camp',hp:5,label:'营地'},prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify({red:G.camps.red?{x:G.camps.red.x,y:G.camps.red.y,hp:G.camps.red.hp,team:'red'}:null,blue:null})),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
     }
-    hideAngleKnob();hide取消Btn();updUI();draw();return;
+    hideAngleKnob();hide取消Btn();syncIfLan();updUI();draw();return;
   }
   if(!canP({x:mx,y:my})){hint('必须在己方营地或单位3cm内');return;}
   if(overlap({x:mx,y:my},UR)){hint('位置重叠');return;}
@@ -1559,6 +1863,7 @@ function place(mx,my){
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
   hideAngleKnob();hide取消Btn();
   hint(`${u.label}已放置`);
+  syncIfLan();
   animP(u);updUI();draw();autoEnd();
 }
 
@@ -1676,6 +1981,7 @@ function clickUnit(mx,my){
 function trySel(mx,my){
   const u=findU(mx,my);
   if(u&&!u.eliminated&&!u.trapped&&u.team===G.phase&&G.state!==SD){
+    if(G.lanMode&&((G.isHost&&u.team!=='red')||(!G.isHost&&u.team!=='blue')))return;
     G.selU=u;
     show取消Btn();
     showPopup(u,mx,my);
@@ -1879,6 +2185,11 @@ function fire(shooter,angle){
   if(!G.replayMode&&G.replay){
     G.replay.push({type:'fire',sx:sx,sy:sy,angle:angle,stop:stop,hitList:hitList.map(function(h){return{dmg:h.dmg,isCamp:h.isCamp,x:h.target.x,y:h.target.y};}),prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify(G.camps)),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
   }
+  // 联机模式：通知对方播放子弹动画
+  if(G.lanMode){
+    const hitsData=hitList.map(h=>({x:h.target.x,y:h.target.y,dmg:h.dmg,isCamp:!!h.isCamp,dist:h.dist}));
+    sendLanAnim('bullet',{sx:sx,sy:sy,angle:angle,stop:stop,hits:hitsData});
+  }
   animBullet(sx,sy,angle,hitList,stop);
   G.selU=null;updUI();draw();
 }
@@ -1897,7 +2208,7 @@ function animBullet(sx,sy,angle,hitList,stop){
         else dmgU(h.target,h.dmg);
         app++;
       }
-      clearInterval(iv);chkOver();autoEnd();draw();return;
+      syncIfLan();clearInterval(iv);chkOver();autoEnd();draw();return;
     }
     const px=sx+Math.cos(angle)*d,py=sy+Math.sin(angle)*d;
     draw();
@@ -1944,7 +2255,10 @@ function fireM(m){
   if(!G.replayMode&&G.replay){
     G.replay.push({type:'mortar',sx:m.x,sy:m.y,tx:t.x,ty:t.y,intercepted:int,prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify(G.camps)),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
   }
-  if(!int)animMor(t.x,t.y,m);
+  if(!int){
+    if(G.lanMode)sendLanAnim('mortar',{tx:t.x,ty:t.y,sx:m.x,sy:m.y});
+    animMor(t.x,t.y,m);
+  }
   G.selU=null;updUI();draw();
 }
 
@@ -2006,7 +2320,9 @@ function dmgU(u,d){
   if(u.eliminated)return;
   u.hp-=d;
   u._hitTime=Date.now(); // 受伤时间戳，用于闪烁
-  if(u.hp<=0){u.hp=0;u.eliminated=true;animD(u);
+  if(u.hp<=0){u.hp=0;u.eliminated=true;
+    if(G&&G.lanMode)sendLanAnim('death',{x:u.x,y:u.y});
+    animD(u);
     // 墙被消灭后，重新检查所有单位的被困状态
     if(u.type==='wall')checkTrap();
   }
@@ -2031,6 +2347,9 @@ function animD(u){
 // ===== 流程 =====
 function autoEnd(){
   if(G.state===SD)return;
+  if(G.lanMode){
+    if((G.isHost&&G.phase!=='red')||(!G.isHost&&G.phase!=='blue')){return;}
+  }
   setTimeout(()=>swTurn(),100);
 }
 
@@ -2472,13 +2791,13 @@ function swTurn(){
   G.step=0;G.selU=null;G.selT=null;G.pa=0;G.aimMode=false;aiRetryCount=0;
   closePop();hideAngleKnob();hide取消Btn();document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
   document.getElementById('mobileFireBtn').style.display='none';
-  // 收起移动端面板
   document.getElementById('mobileToolPanel').style.display='none';
   document.querySelector('.mtp-close').style.display='none';
   updUI();draw();
   hint(`T${G.turn} ${G.phase==='red'?'红':'蓝'}方${G.turn<=3?'(休战)':''}`);
-  // AI 对战：如果是蓝方回合（AI）且非绘制阶段
-  if(G.aiMode&&G.phase==='blue'&&G.state!==SD){
+  if(G.lanMode){
+    syncIfLan();
+  }else if(G.aiMode&&G.phase==='blue'&&G.state!==SD){
     hint('AI思考中...');
     setTimeout(()=>aiTurn(),300);
   }
@@ -2487,13 +2806,18 @@ function startGame(){
   if(!G.camps||!G.camps.red||!G.camps.blue){hint('请放置双方营地');return;}
   G.state=ST;G.turn=1;G.phase='red';G.step=0;
   document.getElementById('startBtn').style.display='none';
+  syncIfLan();
   updUI();draw();hint('休战期开始！前3回合不能开战');
 }
 function updUI(){
   if(!G)return;
   document.getElementById('topInfo').textContent=`T${G.turn} ${G.state===SD?'绘制':(G.state===ST?'休战':'战斗')}`;
   const ti=document.getElementById('turnInd');
-  if(G.state===SD){ti.textContent='绘制地图';ti.style.color='#8a7a5a';document.getElementById('startBtn').style.display='';}
+  if(G.state===SD){
+    ti.textContent='绘制地图';ti.style.color='#8a7a5a';
+    if(G.lanMode&&!G.isHost){document.getElementById('startBtn').style.display='none';}
+    else{document.getElementById('startBtn').style.display='';}
+  }
   else{
     ti.textContent=G.phase==='red'?'[红方回合]':'[蓝方回合]';
     ti.style.color=G.phase==='red'?'#c44':'#48f';
@@ -2530,6 +2854,20 @@ function updUI(){
       }
     }
   });
+  // 联机模式：动态控制工具面板，各管各的回合
+  if(G.lanMode){
+    const panel=document.getElementById('toolPanel');
+    if(G.state===SD){
+      if(!G.isHost){panel.style.pointerEvents='none';panel.style.opacity='0.5';document.getElementById('hintTxt').textContent='等待房主绘制地图...';}
+      else{panel.style.pointerEvents='auto';panel.style.opacity='1';document.getElementById('hintTxt').textContent='绘制地图中';}
+    }else if((G.isHost&&G.phase==='red')||(!G.isHost&&G.phase==='blue')){
+      panel.style.pointerEvents='auto';panel.style.opacity='1';
+      document.getElementById('hintTxt').textContent='你的回合';
+    }else{
+      panel.style.pointerEvents='none';panel.style.opacity='0.5';
+      document.getElementById('hintTxt').textContent='等待对方操作...';
+    }
+  }
 }
 function chkOver(){
   if(G.over)return;
@@ -2596,16 +2934,19 @@ function showReplayList(){
     var d=new Date(r.time);
     var ds=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+' '+d.getHours()+':'+d.getMinutes();
     var steps=r.data.length;
-    var winner='',mode='';
+    var winner='',mode='',type='';
     var first=r.data[0];
-    if(first)mode=first.mode==='bb'?'大战场':'战术';
+    if(first){
+      mode=first.subMode==='bb'?'大战场':(first.subMode||'战术');
+      type=first.mode||'单人';
+    }
     var last=r.data[r.data.length-1];
     if(last&&last.prevSnap){
       var rCamp=last.prevSnap.camps&&last.prevSnap.camps.red?last.prevSnap.camps.red.hp:0;
       var bCamp=last.prevSnap.camps&&last.prevSnap.camps.blue?last.prevSnap.camps.blue.hp:0;
       winner=rCamp<=0?'蓝方胜':(bCamp<=0?'红方胜':'进行中');
     }
-    html+='<button class="pb" onclick="document.getElementById(\'modal\').style.display=\'none\';startReplay('+i+')">['+mode+'] '+ds+' | '+steps+'步 | '+winner+'</button>';
+    html+='<button class="pb" onclick="document.getElementById(\'modal\').style.display=\'none\';startReplay('+i+')">['+type+']['+mode+'] '+ds+' | '+steps+'步 | '+winner+'</button>';
   }
   html+='</div><div style="margin-top:10px;display:flex;gap:10px;justify-content:center">';
   html+='<button onclick="clearAllReplays()" style="padding:6px 18px;background:#5a2020;border:2px solid #c44;color:#faa;cursor:pointer;font-family:Courier New;font-size:13px">🗑 清空记录</button>';
@@ -2739,6 +3080,7 @@ function replayExit(){
   document.getElementById('toolPanel').style.display='';
   document.getElementById('bottomBar').style.display='';
   document.getElementById('topBar').style.display='';
+  document.getElementById('mobileToolBtn').style.display='';
   document.getElementById('mainMenu').style.display='block';
   document.getElementById('menuMain').style.display='flex';
   G=null;MC.width=window.innerWidth;MC.height=window.innerHeight;drawMenu();
@@ -3738,9 +4080,11 @@ function bbPlace(mx,my){
     }else if(t==='camp_red'){
       if(BB_G.camps.red){bbHint('红方营地已存在');return;}
       BB_G.camps.red={x:mx,y:my,hp:200,maxHp:200,team:'red',type:'camp',label:'钀ュ湴',eliminated:false};
+      syncIfLan();
     }else if(t==='camp_blue'){
       if(BB_G.camps.blue){bbHint('蓝方营地已存在');return;}
       BB_G.camps.blue={x:mx,y:my,hp:200,maxHp:200,team:'blue',type:'camp',label:'钀ュ湴',eliminated:false};
+      syncIfLan();
     }else if(t==='sea_paint'){
       // sea_paint 由 mousedown/mousemove/mouseup 处理拖动绘制
       return;
@@ -3765,7 +4109,7 @@ function bbPlace(mx,my){
   BB_G.units.push(u);BB_G.step++;BB_G.selT=null;BB_G.pa=0;
   document.querySelectorAll('.bb-tb').forEach(function(b){b.classList.remove('act');});
   bbHideAngleKnob();bbHideCancelBtn();
-  bbHint(u.label+' 已放置');bbUpdUI();bbAutoEnd();
+  bbHint(u.label+' 已放置');syncIfLan();bbUpdUI();bbAutoEnd();
 }
 function bbPlaceWall(mx,my){
   var e=BB_G.builder;
@@ -4267,7 +4611,11 @@ function bbDmgU(u,d,source){
 }
 
 // ===== TURN =====
-function bbAutoEnd(){if(BB_G.state===BB_SD)return;setTimeout(function(){bbSwTurn();},100);}
+function bbAutoEnd(){
+  if(BB_G.state===BB_SD)return;
+  if(BB_G.lanMode&&!BB_G.isHost){return;}
+  setTimeout(function(){bbSwTurn();},100);
+}
 function bbSwTurn(){
   if(BB_G.over)return;
   if(BB_G.phase==='red')BB_G.phase='blue';
@@ -4284,8 +4632,9 @@ function bbSwTurn(){
   document.querySelector('.bb-mtp-close').style.display='none';
   bbUpdUI();
   bbHint('T'+BB_G.turn+' '+(BB_G.phase==='red'?'Red':'Blue')+(BB_G.turn<=3?' (Truce)':''));
-  // AI 模式：蓝方回合自动执行 AI
-  if(BB_G.aiMode&&BB_G.phase==='blue'&&!BB_G.over){
+  if(BB_G.lanMode){
+    syncIfLan();
+  }else if(BB_G.aiMode&&BB_G.phase==='blue'&&!BB_G.over){
     setTimeout(function(){bbAiTurn();},500);
   }
 }
@@ -4293,13 +4642,18 @@ function bbStartGame(){
   if(!BB_G.camps||!BB_G.camps.red||!BB_G.camps.blue){bbHint('请先放置双方营地');return;}
   BB_G.state=BB_ST;BB_G.turn=1;BB_G.phase='red';BB_G.step=0;
   document.getElementById('bbStartBtn').style.display='none';
+  syncIfLan();
   bbUpdUI();bbHint('休战期！前3回合只能部署');
 }
 function bbUpdUI(){
   if(!BB_G)return;
   document.getElementById('bbTopInfo').textContent='T'+BB_G.turn+' '+(BB_G.state===BB_SD?'Draw':(BB_G.state===BB_ST?'Truce':'Battle'));
   var ti=document.getElementById('bbTurnInd');
-  if(BB_G.state===BB_SD){ti.textContent='Draw Map';ti.style.color='#8a7a5a';document.getElementById('bbStartBtn').style.display='';}
+  if(BB_G.state===BB_SD){
+    ti.textContent='Draw Map';ti.style.color='#8a7a5a';
+    if(BB_G.lanMode&&!BB_G.isHost){document.getElementById('bbStartBtn').style.display='none';}
+    else{document.getElementById('bbStartBtn').style.display='';}
+  }
   else{ti.textContent=BB_G.phase==='red'?'[Red Turn]':'[Blue Turn]';ti.style.color=BB_G.phase==='red'?'#c44':'#48f';document.getElementById('bbStartBtn').style.display='none';}
   document.getElementById('bbHpR').textContent='Red:'+(BB_G.camps&&BB_G.camps.red?BB_G.camps.red.hp:'-');
   document.getElementById('bbHpB').textContent='Blue:'+(BB_G.camps&&BB_G.camps.blue?BB_G.camps.blue.hp:'-');
