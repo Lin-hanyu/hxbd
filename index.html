@@ -211,6 +211,18 @@ canvas{display:block;cursor:crosshair;touch-action:none}
 #bbMobileToolPanel{position:fixed;bottom:0;left:0;right:0;z-index:650;display:none;
   background:#1a1a00;border-top:3px solid #654321;max-height:45vh;overflow:hidden;flex-direction:column}
 .bb-dp-btn{padding:8px 6px;background:#2a2a00;border:1px solid #654321;color:#c8a96e;cursor:pointer;font-family:Courier New;font-size:14px;text-align:center;border-radius:4px;user-select:none;-webkit-user-select:none;touch-action:none}.bb-dp-btn:active{background:#3a3a00;border-color:#c8a96e}
+/* 回放控制栏 */
+#replayBar{position:fixed;bottom:0;left:0;right:0;height:40px;z-index:900;display:none;background:#1a1a00;border-top:3px solid #654321;align-items:center;justify-content:center;gap:12px;padding:0 10px;font-family:'Courier New',monospace}
+#replayBar button{padding:4px 12px;background:#2a2a00;border:1px solid #654321;color:#c8a96e;cursor:pointer;font-family:'Courier New';font-size:12px;border-radius:3px}
+#replayBar button:hover{background:#3a3a00;border-color:#c8a96e}
+#replayBar button:disabled{opacity:0.4;cursor:default}
+#replayInfo{color:#8a7a5a;font-size:11px;min-width:100px;text-align:center}
+/* 伤害数字飘字 */
+.dmgFloat{position:fixed;z-index:3000;pointer-events:none;font-family:'Courier New',monospace;font-weight:bold;font-size:16px;animation:dmgUp 0.8s ease-out forwards}
+@keyframes dmgUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
+/* 回放按钮（菜单中） */
+#replayBtnInMenu{width:220px;padding:10px 20px;background:#1a1a00;border:2px solid #654321;color:#a0906a;cursor:pointer;font-family:'Courier New',monospace;font-size:15px;text-align:center;transition:background 0.15s,border-color 0.15s,color 0.15s}
+#replayBtnInMenu:hover{background:#3a2a10;border-color:#c8a96e;color:#e8c87a}
 </style></head><body>
 
 <div id="mainMenu">
@@ -220,6 +232,7 @@ canvas{display:block;cursor:crosshair;touch-action:none}
       <button class="menu-btn" onclick="G={aiMode:false};showGame();">⚔ 战术模式</button>
       <button class="menu-btn" onclick="openBigBattle()">🏴 大战场模式</button>
       <button class="menu-btn" onclick="document.getElementById('menuMain').style.display='none';document.getElementById('menuAi').style.display='flex';">🤖 AI对战</button>
+      <button id="replayBtnInMenu" onclick="showReplayList()">▶ 回放记录</button>
     </div>
     <div id="menuAi" style="display:none">
       <button class="menu-btn" onclick="G={aiMode:true};showGame();">⚔ 战术模式</button>
@@ -394,6 +407,14 @@ canvas{display:block;cursor:crosshair;touch-action:none}
   </div>
   <!-- 确定按钮 -->
   <button id="bbDPOK" style="position:absolute;width:60px;height:32px;border-radius:6px;background:rgba(40,80,40,0.5);border:2px solid rgba(120,200,120,0.6);color:rgba(180,255,180,0.95);font-size:14px;font-weight:bold;pointer-events:auto;backdrop-filter:blur(2px)">✓ 确定</button>
+</div>
+
+<!-- 回放控制栏 -->
+<div id="replayBar">
+  <button id="replayPrev" onclick="replayPrev()">◀ 上一步</button>
+  <button id="replayNext" onclick="replayNext()">下一步 ▶</button>
+  <span id="replayInfo">回放中</span>
+  <button id="replayExit" onclick="replayExit()">退出回放</button>
 </div>
 
 <script>
@@ -733,8 +754,12 @@ function initGame(aiMode){
     selU:null,selT:null,buildWall:false,builder:null,
     selMortar:false,aimMode:false,
     sa:0,pa:0,mx:0,my:0,over:false,
-    aiMode:!!aiMode
+    aiMode:!!aiMode,
+    replay:[],replayIdx:-1,replayMode:false,
+    dmgFloats:[]
   };
+  // 记录初始状态到回放
+  G.replay.push({type:'init',units:[],camps:{red:null,blue:null},shelters:[],state:SD,turn:0,phase:'red',step:0,mode:'tactical'});
   hideAngleKnob();hide取消Btn();
   resizeCanvas();
   updUI();draw();
@@ -820,7 +845,7 @@ function drawCamps(){
       GCC.fillStyle=t==='red'?'#8a3030':'#304a8a';GCC.fill();GCC.stroke();
       GCC.restore();
     }
-    GCC.fillStyle='#fff';GCC.font='bold 14px "Courier New"';
+    GCC.fillStyle='#222';GCC.font='bold 14px "Courier New"';
     GCC.textAlign='center';GCC.textBaseline='middle';
     GCC.fillText(`HP${c.hp}`,cx,cy+CS+12);
   }
@@ -829,8 +854,14 @@ function drawCamps(){
 function drawUnits(){
   for(const u of G.units){
     if(u.eliminated||u.trapped)continue;
+    // 受伤闪烁效果
+    if(u._hitTime&&Date.now()-u._hitTime<200){
+      if(Math.floor(Date.now()/100)%2===0){GCC.save();GCC.globalAlpha=0.3;GCC.translate(u.x,u.y);}
+      else{GCC.save();GCC.translate(u.x,u.y);}
+    }else{
+      GCC.save();GCC.translate(u.x,u.y);
+    }
     const r=u.team==='red',c=r?'#c44':'#48f';
-    GCC.save();GCC.translate(u.x,u.y);
     if(G.selU===u){
       GCC.strokeStyle='#c8a96e';GCC.lineWidth=1.5;GCC.setLineDash([3,3]);
       GCC.beginPath();GCC.arc(0,0,UR+5,0,Math.PI*2);GCC.stroke();GCC.setLineDash([]);
@@ -862,7 +893,7 @@ function drawUnits(){
     }
     // 血量数字
     if (u.type !== 'wall' && u.type !== 'mortar' && u.type !== 'interceptor') {
-      GCC.fillStyle='#fff';GCC.font='bold 8px "Courier New"';
+      GCC.fillStyle='#222';GCC.font='bold 8px "Courier New"';
       GCC.textAlign='center';GCC.textBaseline='middle';
       GCC.fillText(`${u.hp}`,0,UR+10);
     }
@@ -991,7 +1022,7 @@ function drawWalls(){
       rRect(GCC,-w/2,-h/2,w,h,2);GCC.fill();GCC.stroke();
       GCC.restore();
     }
-    GCC.fillStyle='#fff';GCC.font='8px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
+    GCC.fillStyle='#222';GCC.font='8px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
     GCC.fillText(u.maxHp>99?'∞':`H${u.hp}`,u.x,u.y-(u.h||6)/2-4);
   }
 }
@@ -1490,10 +1521,12 @@ function place(mx,my){
       if(G.camps&&G.camps.red){hint('红方营地已存在');return;}
       if(!G.camps)G.camps={};
       G.camps.red={x:mx,y:my,hp:5,team:'red'};hint('红方营地已放置');
+      if(!G.replayMode&&G.replay)G.replay.push({type:'place',unit:{x:mx,y:my,team:'red',type:'camp',hp:5,label:'营地'},prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify({red:null,blue:G.camps.blue?{x:G.camps.blue.x,y:G.camps.blue.y,hp:G.camps.blue.hp,team:'blue'}:null})),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
     }else if(t==='camp_blue'){
       if(G.camps&&G.camps.blue){hint('蓝方营地已存在');return;}
       if(!G.camps)G.camps={};
       G.camps.blue={x:mx,y:my,hp:5,team:'blue'};hint('蓝方营地已放置');
+      if(!G.replayMode&&G.replay)G.replay.push({type:'place',unit:{x:mx,y:my,team:'blue',type:'camp',hp:5,label:'营地'},prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify({red:G.camps.red?{x:G.camps.red.x,y:G.camps.red.y,hp:G.camps.red.hp,team:'red'}:null,blue:null})),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
     }
     hideAngleKnob();hide取消Btn();updUI();draw();return;
   }
@@ -1518,6 +1551,11 @@ function place(mx,my){
     hint('选择目标位置');updUI();draw();return;
   }
   G.units.push(u);G.step++;G.selT=null;G.pa=0;
+  // 记录回放（操作前的快照）
+  if(!G.replayMode&&G.replay){
+    var ps=JSON.parse(JSON.stringify({units:G.units.slice(0,-1),camps:G.camps,shelters:G.shelters,state:G.state,turn:G.turn,phase:G.phase,step:G.step-1}));
+    G.replay.push({type:'place',unit:{x:u.x,y:u.y,team:u.team,type:u.type,hp:u.hp,ammo:u.ammo,facing:u.facing,maxHp:u.maxHp,maxAmmo:u.maxAmmo,label:u.label},prevSnap:ps});
+  }
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('act'));
   hideAngleKnob();hide取消Btn();
   hint(`${u.label}已放置`);
@@ -1837,6 +1875,10 @@ function fire(shooter,angle){
     if(pen>=2&&shooter.type==='sniper')break;
   }
   console.log('fire: hitList=',hitList.map(h=>h.isCamp?`camp(${h.target.team})dmg=${h.dmg}dist=${h.dist.toFixed(0)}`:`${h.target.type}(${h.target.team})dmg=${h.dmg}dist=${h.dist.toFixed(0)}`),'stop=',stop.toFixed(0),'angle=',(angle*57.3).toFixed(0)+'°');
+  // 记录回放（操作前的快照）
+  if(!G.replayMode&&G.replay){
+    G.replay.push({type:'fire',sx:sx,sy:sy,angle:angle,stop:stop,hitList:hitList.map(function(h){return{dmg:h.dmg,isCamp:h.isCamp,x:h.target.x,y:h.target.y};}),prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify(G.camps)),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
+  }
   animBullet(sx,sy,angle,hitList,stop);
   G.selU=null;updUI();draw();
 }
@@ -1863,12 +1905,14 @@ function animBullet(sx,sy,angle,hitList,stop){
     GCC.save();
     GCC.translate(camX,camY);
     GCC.scale(camZoom,camZoom);
-    GCC.fillStyle='#ff0';GCC.shadowColor='#ff0';GCC.shadowBlur=10;
+    GCC.fillStyle='#f44';GCC.shadowColor='#f44';GCC.shadowBlur=10;
     GCC.beginPath();GCC.arc(px,py,3,0,Math.PI*2);GCC.fill();
     GCC.restore();
     while(app<hitList.length&&d>=hitList[app].dist){
       const h=hitList[app];
       console.log('animBullet: hit!',h.isCamp?'camp('+h.target.team+')':h.target.type+'('+h.target.team+')','dmg=',h.dmg,'hp_before=',h.isCamp?h.target.hp:h.target.hp);
+      // 命中时显示伤害数字
+      if(!h.isCamp||h.target.type!=='wall')showDmgFloat(h.target.x,h.target.y,h.dmg);
       if(h.isCamp){h.target.hp-=h.dmg;if(h.target.hp<=0){h.target.hp=0;endG(h.target.team==='red'?'blue':'red');}}
       else dmgU(h.target,h.dmg);
       app++;
@@ -1896,32 +1940,72 @@ function fireM(m){
       }
     }
   }
-  if(!int)animMor(t.x,t.y);
+  // 记录回放（操作前的快照）
+  if(!G.replayMode&&G.replay){
+    G.replay.push({type:'mortar',sx:m.x,sy:m.y,tx:t.x,ty:t.y,intercepted:int,prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify(G.camps)),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
+  }
+  if(!int)animMor(t.x,t.y,m);
   G.selU=null;updUI();draw();
 }
 
-function animMor(tx,ty){
-  let r=0,dam=false;
-  const mx=CM*1;
-  const iv=setInterval(()=>{
-    r+=12;
-    if(r>mx){clearInterval(iv);chkOver();autoEnd();draw();return;}
-    draw();
-    GCC.save();GCC.fillStyle=`rgba(200,80,0,${0.25*(1-r/mx)})`;
-    GCC.beginPath();GCC.arc(tx,ty,r,0,Math.PI*2);GCC.fill();
-    GCC.strokeStyle='#c40';GCC.lineWidth=1.5;GCC.stroke();GCC.restore();
-    if(!dam&&r>mx*0.4){
-      dam=true;
-      for(const u of G.units)if(!u.eliminated&&dist(u,{x:tx,y:ty})<=mx)dmgU(u,3);
-      for(const t of['red','blue']){const c=G.camps[t];if(c&&dist(c,{x:tx,y:ty})<=mx){c.hp-=3;if(c.hp<=0){c.hp=0;endG(t==='red'?'blue':'red');}}}
-      hint('爆炸！范围3伤害');
-    }
-  },20);
+function animMor(tx,ty,shooter){
+  // 先画炮弹飞行轨迹
+  if(shooter){
+    const sx=shooter.x,sy=shooter.y;
+    let prog=0;
+    const flyIv=setInterval(function(){
+      prog+=0.05;
+      if(prog>=1){clearInterval(flyIv);}
+      draw();
+      var cx=sx+(tx-sx)*prog,cy=sy+(ty-sy)*prog-80*Math.sin(prog*Math.PI); // 抛物线
+      GCC.save();
+      GCC.fillStyle='#f44';GCC.shadowColor='#f44';GCC.shadowBlur=8;
+      GCC.beginPath();GCC.arc(cx,cy,4,0,Math.PI*2);GCC.fill();
+      GCC.restore();
+    },20);
+  }
+  // 爆炸特效
+  setTimeout(function(){
+    let r=0,dam=false;
+    const mx=CM*1;
+    const iv=setInterval(()=>{
+      r+=12;
+      if(r>mx){clearInterval(iv);chkOver();autoEnd();draw();return;}
+      draw();
+      GCC.save();GCC.fillStyle=`rgba(200,80,0,${0.25*(1-r/mx)})`;
+      GCC.beginPath();GCC.arc(tx,ty,r,0,Math.PI*2);GCC.fill();
+      GCC.strokeStyle='#c40';GCC.lineWidth=1.5;GCC.stroke();GCC.restore();
+      if(!dam&&r>mx*0.4){
+        dam=true;
+        for(const u of G.units)if(!u.eliminated&&dist(u,{x:tx,y:ty})<=mx)dmgU(u,3);
+        for(const t of['red','blue']){const c=G.camps[t];if(c&&dist(c,{x:tx,y:ty})<=mx){c.hp-=3;if(c.hp<=0){c.hp=0;endG(t==='red'?'blue':'red');}}}
+        hint('爆炸！范围3伤害');
+      }
+    },20);
+  },shooter?500:0);
+}
+
+// 伤害数字飘字
+function showDmgFloat(x,y,dmg){
+  if(!G)return;
+  var cv=GC.getBoundingClientRect();
+  var scale=cv.width/MS;
+  var sx=cv.left+(x*camZoom+camX)*scale;
+  var sy=cv.top+(y*camZoom+camY)*scale;
+  var el=document.createElement('div');
+  el.className='dmgFloat';
+  el.textContent='-'+dmg;
+  el.style.left=sx+'px';
+  el.style.top=sy+'px';
+  el.style.color='#f44';
+  document.body.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},800);
 }
 
 function dmgU(u,d){
   if(u.eliminated)return;
   u.hp-=d;
+  u._hitTime=Date.now(); // 受伤时间戳，用于闪烁
   if(u.hp<=0){u.hp=0;u.eliminated=true;animD(u);
     // 墙被消灭后，重新检查所有单位的被困状态
     if(u.type==='wall')checkTrap();
@@ -1937,7 +2021,7 @@ function animD(u){
     GCC.save();
     GCC.translate(camX,camY);
     GCC.scale(camZoom,camZoom);
-    GCC.globalAlpha=o;GCC.fillStyle='rgba(255,255,200,0.3)';
+    GCC.globalAlpha=o;GCC.fillStyle='rgba(200,50,50,0.5)';
     GCC.font='18px "Courier New"';GCC.textAlign='center';GCC.textBaseline='middle';
     GCC.fillText('✕',u.x,u.y);
     GCC.restore();
@@ -2164,50 +2248,39 @@ async function aiTurn(){
   if(aiRetryCount>0)extra=`\n⚠️ 上次操作失败，请换一个合法操作。`;
   
   const messages=[
-    {role:'system',content:`你正在玩"核邪部队"这款战争策略游戏，作为蓝方指挥官，你的唯一目标是摧毁红方营地获得胜利。你和红方是敌对关系，战场上一方必须被消灭。
+    {role:'system',content:`你是"核邪部队"的蓝方指挥官AI，正在指挥一场真实战争。你的唯一目标：摧毁红方营地。红方也会全力摧毁你的营地。
 
-重要：每回合只能执行1个操作（部署1个单位或控制1个单位行动）。只返回当前回合要做的1件事。
+## 核心原则（严格遵守）
+1. 每回合只能执行1个操作。仔细分析战场局势后再决策。
+2. **真AI决策**：不要机械执行"建议操作"。要根据战场实时局势判断：
+   - 红方哪些单位对我方威胁最大？优先清除。
+   - 我方残血单位应该继续输出还是找掩体？
+   - 集火同一个目标效率最高，不要分散伤害。
+   - 红方营地血量低时，所有火力集中打营地！
+3. 如果红方单位已经瞄准你的脆弱单位（狙击兵、迫击炮），优先建掩体保护或先手消灭对方。
+4. 工程兵不要只修营地，更要为狙击兵和迫击炮建掩体。
 
-==兵种与操作详解==
-soldier 普通兵(3HP,5弹,1伤,射角±45°):
-  - fire: 射击(target_x/y必填,目标必须在朝向±45°内)
-  - reload: 装弹(弹满时不可用)
+## 兵种数据
+soldier 普通兵(3HP,5弹,1伤,射角±45°): fire/reload
+sniper 狙击兵(1HP,2弹,2伤,可穿1面墙): fire/reload
+engineer 工程兵(1HP): build_wall(建掩体3HP)/add_cement/repair_camp
+mortar 迫击炮(1HP,3伤范围): load_mortar→set_mortar_target→fire_mortar(三步各1回合)
+interceptor 拦截装置(1HP): load_interceptor(最多2发,拦截迫击炮)
 
-sniper 狙击兵(1HP,2弹,2伤,可穿透1面墙,射角±45°):
-  - fire: 射击(target_x/y必填,可穿1面墙)
-  - reload: 装弹
+## 坐标系
+X右Y下，0-800。朝向角度：0=上,90=右,180=下。射角±45°。
+被困单位无法操作，需打掉盖住它的墙。
 
-engineer 工程兵(1HP):
-  - build_wall: 在身边建掩体(target_x/y必填,需在身边3cm内,不需消耗水泥)
-    掩体3HP,子弹不可穿透(狙击兵可穿1面),用于保护脆弱单位
-    策略:在己方脆弱单位(sniper/soldier/mortar)与红方之间放掩体挡弹
-  - add_cement: 装水泥(为修营地做准备)
-  - repair_camp: 修复蓝方营地(消耗1水泥,+1HP,需营地HP<5)
-
-mortar 迫击炮(1HP,3伤范围伤害,射程约两营地距离一半):
-  操作三步曲(每步消耗1回合):
-  1. load_mortar: 装填炮弹(从0弹开始必须先装)
-  2. set_mortar_target: 设定目标(target_x/y必填,建议设为红营坐标)
-  3. fire_mortar: 开炮(消耗1弹,3伤范围伤害)
-  注意:迫击炮不受射角限制,可直接打到目标位置!
-
-interceptor 拦截装置(1HP):
-  - load_interceptor: 装拦截弹(最多2发,1发50%拦截/2发100%拦截敌方迫击炮)
-
-坐标系：X右Y下，0-800。朝向角度：0=上,90=右,180=下,-90°=左。
-射击范围：单位朝向±45°内才能开火。上下文中已标注每个单位"可打"哪些目标。
-
-掩体盖住规则：当掩体(wall)盖住单位时，该单位被标记为"被困"，无法进行任何操作（不能射击/装弹/建造等）。只有打掉盖住的掩体（wall 3HP）才能解除被困状态。被困单位在上下文中标注为【被困】。
-
-休战期(前3回合)：只能部署。优先部署soldier和sniper，部署在蓝方营地附近，朝向红方营地方向。也可以部署mortar为战斗期做准备。
+## 策略指南
+休战期(前3回合)：部署soldier/sniper朝向红方，可部署mortar。
 战斗期(第4回合起)：
-  - 优先让"可打红营"的soldier/sniper开火攻击红方营地
-  - 迫击炮如果有弹有目标直接fire_mortar，没弹先load_mortar，有弹没目标先set_mortar_target打红营
-  - 工程兵优先为脆弱单位建掩体(build_wall)挡子弹,营地受损时repair_camp
-  - 弹药用完要reload
-  - 上下文中每个单位都标注了"下一步"建议操作，按建议执行
+  - **优先消灭红方有生力量**，再打营地
+  - 集火！多个单位打同一个目标
+  - 保护己方狙击兵（高伤害但脆皮）
+  - 迫击炮范围伤害，打聚集的单位收益高
+  - 工程兵在己方脆皮单位前建掩体挡子弹
 
-每回合调用1个工具。记住：你的敌人是红方，消灭他们！`},
+每回合1个操作。记住：这是真AI决策，根据战场灵活应变！`},
     {role:'user',content:context+extra}
   ];
 
@@ -2459,12 +2532,24 @@ function updUI(){
   });
 }
 function chkOver(){
+  if(G.over)return;
   if(G.camps.red&&G.camps.red.hp<=0)endG('blue');
   else if(G.camps.blue&&G.camps.blue.hp<=0)endG('red');
 }
 function endG(w){
+  if(G.over)return;
   G.over=true;
-  setTimeout(()=>showModal(w==='red'?'红方胜利！':'蓝方胜利！','游戏结束'),500);
+  // 回放模式：不弹窗不保存
+  if(G.replayMode)return;
+  // 保存回放记录到 localStorage
+  if(G.replay&&G.replay.length>0){
+    G.replay.push({type:'end',prevSnap:{units:JSON.parse(JSON.stringify(G.units)),camps:JSON.parse(JSON.stringify(G.camps)),shelters:JSON.parse(JSON.stringify(G.shelters)),state:G.state,turn:G.turn,phase:G.phase,step:G.step}});
+    saveReplay(G.replay);
+  }
+  setTimeout(function(){
+    document.getElementById('modalBox').innerHTML='<h2>'+(w==='red'?'红方胜利！':'蓝方胜利！')+'</h2><p>游戏结束</p><button onclick="document.getElementById(\'modal\').style.display=\'none\';doBackToMenu()">返回主菜单</button>';
+    document.getElementById('modal').style.display='flex';
+  },500);
 }
 function backToMenu(){
   // 用自定义弹窗替代 confirm（移动端友好）
@@ -2489,6 +2574,174 @@ function doBackToMenu(){
 function showModal(t,d){
   document.getElementById('modalBox').innerHTML=`<h2>${t}</h2><p>${d}</p><button onclick="document.getElementById('modal').style.display='none'">确定</button>`;
   document.getElementById('modal').style.display='flex';
+}
+
+// ===== 回放功能 =====
+function saveReplay(replay){
+  var list=JSON.parse(localStorage.getItem('hxbd_replays')||'[]');
+  list.push({time:Date.now(),data:replay});
+  if(list.length>10)list=list.slice(-10); // 只保留最近10条
+  localStorage.setItem('hxbd_replays',JSON.stringify(list));
+}
+function showReplayList(){
+  var list=JSON.parse(localStorage.getItem('hxbd_replays')||'[]');
+  if(list.length===0){
+    document.getElementById('modalBox').innerHTML='<h2>回放记录</h2><p>暂无回放记录</p><button onclick="document.getElementById(\'modal\').style.display=\'none\'">确定</button>';
+    document.getElementById('modal').style.display='flex';
+    return;
+  }
+  var html='<h2>选择回放</h2><div style="max-height:300px;overflow-y:auto">';
+  for(var i=list.length-1;i>=0;i--){
+    var r=list[i];
+    var d=new Date(r.time);
+    var ds=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+' '+d.getHours()+':'+d.getMinutes();
+    var steps=r.data.length;
+    var winner='',mode='';
+    var first=r.data[0];
+    if(first)mode=first.mode==='bb'?'大战场':'战术';
+    var last=r.data[r.data.length-1];
+    if(last&&last.prevSnap){
+      var rCamp=last.prevSnap.camps&&last.prevSnap.camps.red?last.prevSnap.camps.red.hp:0;
+      var bCamp=last.prevSnap.camps&&last.prevSnap.camps.blue?last.prevSnap.camps.blue.hp:0;
+      winner=rCamp<=0?'蓝方胜':(bCamp<=0?'红方胜':'进行中');
+    }
+    html+='<button class="pb" onclick="document.getElementById(\'modal\').style.display=\'none\';startReplay('+i+')">['+mode+'] '+ds+' | '+steps+'步 | '+winner+'</button>';
+  }
+  html+='</div><div style="margin-top:10px;display:flex;gap:10px;justify-content:center">';
+  html+='<button onclick="clearAllReplays()" style="padding:6px 18px;background:#5a2020;border:2px solid #c44;color:#faa;cursor:pointer;font-family:Courier New;font-size:13px">🗑 清空记录</button>';
+  html+='<button onclick="document.getElementById(\'modal\').style.display=\'none\'" style="padding:6px 24px;background:#3a2a00;border:2px solid #654321;color:#c8a96e;cursor:pointer;font-family:Courier New;font-size:14px">关闭</button>';
+  html+='</div>';
+  document.getElementById('modalBox').innerHTML=html;
+  document.getElementById('modal').style.display='flex';
+}
+function clearAllReplays(){
+  localStorage.removeItem('hxbd_replays');
+  document.getElementById('modal').style.display='none';
+  // 提示用户已清空
+  alert('已清空所有回放记录！请重新玩一局，新数据会包含营地信息。');
+}
+function startReplay(idx){
+  var list=JSON.parse(localStorage.getItem('hxbd_replays')||'[]');
+  var replay=list[idx].data;
+  if(!replay||replay.length<2)return;
+  // 进入回放模式
+  G={state:SD,turn:0,phase:'red',step:0,maxStep:1,
+    units:[],camps:{red:null,blue:null},shelters:[],
+    selU:null,selT:null,buildWall:false,builder:null,
+    selMortar:false,aimMode:false,
+    sa:0,pa:0,mx:0,my:0,over:false,aiMode:false,
+    replay:replay,replayIdx:-1,replayMode:true,dmgFloats:[]
+  };
+  document.getElementById('mainMenu').style.display='none';
+  document.getElementById('gameUI').style.display='block';
+  document.getElementById('mobileToolPanel').style.display='none';
+  document.getElementById('mobileFireBtn').style.display='none';
+  // 加载图片后再显示
+  loadImages().then(function(){
+    resizeCanvas();
+    // 回放模式隐藏工具栏和返回按钮
+    document.getElementById('toolPanel').style.display='none';
+    document.getElementById('bottomBar').style.display='none';
+    document.getElementById('topBar').style.display='none';
+    document.getElementById('mobileToolBtn').style.display='none';
+    document.getElementById('replayBar').style.display='flex';
+    replayNext();
+  });
+}
+function replayApplyState(idx){
+  var replay=G.replay;
+  if(!replay||idx<0||idx>=replay.length)return;
+  var r=replay[idx];
+  // 使用 prevSnap（操作前的快照）
+  var snap=r.prevSnap||r;
+  if(snap.units){
+    G.units=JSON.parse(JSON.stringify(snap.units));
+    G.camps=JSON.parse(JSON.stringify(snap.camps));
+    G.shelters=JSON.parse(JSON.stringify(snap.shelters));
+    G.state=snap.state;G.turn=snap.turn;G.phase=snap.phase;G.step=snap.step;
+    G.over=false;
+  }else if(r.type==='init'){
+    G.units=[];G.camps={red:null,blue:null};G.shelters=[];
+    G.state=SD;G.turn=0;G.phase='red';G.step=0;G.over=false;
+  }
+}
+function replayNext(){
+  if(!G||!G.replay||G.replayMode!==true)return;
+  if(G.replayIdx>=G.replay.length-1){return};
+  G.replayIdx++;
+  // 还原到操作前的状态（prevSnap）
+  replayApplyState(G.replayIdx);
+  document.getElementById('replayInfo').textContent='步骤 '+(G.replayIdx+1)+'/'+G.replay.length;
+  document.getElementById('replayPrev').disabled=(G.replayIdx<=0);
+  document.getElementById('replayNext').disabled=(G.replayIdx>=G.replay.length-1);
+  camX=0;camY=0;camZoom=1;
+  var cur=G.replay[G.replayIdx];
+  if(!cur){draw();return;}
+  if(cur.type==='fire'){
+    // 构建 hitList（找 prevSnap 状态中的单位）
+    var hitList=[];
+    for(var h=0;h<cur.hitList.length;h++){
+      var hi=cur.hitList[h];
+      if(hi.isCamp){
+        var ct=hi.x<400?'red':'blue';
+        if(G.camps[ct])hitList.push({target:G.camps[ct],dmg:hi.dmg,isCamp:true,dist:hi.dist||999});
+      }else{
+        for(var ui=0;ui<G.units.length;ui++){
+          var u=G.units[ui];
+          if(!u.eliminated&&Math.abs(u.x-hi.x)<10&&Math.abs(u.y-hi.y)<10){
+            hitList.push({target:u,dmg:hi.dmg,dist:hi.dist||999});
+            break;
+          }
+        }
+      }
+    }
+    // 子弹飞行，命中时动画自动扣血
+    animBullet(cur.sx,cur.sy,cur.angle,hitList,cur.stop);
+  }else if(cur.type==='mortar'){
+    if(!cur.intercepted){
+      var m={x:cur.sx,y:cur.sy};
+      animMor(cur.tx,cur.ty,m);
+    }else{
+      draw();
+    }
+  }else if(cur.type==='place'){
+    // 放置
+    var u=cur.unit;
+    if(u.type==='camp'){
+      // 营地
+      if(!G.camps)G.camps={};
+      G.camps[u.team]={x:u.x,y:u.y,hp:u.hp,team:u.team};
+    }else{
+      // 普通单位
+      G.units.push({x:u.x,y:u.y,team:u.team,type:u.type,hp:u.hp,ammo:u.ammo||0,facing:u.facing||0,maxHp:u.maxHp||u.hp,maxAmmo:u.maxAmmo||(u.ammo||0),label:u.label,eliminated:false,trapped:false,bulletsFired:0,reservedCement:0,mortarTarget:null,interceptAmmo:0});
+    }
+    G.step++;
+    draw();
+  }else if(cur.type==='end'){
+    // end：从 prevSnap 还原就是最终状态，不用额外操作
+    draw();
+  }else{
+    draw();
+  }
+}
+function replayPrev(){
+  if(!G||!G.replay||G.replayMode!==true||G.replayIdx<=0)return;
+  G.replayIdx--;
+  replayApplyState(G.replayIdx);
+  document.getElementById('replayInfo').textContent='步骤 '+(G.replayIdx+1)+'/'+G.replay.length;
+  document.getElementById('replayPrev').disabled=(G.replayIdx<=0);
+  document.getElementById('replayNext').disabled=(G.replayIdx>=G.replay.length-1);
+  camX=0;camY=0;camZoom=1;draw();
+}
+function replayExit(){
+  document.getElementById('replayBar').style.display='none';
+  document.getElementById('gameUI').style.display='none';
+  document.getElementById('toolPanel').style.display='';
+  document.getElementById('bottomBar').style.display='';
+  document.getElementById('topBar').style.display='';
+  document.getElementById('mainMenu').style.display='block';
+  document.getElementById('menuMain').style.display='flex';
+  G=null;MC.width=window.innerWidth;MC.height=window.innerHeight;drawMenu();
 }
 
 drawMenu();
@@ -2715,7 +2968,7 @@ function bbDrawCamps(){
       BB_CTX.strokeRect(cx-BB_CS,cy-BB_CS+5,BB_CS*2,BB_CS*2-5);
       BB_CTX.restore();
     }
-    BB_CTX.fillStyle='#fff';BB_CTX.font='bold 14px "Courier New"';
+    BB_CTX.fillStyle='#222';BB_CTX.font='bold 14px "Courier New"';
     BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
     BB_CTX.fillText('HP'+c.hp,cx,cy+BB_CS+12);
   });
@@ -2738,12 +2991,12 @@ function bbDrawUnits(){
     var imgKey=bbGetUnitImgKey(u);
     if(imgKey)bbDrawImg(BB_CTX,imgKey,0,0,u.facing);
     if(u.type!=='wall'&&u.type!=='mine'){
-      BB_CTX.fillStyle='#fff';BB_CTX.font='bold 9px "Courier New"';
+      BB_CTX.fillStyle='#222';BB_CTX.font='bold 9px "Courier New"';
       BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
       BB_CTX.fillText(''+u.hp,0,BB_UR+10);
     }
     if(u.air){
-      BB_CTX.fillStyle='#fff';BB_CTX.font='8px "Courier New"';BB_CTX.textAlign='center';
+      BB_CTX.fillStyle='#222';BB_CTX.font='8px "Courier New"';BB_CTX.textAlign='center';
       BB_CTX.fillText('H:'+(u.altitude||50),0,-BB_UR-10);
     }
     BB_CTX.restore();
@@ -2771,7 +3024,7 @@ function bbDrawWalls(){
       var w=u.w||50,h=u.h||6;rRect(BB_CTX,-w/2,-h/2,w,h,2);BB_CTX.fill();BB_CTX.stroke();
       BB_CTX.restore();
     }
-    BB_CTX.fillStyle='#fff';BB_CTX.font='8px "Courier New"';BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
+    BB_CTX.fillStyle='#222';BB_CTX.font='8px "Courier New"';BB_CTX.textAlign='center';BB_CTX.textBaseline='middle';
     BB_CTX.fillText(u.maxHp>99?'inf':'H'+u.hp,u.x,u.y-(u.h||6)/2-4);
   }
 }
@@ -2882,7 +3135,7 @@ function bbDrawAnim(){
     var elapsed=now-b.startTime,d=(elapsed/200)*b.stop;
     if(d>b.stop+10)return false;
     var px=b.sx+Math.cos(b.angle)*d,py=b.sy+Math.sin(b.angle)*d;
-    BB_CTX.save();BB_CTX.fillStyle='#ff0';BB_CTX.shadowColor='#ff0';BB_CTX.shadowBlur=10;
+    BB_CTX.save();BB_CTX.fillStyle='#f44';BB_CTX.shadowColor='#f44';BB_CTX.shadowBlur=10;
     BB_CTX.beginPath();BB_CTX.arc(px,py,3,0,Math.PI*2);BB_CTX.fill();BB_CTX.restore();
     return true;
   });
@@ -4079,7 +4332,10 @@ function bbChkOver(){
 function bbEndG(w){
   BB_G.over=true;
   if(BB_G.animId)cancelAnimationFrame(BB_G.animId);
-  setTimeout(function(){showModal(w==='red'?'Red Wins!':'Blue Wins!','Big Battle - Game Over');},500);
+  setTimeout(function(){
+    document.getElementById('modalBox').innerHTML='<h2>'+(w==='red'?'Red Wins!':'Blue Wins!')+'</h2><p>Big Battle - Game Over</p><button onclick="document.getElementById(\'modal\').style.display=\'none\';closeBigBattle()">返回主菜单</button>';
+    document.getElementById('modal').style.display='flex';
+  },500);
 }
 // ===== AI (大战场模式) =====
 var bbAiRetryCount=0;
