@@ -2857,14 +2857,28 @@ function updUI(){
   // 联机模式：动态控制工具面板，各管各的回合
   if(G.lanMode){
     const panel=document.getElementById('toolPanel');
+    const mtb=document.getElementById('mobileToolBtn');
     if(G.state===SD){
-      if(!G.isHost){panel.style.pointerEvents='none';panel.style.opacity='0.5';document.getElementById('hintTxt').textContent='等待房主绘制地图...';}
-      else{panel.style.pointerEvents='auto';panel.style.opacity='1';document.getElementById('hintTxt').textContent='绘制地图中';}
+      if(!G.isHost){
+        panel.style.pointerEvents='none';panel.style.opacity='0.5';
+        if(mtb)mtb.style.display='none';
+        document.getElementById('mobileFireBtn').style.display='none';
+        document.getElementById('mobileToolPanel').style.display='none';
+        document.getElementById('hintTxt').textContent='等待房主绘制地图...';
+      }else{
+        panel.style.pointerEvents='auto';panel.style.opacity='1';
+        if(mtb)mtb.style.display='';
+        document.getElementById('hintTxt').textContent='绘制地图中';
+      }
     }else if((G.isHost&&G.phase==='red')||(!G.isHost&&G.phase==='blue')){
       panel.style.pointerEvents='auto';panel.style.opacity='1';
+      if(mtb)mtb.style.display='';
       document.getElementById('hintTxt').textContent='你的回合';
     }else{
       panel.style.pointerEvents='none';panel.style.opacity='0.5';
+      if(mtb)mtb.style.display='none';
+      document.getElementById('mobileFireBtn').style.display='none';
+      document.getElementById('mobileToolPanel').style.display='none';
       document.getElementById('hintTxt').textContent='等待对方操作...';
     }
   }
